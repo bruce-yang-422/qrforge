@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Code Generator — 多格式批次 QR Code 產生器</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- CDN libraries (loaded before app.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- ── Header ──────────────────────────────────────────── -->
+  <header>
+    <h1>QR Code Generator</h1>
+    <p>多格式批次 QR Code 產生器 &nbsp;|&nbsp; CSV / Excel / TXT</p>
+  </header>
+
+  <!-- ── Quick generate ──────────────────────────────────── -->
+  <div id="quick-input">
+    <h2 class="section-title">快速產生 / Quick Generate</h2>
+    <div class="qi-form">
+
+      <div class="qi-row">
+        <label for="qi-type">類型 / Type</label>
+        <select id="qi-type">
+          <option value="url">URL</option>
+          <option value="text">文字 / Text</option>
+          <option value="wifi">WiFi</option>
+        </select>
+      </div>
+
+      <!-- url / text / line -->
+      <div class="qi-row" id="qi-data-row">
+        <label for="qi-data">資料 / Data</label>
+        <textarea id="qi-data" rows="1" placeholder="https://example.com"></textarea>
+      </div>
+
+      <!-- wifi -->
+      <div id="qi-wifi-rows">
+        <div class="qi-row">
+          <label for="qi-ssid">WiFi 名稱 / SSID</label>
+          <input type="text" id="qi-ssid" placeholder="MyNetwork" />
+        </div>
+        <div class="qi-row">
+          <label for="qi-password">密碼 / Password</label>
+          <input type="password" id="qi-password" placeholder="password123" />
+        </div>
+        <div class="qi-row">
+          <label for="qi-security">加密方式 / Security</label>
+          <select id="qi-security">
+            <option value="WPA">WPA / WPA2</option>
+            <option value="WEP">WEP</option>
+            <option value="nopass">無密碼 / None</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="qi-row">
+        <label for="qi-name">
+          檔案名稱 / Filename
+          <span class="optional">（選填 / optional）</span>
+        </label>
+        <input type="text" id="qi-name" placeholder="my-qrcode" />
+      </div>
+
+      <div id="qi-error" class="qi-error"></div>
+
+      <button id="qi-btn" class="btn btn-primary">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+        </svg>
+        產生 QR Code / Generate
+      </button>
+    </div>
+  </div>
+
+  <!-- ── OR divider ──────────────────────────────────────── -->
+  <div class="or-divider"><span>或批次上傳 / Or Batch Upload</span></div>
+
+  <!-- ── Upload zone ─────────────────────────────────────── -->
+  <div id="drop-zone" role="button" tabindex="0" aria-label="上傳檔案">
+    <svg width="52" height="52" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="16 16 12 12 8 16"></polyline>
+      <line x1="12" y1="12" x2="12" y2="21"></line>
+      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
+    </svg>
+    <div class="dz-title">點擊選擇 或 拖曳檔案至此</div>
+    <div class="dz-title" style="font-weight:400;font-size:.95rem;color:#64748b;margin-top:.25rem;">
+      Click to select or drag &amp; drop files here
+    </div>
+    <div class="dz-sub">支援格式 / Supported: .csv &nbsp;·&nbsp; .xlsx &nbsp;·&nbsp; .txt</div>
+    <input id="file-input" type="file" accept=".csv,.xlsx,.txt" multiple />
+  </div>
+
+  <!-- ── Advanced options ─────────────────────────────────── -->
+  <details id="advanced-opts">
+    <summary>進階選項 / Advanced Options</summary>
+    <div class="opts-grid">
+      <label>
+        容錯等級 / Error Correction
+        <select id="opt-ecl">
+          <option value="L">L — 7%</option>
+          <option value="M" selected>M — 15%（預設 / Default）</option>
+          <option value="Q">Q — 25%</option>
+          <option value="H">H — 30%</option>
+        </select>
+      </label>
+      <label>
+        每格放大倍數 / Scale (px / module)
+        <input type="number" id="opt-scale" min="2" max="20" value="8" />
+      </label>
+      <label>
+        輸出格式 / Output Format
+        <div class="radio-group">
+          <label><input type="radio" name="opt-fmt" value="PNG" checked /> PNG</label>
+          <label><input type="radio" name="opt-fmt" value="JPG" /> JPG</label>
+          <label><input type="radio" name="opt-fmt" value="SVG" /> SVG</label>
+        </div>
+      </label>
+    </div>
+  </details>
+
+  <!-- ── Spinner ──────────────────────────────────────────── -->
+  <div id="spinner">
+    <div class="spin-ring"></div>
+    <span id="spinner-msg">處理中 Processing…</span>
+  </div>
+
+  <!-- ── Log area ─────────────────────────────────────────── -->
+  <div id="log-area" role="log" aria-live="polite"></div>
+
+  <!-- ── Toolbar ──────────────────────────────────────────── -->
+  <div id="toolbar">
+    <span class="count-label" id="count-label"></span>
+    <div style="display:flex;gap:.6rem;">
+      <!-- 單張直接下載（1 張時顯示） -->
+      <button id="single-dl-btn" class="btn btn-primary" style="display:none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        下載 / Download
+      </button>
+      <!-- 批次打包（2 張以上時顯示） -->
+      <button id="zip-btn" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        全部下載 (ZIP)
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Results grid ─────────────────────────────────────── -->
+  <div id="results-grid"></div>
+
+</div><!-- /.page-wrap -->
+
+<!-- App logic -->
+<script src="js/app.js"></script>
+</body>
+</html>
