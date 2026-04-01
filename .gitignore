@@ -1,0 +1,33 @@
+# Virtual environment / 虛擬環境
+.venv/
+
+# Generated outputs / 產生的輸出檔案（保留空資料夾）
+output/*
+!output/.gitkeep
+
+# Run logs / 執行紀錄（保留空資料夾）
+logs/*
+!logs/.gitkeep
+
+# Input data / 輸入資料（保留空資料夾）
+input/*
+!input/.gitkeep
+
+# Project tree script & output / 專案結構工具
+script/project_tree_structure_generator.py
+project_tree_structure.txt
+
+# Python cache / Python 快取
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Distribution / 打包產物
+dist/
+build/
+*.egg-info/
+
+# OS / 系統檔案
+.DS_Store
+Thumbs.db
+desktop.ini
