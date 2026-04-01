@@ -2,6 +2,14 @@
 
 ## 多格式批次 QR Code 產生器
 
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/bruce-yang-422/qrforge/blob/main/LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![Stars](https://img.shields.io/github/stars/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge)
+[![Last Commit](https://img.shields.io/github/last-commit/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge/commits/main)
+[![Issues](https://img.shields.io/github/issues/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge/issues)
+![Status](https://img.shields.io/badge/status-active-success)
+
+
 批次將 CSV、Excel、TXT 來源資料轉換為 QR code 圖片的命令列工具。
 
 Batch QR code generator — converts CSV, Excel, and TXT source files into QR code images via the command line.
