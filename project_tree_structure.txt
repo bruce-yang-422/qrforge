@@ -1,0 +1,19 @@
+📁 qr_code_generator
+├── 📁 .venv
+├── 📂 config
+│   └── 🐍 settings.py
+├── 📂 input
+│   └── 📈 sample.xlsx
+├── 📂 logs
+│   └── 📋 run_20260401_173005.log
+├── 📂 output
+│   ├── 📊 ... 還有 1 個 .svg 檔案
+│   ├── 🎨 MyWifi.svg
+│   ├── 🎨 line_00004.svg
+│   └── 🎨 text_00003.svg
+├── 📂 script
+│   └── 🐍 project_tree_structure_generator.py
+├── 📖 README.md
+├── 🐍 main.py
+├── 📄 project_tree_structure.txt
+└── 📋 requirements.txt
