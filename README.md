@@ -10,14 +10,17 @@
 ![Status](https://img.shields.io/badge/status-active-success)
 
 
-批次將 CSV、Excel、TXT 來源資料轉換為 QR code 圖片的命令列工具。
+批次將 CSV、Excel、TXT 來源資料轉換為 QR code 圖片的命令列工具。支援網頁版線上使用。
 
-Batch QR code generator — converts CSV, Excel, and TXT source files into QR code images via the command line.
+Batch QR code generator — converts CSV, Excel, and TXT source files into QR code images via the command line. Also available as a web app.
+
+**網頁版 / Web App** → [https://bruce-yang-422.github.io/qrforge](https://bruce-yang-422.github.io/qrforge)
 
 ---
 
 ## 功能特色 / Features
 
+- 🌐 **網頁版**：免安裝，直接於瀏覽器使用，支援快速產生與批次上傳
 - 支援 **CSV**、**Excel (.xlsx)**、**TXT** 三種輸入格式
 - TXT 自動偵測純網址 / 純文本，支援單筆、逗號分隔、換行分隔多筆 URL
 - 輸出格式：**PNG**、**JPG**、**SVG**（可於設定檔切換）

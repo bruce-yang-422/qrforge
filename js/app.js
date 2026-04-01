@@ -82,17 +82,39 @@ function getSettings() {
 }
 
 /* ── QR generation — returns { format, canvas?, svg? } ───────────── */
-async function makeQr(data) {
+// Uses qrcode-generator (global: `qrcode` lowercase function).
+function makeQr(data) {
   const { ecl, scale, format } = getSettings();
-  const opts = { errorCorrectionLevel: ecl, scale };
+
+  // typeNumber 0 = auto-detect; 'Byte' mode handles UTF-8 / CJK characters.
+  const qr = qrcode(0, ecl);
+  qr.addData(data, "Byte");
+  qr.make();
 
   if (format === "SVG") {
-    const svgStr = await QRCode.toString(data, { ...opts, type: "svg" });
+    const svgStr = qr.createSvgTag(scale, 4);
     return { format: "SVG", svg: svgStr };
   }
 
-  const canvas = document.createElement("canvas");
-  await QRCode.toCanvas(canvas, data, opts);
+  // Render onto an off-screen canvas (PNG / JPG).
+  const modules = qr.getModuleCount();
+  const margin  = 4 * scale;
+  const size    = modules * scale + margin * 2;
+  const canvas  = document.createElement("canvas");
+  canvas.width  = canvas.height = size;
+  const ctx     = canvas.getContext("2d");
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = "#000000";
+  for (let r = 0; r < modules; r++) {
+    for (let c = 0; c < modules; c++) {
+      if (qr.isDark(r, c)) {
+        ctx.fillRect(c * scale + margin, r * scale + margin, scale, scale);
+      }
+    }
+  }
+
   return { format, canvas };
 }
 
@@ -176,7 +198,7 @@ function updateToolbar() {
 
 /* ── Add a single generated QR to the UI ─────────────────────────── */
 async function addResult(filename, data) {
-  const qr = await makeQr(data);
+  const qr = makeQr(data);
   results.push({ filename, qr });
   renderCard(filename, qr);
   updateToolbar();
