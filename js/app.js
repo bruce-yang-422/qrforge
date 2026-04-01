@@ -567,7 +567,7 @@ document.getElementById("single-dl-btn").addEventListener("click", () => {
 const dropZone  = document.getElementById("drop-zone");
 const fileInput = document.getElementById("file-input");
 
-dropZone.addEventListener("click", () => fileInput.click());
+dropZone.addEventListener("click", e => { if (e.target.closest("a")) return; fileInput.click(); });
 dropZone.addEventListener("keydown", e => {
   if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); }
 });
