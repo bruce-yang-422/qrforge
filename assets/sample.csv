@@ -1,0 +1,7 @@
+類型,資料,WiFi名稱,WiFi密碼,加密方式,Qr-code檔案名稱
+url,https://example.com,,,, 官網
+url,https://github.com,,,,GitHub
+wifi,,MySSID,MyPassword,WPA,辦公室WiFi
+wifi,,GuestNet,guest1234,WPA,來賓WiFi
+text,Hello World,,,,
+text,掃描即可查看資訊,,,,名片文字

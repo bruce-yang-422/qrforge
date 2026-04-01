@@ -73,6 +73,16 @@ QR code 圖片會輸出至 `output/`，執行紀錄儲存於 `logs/run_YYYYMMDD_
 
 ---
 
+## 範本檔案 / Sample Templates
+
+| 格式 | 下載 |
+| --- | --- |
+| CSV | [assets/sample.csv](assets/sample.csv) |
+| Excel | [assets/sample.xlsx](assets/sample.xlsx) |
+| TXT | [assets/sample.txt](assets/sample.txt) |
+
+---
+
 ## 輸入格式說明 / Input Formats
 
 ### CSV / Excel

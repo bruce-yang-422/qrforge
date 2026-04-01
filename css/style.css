@@ -71,6 +71,18 @@ header p {
   color: #94a3b8;
 }
 #file-input { display: none; }
+.dz-sample {
+  margin-top: .55rem;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+.dz-sample a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+  margin-left: .35rem;
+}
+.dz-sample a:hover { text-decoration: underline; }
 
 /* ── Spinner overlay ───────────────────────────────────── */
 #spinner {
