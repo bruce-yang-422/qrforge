@@ -1,6 +1,6 @@
 /* Bump VERSION whenever a precached file changes. Updates activate once all
    existing app windows close, keeping each session on a consistent version. */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE_PREFIX = `qrforge-${self.registration.scope}-`;
 const CACHE_NAME = `${CACHE_PREFIX}${VERSION}`;
 const APP_URL = new URL('./', self.registration.scope).href;
@@ -17,6 +17,7 @@ const ASSETS = [
   'assets/sample.csv',
   'assets/sample.xlsx',
   'assets/sample.txt',
+  'assets/icons/favicon.ico',
   'assets/icons/icon-192.png',
   'assets/icons/icon-512.png',
   'assets/icons/icon-maskable-512.png',

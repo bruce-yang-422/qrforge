@@ -1,3 +1,5 @@
+<img src="assets/brand/qrforge-mark-on-white.png" alt="QRForge logo" width="180" />
+
 # QRForge
 
 **English** | [繁體中文](README.zh-TW.md)
@@ -170,7 +172,7 @@ qrforge/
 ├── sw.js                   # Service worker
 ├── manifest.webmanifest    # PWA manifest
 ├── libs/                   # Vendored browser libraries
-└── assets/                 # Sample templates and app icons
+└── assets/                 # Sample templates, app icons, and logo
 ```
 
 ## Deploying the web app

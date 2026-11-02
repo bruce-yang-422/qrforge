@@ -1,3 +1,5 @@
+<img src="assets/brand/qrforge-mark-on-white.png" alt="QRForge logo" width="180" />
+
 # QRForge
 
 [English](README.md) | **繁體中文**
@@ -170,7 +172,7 @@ qrforge/
 ├── sw.js                   # Service Worker
 ├── manifest.webmanifest    # PWA manifest
 ├── libs/                   # 內附的瀏覽器函式庫
-└── assets/                 # 範本檔案與應用程式圖示
+└── assets/                 # 範本檔案、應用程式圖示與標誌
 ```
 
 ## 部署網頁版
