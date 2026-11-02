@@ -73,7 +73,8 @@ const QRPrint = (() => {
     const height = side + (caption ? caption.extra : 0);
     let content = matrixOps(matrix, 4 * moduleMm, 4 * moduleMm, moduleMm, height);
     if (caption) {
-      const shapes = [{ stroke: 0, segments: parsePath(captionPath(caption, side, side + caption.gap, 1)) }];
+      const shapes = captionPaths(caption, side, side + caption.gap, 1)
+        .map(({ color, d }) => ({ stroke: 0, fill: color, segments: parsePath(d) }));
       content += vectorOps({ width: side, height, shapes }, 0, 0, 1, height);
     }
     return buildPdf([{ width: side, height, content }]);
@@ -127,7 +128,8 @@ const QRPrint = (() => {
       const d = ATTR(tag, "d");
       if (!d) continue;
       const stroke = ATTR(tag, "stroke-width");
-      shapes.push({ stroke: stroke ? parseFloat(stroke) : 0, segments: parsePath(d) });
+      const fill = ATTR(tag, "fill");
+      shapes.push({ stroke: stroke ? parseFloat(stroke) : 0, fill: fill && fill[0] === "#" ? fill.slice(1) : "000000", segments: parsePath(d) });
     }
     return { width: parseFloat(box[1]), height: parseFloat(box[2]), shapes };
   }
@@ -146,6 +148,7 @@ const QRPrint = (() => {
     const Y = (v) => num(originTop - v * unitPt);
     let out = "";
     for (const shape of vector.shapes) {
+      out += `${[0, 2, 4].map((i) => num(parseInt((shape.fill || "000000").slice(i, i + 2), 16) / 255)).join(" ")} ${ops.color}\n`;
       if (shape.stroke) out += `${num(shape.stroke * unitPt)} ${ops.width}\n`;
       let cur = [0, 0];
       for (const { cmd, pts } of shape.segments) {
@@ -165,8 +168,8 @@ const QRPrint = (() => {
     return out;
   }
 
-  const PDF_OPS = { width: "w", move: "m", line: "l", curve: "c", close: "h", stroke: "S", fill: "f*" };
-  const EPS_OPS = { width: "setlinewidth", move: "moveto", line: "lineto", curve: "curveto", close: "closepath", stroke: "stroke", fill: "eofill" };
+  const PDF_OPS = { color: "rg", width: "w", move: "m", line: "l", curve: "c", close: "h", stroke: "S", fill: "f*" };
+  const EPS_OPS = { color: "setrgbcolor", width: "setlinewidth", move: "moveto", line: "lineto", curve: "curveto", close: "closepath", stroke: "stroke", fill: "eofill" };
 
   function vectorOps(vector, x, y, unitMm, pageHeight) {
     return `0 g 0 G 0 J\n${shapesToOps(vector, unitMm * PT_PER_MM, x * PT_PER_MM, (pageHeight - y) * PT_PER_MM, PDF_OPS)}`;
@@ -194,7 +197,7 @@ const QRPrint = (() => {
 
   /* ── Text below a code ─────────────────────────────────────────── */
   const CAPTION_TRACE_PER_MM = 16; /* About 400 dpi. */
-  const captionFont = (px) => `${px}px -apple-system, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif`;
+  const captionFont = (px) => `${px}px -apple-system, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
 
   /* Fits the text to widthMm. Returns null when empty, { tooLong: true } if it can't fit.
      limits: { size, minSize, gap, bottom, margin }, all in mm. */
@@ -228,15 +231,14 @@ const QRPrint = (() => {
     return target;
   }
 
-  /* Traces the caption into rectangles, so vector files need no embedded font. */
-  function captionPath(caption, widthMm, topUnits, unitMm) {
+  /* Traces the caption into rectangles, so vector files need no embedded font.
+     Returns one path per colour, because emoji are not black. */
+  function captionPaths(caption, widthMm, topUnits, unitMm) {
     const scale = CAPTION_TRACE_PER_MM;
     const canvas = document.createElement("canvas");
     canvas.width = Math.ceil(widthMm * scale);
     canvas.height = Math.ceil(caption.height * scale);
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#000";
     ctx.font = captionFont(caption.size * scale);
     ctx.textAlign = "center";
@@ -244,32 +246,46 @@ const QRPrint = (() => {
     ctx.fillText(caption.text, canvas.width / 2, canvas.height / 2);
     const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
+    /* Six levels per channel keeps emoji recognisable and the file small. */
+    const hex = (v) => (Math.round(v / 51) * 51).toString(16).padStart(2, "0");
+    const colourAt = (x, y) => {
+      const i = (y * width + x) * 4;
+      return data[i + 3] < 128 ? null : hex(data[i]) + hex(data[i + 1]) + hex(data[i + 2]);
+    };
+
     const unit = 1 / (scale * unitMm);
     const n = (v) => String(Math.round(v * 100) / 100);
-    let path = "";
-    const flush = (x0, x1, y0, y1) => {
+    const paths = new Map();
+    const flush = (colour, x0, x1, y0, y1) => {
       const left = n(x0 * unit), right = n(x1 * unit), top = n(topUnits + y0 * unit), bottom = n(topUnits + y1 * unit);
-      path += `M${left} ${top}L${right} ${top}L${right} ${bottom}L${left} ${bottom}Z`;
+      paths.set(colour, `${paths.get(colour) || ""}M${left} ${top}L${right} ${top}L${right} ${bottom}L${left} ${bottom}Z`);
     };
     /* Identical runs on consecutive rows merge into one taller rectangle. */
     let open = new Map();
     for (let y = 0; y <= height; y++) {
       const next = new Map();
       for (let x = 0; y < height && x < width; x++) {
-        if (data[(y * width + x) * 4] >= 128) continue;
+        const colour = colourAt(x, y);
+        if (!colour) continue;
         const start = x;
-        while (x + 1 < width && data[(y * width + x + 1) * 4] < 128) x++;
-        const key = `${start}-${x + 1}`;
+        while (x + 1 < width && colourAt(x + 1, y) === colour) x++;
+        const key = `${colour}:${start}:${x + 1}`;
         next.set(key, open.has(key) ? open.get(key) : y);
         open.delete(key);
       }
       for (const [key, startRow] of open) {
-        const [x0, x1] = key.split("-").map(Number);
-        flush(x0, x1, startRow, y);
+        const [colour, x0, x1] = key.split(":");
+        flush(colour, Number(x0), Number(x1), startRow, y);
       }
       open = next;
     }
-    return path;
+    return Array.from(paths, ([color, d]) => ({ color, d }));
+  }
+
+  /* The same paths as SVG elements. */
+  function captionSvg(caption, widthMm, topUnits, unitMm) {
+    return captionPaths(caption, widthMm, topUnits, unitMm)
+      .map(({ color, d }) => `<path d="${d}" fill="#${color}" fill-rule="evenodd" />`).join("\n");
   }
 
   /* ── PNG resolution metadata ───────────────────────────────────── */
@@ -309,6 +325,6 @@ const QRPrint = (() => {
     LABEL_LAYOUTS, PT_PER_MM,
     buildPdf, qrPdf, labelSheet, qrLabelOps, qrLabelModule,
     parseSvg, vectorOps, vectorPdf, vectorEps, setPngDpi,
-    layoutCaption, paintWithCaption, captionPath,
+    layoutCaption, paintWithCaption, captionSvg,
   };
 })();

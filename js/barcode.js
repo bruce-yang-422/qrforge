@@ -79,11 +79,11 @@
     if (!caption) return svg;
     const [, width, height] = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(svg);
     const top = Number(height) + caption.gap / unitMm;
-    const path = QRPrint.captionPath(caption, Number(width) * unitMm, top, unitMm);
+    const paths = QRPrint.captionSvg(caption, Number(width) * unitMm, top, unitMm);
     const taller = (Number(height) + caption.extra / unitMm).toFixed(2);
     return svg
       .replace(/viewBox="[^"]+"/, `viewBox="0 0 ${width} ${taller}"`)
-      .replace("</svg>", `<path d="${path}" fill-rule="evenodd" />\n</svg>`);
+      .replace("</svg>", `${paths}\n</svg>`);
   }
 
   function showScan(result, spec) {

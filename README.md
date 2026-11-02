@@ -4,7 +4,7 @@
 
 **繁體中文** | [English](README.en.md)
 
-產生、掃描與檢測 QR Code，並製作可直接印刷的條碼。可在瀏覽器中使用;批次產生 QR Code 也可用命令列。
+產生、掃描與檢測 QR Code（二維碼），並製作可直接印刷的條碼。可在瀏覽器中使用;批次產生 QR Code 也可用命令列。
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
@@ -48,7 +48,7 @@ QRForge 提供兩種使用方式，兩者讀取相同的輸入格式：
 
 ### 網頁版
 
-開啟 <https://bruce-yang-422.github.io/qrforge>，在「產生」分頁輸入內容，QR Code 會立即出現，可直接下載。要一次產生多張，請用「批次」分頁，那裡也可以下載範本檔案。介面支援繁體中文與英文，可用右上角的按鈕切換。
+開啟 <https://bruce-yang-422.github.io/qrforge>，在「QR Code」分頁輸入內容，QR Code 會立即出現，可直接下載。要一次產生多張，請用「批次」分頁，那裡也可以下載範本檔案。介面支援繁體中文與英文，可用右上角的按鈕切換。
 
 如需離線使用，請先在連線狀態下開啟一次，等頁首顯示「可離線使用」即可。如需安裝，請使用「安裝」按鈕或瀏覽器選單的安裝功能;iPhone 和 iPad 請在 Safari 分享選單選擇「加入主畫面」。
 
@@ -83,13 +83,13 @@ QR Code 會輸出至 `output/`，記錄檔則寫入 `logs/run_YYYYMMDD_HHMMSS.lo
 
 | 分頁 | 功能 |
 | --- | --- |
-| **產生** | 從網址、文字或 WiFi 資訊產生單張 QR Code，輸入時即時預覽。只輸入網域時會自動加上 `https://`，可在下方加上文字，也可分享圖片或傳到 LINE |
+| **QR Code** | 從網址、文字或 WiFi 資訊產生單張 QR Code，輸入時即時預覽。只輸入網域時會自動加上 `https://`，可在下方加上文字，也可分享圖片或傳到 LINE |
 | **批次** | 從貼上的清單或 CSV、Excel、TXT 檔案產生最多 500 張，可輸出 PNG、JPG、SVG 或 PDF 並打包成 ZIP，也可排版成標籤紙 |
 | **掃描** | 從相機、照片或貼上的截圖讀取 QR Code。連結只有在你點選後才會開啟 |
 | **檢測** | 告訴你 QR Code 能否掃描及如何改善，並提供評等、對比、周圍留白與損傷模組圖 |
 | **條碼** | 以實際列印尺寸製作條碼，每次變更都會用另一套解碼器重新讀取驗證 |
 
-**條碼類型：** EAN-13、EAN-8、UPC-A、UPC-E、ISBN、Code 128、ITF-14、GS1-128、SSCC-18 與 Data Matrix。校驗碼省略時會自動計算，填寫時會加以驗證。也可以在條碼下方加上文字，例如商品名稱，支援中文。這段文字只會印出來，掃描時不會讀到。
+**條碼類型：** EAN-13、EAN-8、UPC-A、UPC-E、ISBN、Code 128、ITF-14、GS1-128、SSCC-18 與 Data Matrix。校驗碼省略時會自動計算，填寫時會加以驗證。也可以在條碼下方加上文字，例如商品名稱。這段文字只會印出來，掃描時不會讀到。
 
 **條碼下載：** 300、600 或 1200 dpi 的 PNG，以毫米為單位的 SVG、EPS、PDF，或整張標籤紙 PDF。
 
@@ -151,7 +151,7 @@ CSV 與 Excel 的資料列依下列順序決定檔名，採用第一個符合的
 
 檔名中的不合法字元(`\ / : * ? " < > |`)會被移除。
 
-在「產生」分頁中，檔名留空時預設為 `Qrcode_YYYYMMDD_HHMM_001`。
+在「QR Code」分頁中，檔名留空時預設為 `Qrcode_YYYYMMDD_HHMM_001`。
 
 ## 設定
 

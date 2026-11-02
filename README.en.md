@@ -48,7 +48,7 @@ The web interface is bilingual (Traditional Chinese and English).
 
 ### Web app
 
-Open <https://bruce-yang-422.github.io/qrforge>, then type in the **Create** tab and your QR code appears as you type, ready to download. To make many at once, use the **Batch** tab, where you can also download sample templates. The interface is in Traditional Chinese or English, and the button at the top right switches between them.
+Open <https://bruce-yang-422.github.io/qrforge>, then type in the **QR Code** tab and your QR code appears as you type, ready to download. To make many at once, use the **Batch** tab, where you can also download sample templates. The interface is in Traditional Chinese or English, and the button at the top right switches between them.
 
 To use the app offline, open it once while connected and wait for the header to show **Works offline**. To install it, use the **Install** button or your browser's install menu. On iPhone and iPad, choose **Add to Home Screen** from the Safari share menu.
 
@@ -83,13 +83,13 @@ These tools are in the web app only. Everything runs locally, and images are nev
 
 | Tab | What it does |
 | --- | --- |
-| **Create** | Makes one code from a link, text, or WiFi details, with a live preview. Adds `https://` to a bare domain, can print text below the code, and can share the image or send to LINE |
+| **QR Code** | Makes one code from a link, text, or WiFi details, with a live preview. Adds `https://` to a bare domain, can print text below the code, and can share the image or send to LINE |
 | **Batch** | Makes up to 500 codes from a pasted list or CSV, Excel, and TXT files, as PNG, JPG, SVG, or PDF in a ZIP file. Also prints them on label sheets |
 | **Scan** | Reads QR codes from the camera, a photo, or a pasted screenshot. Links only open when you click them |
 | **Check** | Tells you whether a code will scan and how to improve it, with a grade, contrast, margin, and a map of damaged modules |
 | **Barcode** | Makes barcodes at true print size, and re-reads each one with a separate decoder whenever you change it |
 
-**Barcode types:** EAN-13, EAN-8, UPC-A, UPC-E, ISBN, Code 128, ITF-14, GS1-128, SSCC-18, and Data Matrix. Check digits are calculated if you leave them out, and verified if you include them. You can also add text below a barcode, such as a product name, in Chinese or any other language. It's printed only, and scanners won't read it.
+**Barcode types:** EAN-13, EAN-8, UPC-A, UPC-E, ISBN, Code 128, ITF-14, GS1-128, SSCC-18, and Data Matrix. Check digits are calculated if you leave them out, and verified if you include them. You can also add text below a barcode, such as a product name. It's printed only, and scanners won't read it.
 
 **Barcode downloads:** PNG at 300, 600, or 1200 dpi, SVG, EPS, and PDF in millimetres, or a full label sheet as a PDF.
 
@@ -151,7 +151,7 @@ For CSV and Excel rows, the filename is the first of these that applies:
 
 Characters that are illegal in filenames (`\ / : * ? " < > |`) are removed.
 
-In the Create tab, an empty filename defaults to `Qrcode_YYYYMMDD_HHMM_001`.
+In the QR Code tab, an empty filename defaults to `Qrcode_YYYYMMDD_HHMM_001`.
 
 ## Configuration
 

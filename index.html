@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QRForge — QR Code 與條碼工具</title>
-  <meta name="description" content="免安裝、可離線的 QR Code 與條碼工具。檔案只在你的裝置上處理。" />
+  <title>QRForge — QR Code（二維碼）與條碼工具</title>
+  <meta name="description" content="免安裝、可離線的 QR Code（二維碼）與條碼工具。檔案只在你的裝置上處理。" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -44,7 +44,7 @@
       <img src="assets/icons/icon-192.png" alt="" width="44" height="44" />
       <div>
         <h1>QRForge</h1>
-        <p data-i18n="QR Code 與條碼工具，打開就能用|QR codes and barcodes, ready when you are"></p>
+        <p data-i18n="QR Code（二維碼）與條碼工具，打開就能用|QR codes and barcodes, ready when you are"></p>
       </div>
     </div>
     <div class="header-actions">
@@ -56,7 +56,7 @@
 
   <!-- ── Tabs ─────────────────────────────────────────────── -->
   <nav class="tabs" role="tablist" data-i18n-label="功能|Tools">
-    <button role="tab" type="button" data-tab="generate" aria-controls="panel-generate"><svg class="icon"><use href="#i-qr"/></svg><span data-i18n="產生|Create"></span></button>
+    <button role="tab" type="button" data-tab="generate" aria-controls="panel-generate"><svg class="icon"><use href="#i-qr"/></svg><span data-i18n="QR Code|QR Code"></span></button>
     <button role="tab" type="button" data-tab="batch" aria-controls="panel-batch"><svg class="icon"><use href="#i-stack"/></svg><span data-i18n="批次|Batch"></span></button>
     <button role="tab" type="button" data-tab="scan" aria-controls="panel-scan"><svg class="icon"><use href="#i-camera"/></svg><span data-i18n="掃描|Scan"></span></button>
     <button role="tab" type="button" data-tab="detect" aria-controls="panel-detect"><svg class="icon"><use href="#i-check"/></svg><span data-i18n="檢測|Check"></span></button>
@@ -65,7 +65,7 @@
 
   <main>
 
-  <!-- ── Create: live preview beside the form ─────────────── -->
+  <!-- ── QR Code: live preview beside the form ─────────────── -->
   <section id="panel-generate" role="tabpanel" data-panel="generate">
     <div class="split">
       <div class="card">
@@ -275,7 +275,7 @@
         <div class="field">
           <label for="bc-caption"><span data-i18n="條碼下方文字|Text below the barcode"></span> <span class="optional" data-i18n="（選填）|(optional)"></span></label>
           <input type="text" id="bc-caption" autocomplete="off" />
-          <span class="hint" data-i18n="例如商品名稱，可輸入中文。只會印在條碼下方，掃描時不會讀到。|For example, a product name. It's only printed, and scanners won't read it."></span>
+          <span class="hint" data-i18n="例如商品名稱。只會印在條碼下方，掃描時不會讀到。|For example, a product name. It's only printed, and scanners won't read it."></span>
         </div>
         <details class="more">
           <summary data-i18n="尺寸設定|Size"></summary>

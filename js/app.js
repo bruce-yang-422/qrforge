@@ -539,7 +539,7 @@ document.getElementById("batch-list-btn").addEventListener("click", () => {
   });
 });
 
-/* ── Create tab: the preview updates as you type ─────────────────── */
+/* ── QR Code tab: the preview updates as you type ────────────────── */
 const stage       = document.getElementById("qp-stage");
 const stageEmpty  = document.getElementById("qp-empty");
 const qiError     = document.getElementById("qi-error");
@@ -599,11 +599,11 @@ function withCaption(qr) {
   const unitMm = qr.moduleMm / getSettings().scale;
   const width  = Math.round(widthMm / unitMm);
   const height = Math.round((widthMm + caption.extra) / unitMm);
-  const path   = QRPrint.captionPath(caption, widthMm, width + caption.gap / unitMm, unitMm);
+  const paths  = QRPrint.captionSvg(caption, widthMm, width + caption.gap / unitMm, unitMm);
   const svg = qr.svg
     .replace(/ width="[^"]*" height="[^"]*"/, ` width="${width}px" height="${height}px"`)
     .replace(/viewBox="[^"]*"/, `viewBox="0 0 ${width} ${height}"`)
-    .replace("</svg>", `<path d="${path}" fill="black" fill-rule="evenodd"/></svg>`);
+    .replace("</svg>", `${paths}</svg>`);
   return { ...qr, caption, svg };
 }
 
