@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QR Code Generator — 多格式批次 QR Code 產生器</title>
+  <title>QRForge — QR Code 與條碼工具</title>
+  <meta name="description" content="免安裝、可離線的 QR Code 與條碼工具。檔案只在你的裝置上處理。" />
   <meta name="theme-color" content="#2563eb" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -21,295 +22,328 @@
   <script src="libs/jszip.min.js"></script>
 </head>
 <body>
+
+<!-- Shared icons -->
+<svg width="0" height="0" class="icon-sprite" aria-hidden="true">
+  <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M21 14v.01M21 21h-4M14 21v-.01"/></symbol>
+  <symbol id="i-stack" viewBox="0 0 24 24"><rect x="8" y="3" width="13" height="13" rx="2"/><path d="M16 21H5a2 2 0 0 1-2-2V8"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3M7 12h10"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-bars" viewBox="0 0 24 24"><path d="M4 5v14M8 5v14M11 5v14M15 5v14M20 5v14M17.5 5v14"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></symbol>
+</svg>
+
 <div class="page-wrap">
 
   <!-- ── Header ──────────────────────────────────────────── -->
-  <header>
-    <h1>QR Code Generator</h1>
-    <p>多格式批次 QR Code 產生器 &nbsp;|&nbsp; CSV / Excel / TXT</p>
-    <div class="pwa-controls">
-      <button id="install-btn" class="btn btn-primary" type="button" hidden>安裝應用程式 / Install App</button>
+  <header class="app-header">
+    <div class="brand">
+      <img src="assets/icons/icon-192.png" alt="" width="44" height="44" />
+      <div>
+        <h1>QRForge</h1>
+        <p data-i18n="QR Code 與條碼工具，打開就能用|QR codes and barcodes, ready when you are"></p>
+      </div>
+    </div>
+    <div class="header-actions">
       <span id="pwa-status" role="status" aria-live="polite"></span>
+      <button id="install-btn" class="btn btn-secondary btn-sm" type="button" data-i18n="安裝|Install" hidden></button>
+      <button id="lang-btn" class="btn btn-ghost btn-sm" type="button" data-i18n="English|中文"></button>
     </div>
   </header>
 
   <!-- ── Tabs ─────────────────────────────────────────────── -->
-  <nav class="tabs" role="tablist" aria-label="功能 / Tools">
-    <button role="tab" type="button" data-tab="generate" aria-controls="panel-generate">QR 產生 / Generate</button>
-    <button role="tab" type="button" data-tab="batch" aria-controls="panel-batch">批次 / Batch</button>
-    <button role="tab" type="button" data-tab="scan" aria-controls="panel-scan">掃描器 / Scanner</button>
-    <button role="tab" type="button" data-tab="detect" aria-controls="panel-detect">偵測器 / Detector</button>
-    <button role="tab" type="button" data-tab="barcode" aria-controls="panel-barcode">條碼 / Barcode</button>
+  <nav class="tabs" role="tablist" data-i18n-label="功能|Tools">
+    <button role="tab" type="button" data-tab="generate" aria-controls="panel-generate"><svg class="icon"><use href="#i-qr"/></svg><span data-i18n="產生|Create"></span></button>
+    <button role="tab" type="button" data-tab="batch" aria-controls="panel-batch"><svg class="icon"><use href="#i-stack"/></svg><span data-i18n="批次|Batch"></span></button>
+    <button role="tab" type="button" data-tab="scan" aria-controls="panel-scan"><svg class="icon"><use href="#i-camera"/></svg><span data-i18n="掃描|Scan"></span></button>
+    <button role="tab" type="button" data-tab="detect" aria-controls="panel-detect"><svg class="icon"><use href="#i-check"/></svg><span data-i18n="檢測|Check"></span></button>
+    <button role="tab" type="button" data-tab="barcode" aria-controls="panel-barcode"><svg class="icon"><use href="#i-bars"/></svg><span data-i18n="條碼|Barcode"></span></button>
   </nav>
 
-  <!-- ── Quick generate ──────────────────────────────────── -->
+  <main>
+
+  <!-- ── Create: live preview beside the form ─────────────── -->
   <section id="panel-generate" role="tabpanel" data-panel="generate">
-  <div id="quick-input">
-    <h2 class="section-title">快速產生 / Quick Generate</h2>
-    <div class="qi-form">
+    <div class="split">
+      <div class="card">
+        <h2 data-i18n="QR Code 要放什麼？|What should the QR code contain?"></h2>
+        <div class="segmented" role="radiogroup" data-i18n-label="內容類型|Content type">
+          <label><input type="radio" name="qi-type" value="url" checked /><span data-i18n="網址|Link"></span></label>
+          <label><input type="radio" name="qi-type" value="text" /><span data-i18n="文字|Text"></span></label>
+          <label><input type="radio" name="qi-type" value="wifi" /><span>WiFi</span></label>
+        </div>
 
-      <div class="qi-row">
-        <label for="qi-type">類型 / Type</label>
-        <select id="qi-type">
-          <option value="url">URL</option>
-          <option value="text">文字 / Text</option>
-          <option value="wifi">WiFi</option>
-        </select>
+        <div class="field" id="qi-data-row">
+          <label for="qi-data" id="qi-data-label"></label>
+          <textarea id="qi-data" rows="3" autofocus></textarea>
+          <span class="hint" id="qi-data-hint"></span>
+        </div>
+
+        <div id="qi-wifi-rows" hidden>
+          <div class="field">
+            <label for="qi-ssid" data-i18n="WiFi 名稱|Network name"></label>
+            <input type="text" id="qi-ssid" autocomplete="off" />
+          </div>
+          <div class="field" id="qi-password-row">
+            <label for="qi-password" data-i18n="密碼|Password"></label>
+            <input type="text" id="qi-password" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="field">
+            <label for="qi-security" data-i18n="加密方式|Security"></label>
+            <select id="qi-security">
+              <option value="WPA" data-i18n="WPA / WPA2（大多數網路）|WPA / WPA2 (most networks)"></option>
+              <option value="WEP">WEP</option>
+              <option value="nopass" data-i18n="沒有密碼|No password"></option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="qi-caption"><span data-i18n="QR Code 下方文字|Text below the QR code"></span> <span class="optional" data-i18n="（選填）|(optional)"></span></label>
+          <input type="text" id="qi-caption" autocomplete="off" />
+          <span class="hint" data-i18n="例如「掃描加入會員」。只會印在圖片上，掃描時不會讀到。|For example, “Scan to join”. It's only printed on the image, and scanners won't read it."></span>
+        </div>
+
+        <div class="field">
+          <label for="qi-name"><span data-i18n="檔案名稱|File name"></span> <span class="optional" data-i18n="（選填）|(optional)"></span></label>
+          <input type="text" id="qi-name" autocomplete="off" />
+        </div>
       </div>
 
-      <!-- url / text / line -->
-      <div class="qi-row" id="qi-data-row">
-        <label for="qi-data">資料 / Data</label>
-        <textarea id="qi-data" rows="1" placeholder="https://example.com"></textarea>
-      </div>
+      <aside class="card preview-card" aria-live="polite">
+        <div id="qp-stage" class="qr-stage">
+          <p id="qp-empty" class="stage-empty"></p>
+        </div>
+        <div id="qi-error" class="error-text" role="alert"></div>
+        <div id="settings-slot-generate"></div>
+        <button id="qp-download" type="button" class="btn btn-primary btn-lg" disabled>
+          <svg class="icon"><use href="#i-down"/></svg><span id="qp-download-label"></span>
+        </button>
+        <div id="qp-share-row" class="share-row" hidden>
+          <button id="qp-share" type="button" class="btn btn-secondary"><svg class="icon"><use href="#i-share"/></svg><span data-i18n="分享圖片|Share image"></span></button>
+          <button id="qp-copy" type="button" class="btn btn-secondary" data-i18n="複製圖片|Copy image"></button>
+          <a id="qp-line" class="btn btn-line" target="_blank" rel="noopener noreferrer"></a>
+        </div>
+        <p id="qp-share-status" class="hint" role="status" aria-live="polite"></p>
+      </aside>
+    </div>
+  </section>
 
-      <!-- wifi -->
-      <div id="qi-wifi-rows">
-        <div class="qi-row">
-          <label for="qi-ssid">WiFi 名稱 / SSID</label>
-          <input type="text" id="qi-ssid" placeholder="MyNetwork" />
+  <!-- ── Batch ────────────────────────────────────────────── -->
+  <section id="panel-batch" role="tabpanel" data-panel="batch" hidden>
+    <div class="card">
+      <h2 data-i18n="一次產生多張 QR Code|Create many QR codes at once"></h2>
+      <p class="hint" data-i18n="每批最多 500 張。上傳檔案或貼上清單都可以。|Up to 500 per batch. Upload a file or paste a list."></p>
+      <div class="choice-grid">
+        <div id="drop-zone" class="drop-zone" role="button" tabindex="0" data-i18n-label="上傳檔案|Upload files">
+          <svg class="icon icon-lg"><use href="#i-upload"/></svg>
+          <strong data-i18n="選擇或拖曳檔案|Choose or drop files"></strong>
+          <span class="hint">CSV · Excel · TXT</span>
+          <span class="dz-sample">
+            <span data-i18n="沒有檔案？下載範本：|Need a template?"></span>
+            <a href="assets/sample.csv" download>CSV</a>
+            <a href="assets/sample.xlsx" download>Excel</a>
+            <a href="assets/sample.txt" download>TXT</a>
+          </span>
+          <input id="file-input" type="file" accept=".csv,.xlsx,.txt" multiple hidden />
         </div>
-        <div class="qi-row">
-          <label for="qi-password">密碼 / Password</label>
-          <input type="password" id="qi-password" placeholder="password123" />
+        <div class="paste-box">
+          <label for="batch-list"><strong data-i18n="或貼上清單，每行一張|Or paste a list, one per line"></strong></label>
+          <textarea id="batch-list" rows="5" placeholder="https://example.com&#10;https://github.com"></textarea>
+          <div id="batch-list-error" class="error-text" role="alert"></div>
+          <button id="batch-list-btn" type="button" class="btn btn-primary" data-i18n="產生|Create"></button>
         </div>
-        <div class="qi-row">
-          <label for="qi-security">加密方式 / Security</label>
-          <select id="qi-security">
-            <option value="WPA">WPA / WPA2</option>
-            <option value="WEP">WEP</option>
-            <option value="nopass">無密碼 / None</option>
+      </div>
+      <div id="settings-slot-batch"></div>
+    </div>
+
+    <div id="spinner"><div class="spin-ring"></div><span id="spinner-msg"></span></div>
+
+    <div id="toolbar">
+      <span class="count-label" id="count-label"></span>
+      <div class="toolbar-actions">
+        <button id="single-dl-btn" type="button" class="btn btn-primary"><svg class="icon"><use href="#i-down"/></svg><span data-i18n="下載|Download"></span></button>
+        <button id="zip-btn" type="button" class="btn btn-primary"><svg class="icon"><use href="#i-down"/></svg><span id="zip-label"></span></button>
+        <details class="menu">
+          <summary class="btn btn-secondary" data-i18n="列印標籤|Print labels"></summary>
+          <div class="menu-body">
+            <label for="label-layout" data-i18n="選擇標籤紙|Label sheet"></label>
+            <select id="label-layout"></select>
+            <button id="label-btn" type="button" class="btn btn-secondary btn-sm" data-i18n="下載 PDF|Download PDF"></button>
+            <p class="hint" data-i18n="列印時請選 100% 比例，並先用一般紙張試印。|Print at 100% scale and try plain paper first."></p>
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <details id="log-wrap" hidden>
+      <summary data-i18n="處理明細|Details"></summary>
+      <div id="log-area" role="log" aria-live="polite"></div>
+    </details>
+
+    <div id="results-grid"></div>
+  </section>
+
+  <!-- Format and QR options. Moves into the slot of the active tab. -->
+  <div id="qr-settings">
+    <div class="format-row">
+      <span class="field-label" data-i18n="下載格式|Format"></span>
+      <div class="segmented segmented-sm" role="radiogroup" data-i18n-label="下載格式|Format">
+        <label><input type="radio" name="opt-fmt" value="PNG" checked /><span>PNG</span></label>
+        <label><input type="radio" name="opt-fmt" value="SVG" /><span>SVG</span></label>
+        <label><input type="radio" name="opt-fmt" value="JPG" /><span>JPG</span></label>
+        <label><input type="radio" name="opt-fmt" value="PDF" /><span>PDF</span></label>
+      </div>
+    </div>
+    <p id="format-hint" class="hint"></p>
+    <details class="more">
+      <summary data-i18n="更多設定|More settings"></summary>
+      <div class="more-grid">
+        <div class="field">
+          <label for="opt-ecl" data-i18n="防損傷程度|Damage protection"></label>
+          <select id="opt-ecl">
+            <option value="L" data-i18n="低 — 圖案最簡單 (L 7%)|Low — simplest pattern (L 7%)"></option>
+            <option value="M" selected data-i18n="標準 — 建議 (M 15%)|Standard — recommended (M 15%)"></option>
+            <option value="Q" data-i18n="高 (Q 25%)|High (Q 25%)"></option>
+            <option value="H" data-i18n="最高 — 容易磨損時用 (H 30%)|Highest — for wear and tear (H 30%)"></option>
           </select>
         </div>
+        <div class="field">
+          <label for="opt-scale" data-i18n="圖片大小（每格像素，2–20）|Image size (pixels per square, 2–20)"></label>
+          <input type="number" id="opt-scale" min="2" max="20" value="8" />
+        </div>
       </div>
-
-      <div class="qi-row">
-        <label for="qi-name">
-          檔案名稱 / Filename
-          <span class="optional">（選填 / optional）</span>
-        </label>
-        <input type="text" id="qi-name" placeholder="my-qrcode" />
-      </div>
-
-      <div id="qi-error" class="qi-error"></div>
-
-      <button id="qi-btn" class="btn btn-primary">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="7" height="7"></rect>
-          <rect x="14" y="3" width="7" height="7"></rect>
-          <rect x="3" y="14" width="7" height="7"></rect>
-          <rect x="14" y="14" width="7" height="7"></rect>
-        </svg>
-        產生 QR Code / Generate
-      </button>
-    </div>
+    </details>
   </div>
 
-  </section>
-
-  <!-- ── Batch: list or files ────────────────────────────── -->
-  <section id="panel-batch" role="tabpanel" data-panel="batch" hidden>
-  <div class="tool-card">
-    <h2 class="section-title">貼上清單 / Paste a List</h2>
-    <div class="qi-form">
-      <div class="qi-row">
-        <label for="batch-list">每行產生一張 QR Code,每批最多 500 張 / One QR code per line, up to 500 per batch</label>
-        <textarea id="batch-list" class="expanded" rows="6" placeholder="https://example.com&#10;https://github.com"></textarea>
-      </div>
-      <div id="batch-list-error" class="qi-error"></div>
-      <div><button id="batch-list-btn" type="button" class="btn btn-primary">批次產生 / Generate Batch</button></div>
-    </div>
-  </div>
-
-  <div class="or-divider"><span>或上傳檔案 / Or Upload Files</span></div>
-
-  <!-- ── Upload zone ─────────────────────────────────────── -->
-  <div id="drop-zone" role="button" tabindex="0" aria-label="上傳檔案">
-    <svg width="52" height="52" viewBox="0 0 24 24" fill="none"
-         stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-      <polyline points="16 16 12 12 8 16"></polyline>
-      <line x1="12" y1="12" x2="12" y2="21"></line>
-      <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
-    </svg>
-    <div class="dz-title">點擊選擇 或 拖曳檔案至此</div>
-    <div class="dz-title" style="font-weight:400;font-size:.95rem;color:#64748b;margin-top:.25rem;">
-      Click to select or drag &amp; drop files here
-    </div>
-    <div class="dz-sub">支援格式 / Supported: .csv &nbsp;·&nbsp; .xlsx &nbsp;·&nbsp; .txt</div>
-    <div class="dz-sample">
-      下載範本 / Download template:
-      <a href="assets/sample.csv"  download>CSV</a>
-      <a href="assets/sample.xlsx" download>Excel</a>
-      <a href="assets/sample.txt"  download>TXT</a>
-    </div>
-    <input id="file-input" type="file" accept=".csv,.xlsx,.txt" multiple />
-  </div>
-  </section>
-
-  <!-- ── Scanner ──────────────────────────────────────────── -->
+  <!-- ── Scan ─────────────────────────────────────────────── -->
   <section id="panel-scan" role="tabpanel" data-panel="scan" hidden>
-  <div class="tool-card">
-    <h2 class="section-title">QR Code 掃描器 / QR Scanner</h2>
-    <div class="scan-controls">
-      <button id="scan-camera-btn" type="button" class="btn btn-primary">開啟相機 / Start Camera</button>
-      <span id="scan-status" role="status" aria-live="polite"></span>
+    <div class="card">
+      <h2 data-i18n="讀取 QR Code 的內容|Read what a QR code says"></h2>
+      <div class="choice-grid">
+        <button id="scan-camera-btn" type="button" class="choice-btn">
+          <svg class="icon icon-lg"><use href="#i-camera"/></svg>
+          <strong id="scan-camera-label"></strong>
+          <span class="hint" data-i18n="對準 QR Code 就會自動讀取|Point it at a code to read it"></span>
+        </button>
+        <div id="scan-drop" class="drop-zone" role="button" tabindex="0" data-i18n-label="選擇圖片|Choose an image">
+          <svg class="icon icon-lg"><use href="#i-image"/></svg>
+          <strong data-i18n="選擇圖片或截圖|Choose an image or screenshot"></strong>
+          <span class="hint" data-i18n="也可以拖曳，或按 Ctrl+V 貼上|You can also drop it, or paste with Ctrl+V"></span>
+          <input id="scan-file" type="file" accept="image/*" hidden />
+        </div>
+      </div>
+      <video id="scan-video" playsinline muted hidden></video>
+      <p id="scan-status" class="status-text" role="status" aria-live="polite"></p>
+      <button id="scan-to-detect" type="button" class="btn btn-secondary btn-sm" data-i18n="檢測這張圖片的問題|Check this image for problems" hidden></button>
+      <div id="scan-results"></div>
     </div>
-    <video id="scan-video" playsinline muted hidden></video>
-    <div id="scan-drop" class="image-drop" role="button" tabindex="0" aria-label="選擇圖片 / Choose an image">
-      點擊選擇照片或截圖、拖曳至此,或直接貼上(Ctrl+V)<br />
-      Click to choose a photo or screenshot, drag it here, or paste it (Ctrl+V)
-      <input id="scan-file" type="file" accept="image/*" hidden />
-    </div>
-    <div id="scan-results"></div>
-  </div>
   </section>
 
-  <!-- ── Detector ─────────────────────────────────────────── -->
+  <!-- ── Check ────────────────────────────────────────────── -->
   <section id="panel-detect" role="tabpanel" data-panel="detect" hidden>
-  <div class="tool-card">
-    <h2 class="section-title">QR Code 偵測器 / QR Detector</h2>
-    <p class="tool-hint">測試 QR Code 能否掃描,並查看評等、對比與損傷圖 / Test whether a QR code can be scanned, with a grade, contrast, and damage map</p>
-    <div id="detect-drop" class="image-drop" role="button" tabindex="0" aria-label="選擇圖片 / Choose an image">
-      點擊選擇圖片、拖曳至此,或直接貼上(Ctrl+V)<br />
-      Click to choose an image, drag it here, or paste it (Ctrl+V)
-      <input id="detect-file" type="file" accept="image/*" hidden />
+    <div class="card">
+      <h2 data-i18n="這張 QR Code 掃得出來嗎？|Will this QR code scan?"></h2>
+      <p class="hint" data-i18n="印刷或發布前先檢查，看是否有對比不足、留白不夠或損傷的問題。|Check before you print or publish: contrast, margins, and damage."></p>
+      <div id="detect-drop" class="drop-zone" role="button" tabindex="0" data-i18n-label="選擇圖片|Choose an image">
+        <svg class="icon icon-lg"><use href="#i-image"/></svg>
+        <strong data-i18n="選擇 QR Code 圖片|Choose a QR code image"></strong>
+        <span class="hint" data-i18n="也可以拖曳，或按 Ctrl+V 貼上|You can also drop it, or paste with Ctrl+V"></span>
+        <input id="detect-file" type="file" accept="image/*" hidden />
+      </div>
+      <div id="detect-report" role="status" aria-live="polite"></div>
     </div>
-    <div id="detect-report" role="status" aria-live="polite"></div>
-  </div>
   </section>
 
   <!-- ── Barcode ──────────────────────────────────────────── -->
   <section id="panel-barcode" role="tabpanel" data-panel="barcode" hidden>
-  <div class="tool-card">
-    <h2 class="section-title">條碼產生器 / Barcode Generator</h2>
-    <div class="qi-form">
-      <div class="qi-row">
-        <label for="bc-type">類型 / Type</label>
-        <select id="bc-type"></select>
+    <div class="split">
+      <div class="card">
+        <h2 data-i18n="要用在哪裡？|What is the barcode for?"></h2>
+        <div class="field">
+          <label for="bc-type" data-i18n="條碼類型|Barcode type"></label>
+          <select id="bc-type"></select>
+        </div>
+        <div class="field">
+          <label for="bc-data" data-i18n="內容|Content"></label>
+          <input type="text" id="bc-data" autocomplete="off" spellcheck="false" />
+          <span class="hint" id="bc-data-hint"></span>
+        </div>
+        <div class="field">
+          <label for="bc-caption"><span data-i18n="條碼下方文字|Text below the barcode"></span> <span class="optional" data-i18n="（選填）|(optional)"></span></label>
+          <input type="text" id="bc-caption" autocomplete="off" />
+          <span class="hint" data-i18n="例如商品名稱，可輸入中文。只會印在條碼下方，掃描時不會讀到。|For example, a product name. It's only printed, and scanners won't read it."></span>
+        </div>
+        <details class="more">
+          <summary data-i18n="尺寸設定|Size"></summary>
+          <p class="hint" data-i18n="預設值已符合標準尺寸，一般不需更改。|The defaults are standard sizes, so you rarely need to change them."></p>
+          <div class="more-grid">
+            <div class="field">
+              <label for="bc-x" data-i18n="線條寬度 X (mm)|Bar width X (mm)"></label>
+              <input type="number" id="bc-x" min="0.1" max="2" step="0.005" />
+            </div>
+            <div class="field" id="bc-height-row">
+              <label for="bc-height" data-i18n="條碼高度 (mm)|Bar height (mm)"></label>
+              <input type="number" id="bc-height" min="2" max="200" step="0.05" />
+            </div>
+          </div>
+          <label class="check-row" id="bc-text-row"><input type="checkbox" id="bc-text" checked /><span data-i18n="顯示文字|Show text"></span></label>
+        </details>
       </div>
-      <div class="qi-row">
-        <label for="bc-data">內容 / Data <span class="optional">(校驗碼可省略,會自動計算 / the check digit is calculated if omitted)</span></label>
-        <input type="text" id="bc-data" autocomplete="off" spellcheck="false" />
-      </div>
-      <div class="opts-grid bc-opts">
-        <label>模組寬度 X (mm) / Module width
-          <input type="number" id="bc-x" min="0.1" max="2" step="0.005" />
-        </label>
-        <label>條高 (mm) / Bar height
-          <input type="number" id="bc-height" min="2" max="200" step="0.05" />
-        </label>
-        <label class="bc-check"><input type="checkbox" id="bc-text" checked /> 顯示文字 / Show text</label>
-      </div>
-      <div id="bc-error" class="qi-error"></div>
+
+      <aside class="card preview-card">
+        <div class="bc-stage">
+          <canvas id="bc-preview" hidden></canvas>
+          <p id="bc-empty" class="stage-empty"></p>
+        </div>
+        <div id="bc-error" class="error-text" role="alert"></div>
+        <div id="bc-scan" class="scan-badge" role="status" aria-live="polite"></div>
+        <p id="bc-info" class="hint"></p>
+        <div id="bc-downloads" hidden>
+          <div class="bc-primary">
+            <button id="bc-png" type="button" class="btn btn-primary btn-lg"><svg class="icon"><use href="#i-down"/></svg><span data-i18n="下載 PNG|Download PNG"></span></button>
+            <select id="bc-dpi" data-i18n-label="解析度|Resolution">
+              <option value="300">300 dpi</option>
+              <option value="600" selected>600 dpi</option>
+              <option value="1200">1200 dpi</option>
+            </select>
+          </div>
+          <p id="bc-dpi-note" class="hint"></p>
+          <div class="bc-formats">
+            <span class="field-label" data-i18n="向量檔（印刷廠適用）|Vector (for print shops)"></span>
+            <button id="bc-svg" type="button" class="btn btn-secondary btn-sm">SVG</button>
+            <button id="bc-eps" type="button" class="btn btn-secondary btn-sm">EPS</button>
+            <button id="bc-pdf" type="button" class="btn btn-secondary btn-sm">PDF</button>
+          </div>
+          <details class="more">
+            <summary data-i18n="列印整張標籤|Print a label sheet"></summary>
+            <div class="bc-formats">
+              <select id="bc-sheet" data-i18n-label="標籤紙|Label sheet"></select>
+              <button id="bc-sheet-btn" type="button" class="btn btn-secondary btn-sm" data-i18n="下載 PDF|Download PDF"></button>
+            </div>
+          </details>
+        </div>
+      </aside>
     </div>
-    <div class="bc-preview-wrap"><canvas id="bc-preview" hidden></canvas></div>
-    <div id="bc-info" class="tool-hint"></div>
-    <div id="bc-scan" class="bc-scan" role="status" aria-live="polite"></div>
-    <div id="bc-downloads" hidden>
-      <div class="bc-row">
-        <label for="bc-dpi">PNG 解析度 / resolution</label>
-        <select id="bc-dpi">
-          <option value="300">300 dpi</option>
-          <option value="600" selected>600 dpi</option>
-          <option value="1200">1200 dpi</option>
-        </select>
-        <button id="bc-png" type="button" class="btn btn-primary btn-sm">PNG</button>
-        <button id="bc-svg" type="button" class="btn btn-secondary btn-sm">SVG</button>
-        <button id="bc-eps" type="button" class="btn btn-secondary btn-sm">EPS</button>
-        <button id="bc-pdf" type="button" class="btn btn-secondary btn-sm">PDF</button>
-      </div>
-      <div id="bc-dpi-note" class="tool-hint"></div>
-      <div class="bc-row">
-        <label for="bc-sheet">整張標籤 / Label sheet</label>
-        <select id="bc-sheet"></select>
-        <button id="bc-sheet-btn" type="button" class="btn btn-secondary btn-sm">下載 PDF / Download PDF</button>
-      </div>
-    </div>
-  </div>
   </section>
 
-  <!-- ── Shared QR options and results ────────────────────── -->
-  <div data-panel="generate batch">
+  </main>
 
-  <!-- ── Advanced options ─────────────────────────────────── -->
-  <details id="advanced-opts">
-    <summary>進階選項 / Advanced Options</summary>
-    <div class="opts-grid">
-      <label>
-        容錯等級 / Error Correction
-        <select id="opt-ecl">
-          <option value="L">L — 7%</option>
-          <option value="M" selected>M — 15%（預設 / Default）</option>
-          <option value="Q">Q — 25%</option>
-          <option value="H">H — 30%</option>
-        </select>
-      </label>
-      <label>
-        每格放大倍數 / Scale (px / module)
-        <input type="number" id="opt-scale" min="2" max="20" value="8" />
-      </label>
-      <label>
-        輸出格式 / Output Format
-        <div class="radio-group">
-          <label><input type="radio" name="opt-fmt" value="PNG" checked /> PNG</label>
-          <label><input type="radio" name="opt-fmt" value="JPG" /> JPG</label>
-          <label><input type="radio" name="opt-fmt" value="SVG" /> SVG</label>
-          <label><input type="radio" name="opt-fmt" value="PDF" /> PDF</label>
-        </div>
-      </label>
-    </div>
-  </details>
-
-  <!-- ── Spinner ──────────────────────────────────────────── -->
-  <div id="spinner">
-    <div class="spin-ring"></div>
-    <span id="spinner-msg">處理中 Processing…</span>
-  </div>
-
-  <!-- ── Log area ─────────────────────────────────────────── -->
-  <div id="log-area" role="log" aria-live="polite"></div>
-
-  <!-- ── Toolbar ──────────────────────────────────────────── -->
-  <div id="toolbar">
-    <span class="count-label" id="count-label"></span>
-    <div class="toolbar-actions">
-      <select id="label-layout" aria-label="標籤紙 / Label sheet"></select>
-      <button id="label-btn" type="button" class="btn btn-secondary">標籤 PDF / Label PDF</button>
-      <!-- 單張直接下載（1 張時顯示） -->
-      <button id="single-dl-btn" class="btn btn-primary" style="display:none">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="7 10 12 15 17 10"></polyline>
-          <line x1="12" y1="15" x2="12" y2="3"></line>
-        </svg>
-        下載 / Download
-      </button>
-      <!-- 批次打包（2 張以上時顯示） -->
-      <button id="zip-btn" class="btn btn-primary">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-          <polyline points="7 10 12 15 17 10"></polyline>
-          <line x1="12" y1="15" x2="12" y2="3"></line>
-        </svg>
-        全部下載 (ZIP)
-      </button>
-    </div>
-  </div>
-
-  <!-- ── Results grid ─────────────────────────────────────── -->
-  <div id="results-grid"></div>
-
-  </div><!-- /shared QR options and results -->
+  <footer class="app-footer">
+    <span data-i18n="所有處理都在你的裝置上完成，檔案不會上傳。|Everything runs on your device. Nothing is uploaded."></span>
+    <a href="https://github.com/bruce-yang-422/qrforge" rel="noopener">GitHub</a>
+  </footer>
 
 </div><!-- /.page-wrap -->
 
 <!-- App logic -->
+<script src="js/i18n.js"></script>
 <script src="js/print.js"></script>
-<script src="js/app.js"></script>
 <script src="js/tabs.js"></script>
+<script src="js/app.js"></script>
 <script src="js/qr-analyze.js"></script>
 <script src="js/scanner.js"></script>
 <script src="js/barcode-rules.js"></script>

@@ -40,17 +40,17 @@ The web interface is bilingual (Traditional Chinese and English).
 - Reads CSV, Excel (`.xlsx`), and TXT files
 - Detects whether a TXT file holds URLs or plain text
 - Exports PNG, JPG, or SVG with adjustable error correction and scale
-- **Web app:** quick single-code form, batches of up to 500 codes, ZIP and PDF download, label sheets, and offline use
-- **Web app only:** QR scanner, QR detector, and barcode generator
+- **Web app:** live preview as you type, batches of up to 500 codes, ZIP and PDF download, label sheets, and offline use
+- **Web app only:** QR scanner, QR quality check, and barcode generator
 - **CLI:** recursive scan of the input folder and a timestamped log for each run
 
 ## Getting started
 
 ### Web app
 
-Open <https://bruce-yang-422.github.io/qrforge>, then either fill in the **Quick Generate** form or drop your files onto the upload area. Sample templates can be downloaded from the upload area, and format, scale, and error correction are under **Advanced Options**.
+Open <https://bruce-yang-422.github.io/qrforge>, then type in the **Create** tab and your QR code appears as you type, ready to download. To make many at once, use the **Batch** tab, where you can also download sample templates. The interface is in Traditional Chinese or English, and the button at the top right switches between them.
 
-To use the app offline, open it once while connected and wait for the header to show **Offline ready**. To install it, use the **Install App** button or your browser's install menu. On iPhone and iPad, choose **Add to Home Screen** from the Safari share menu.
+To use the app offline, open it once while connected and wait for the header to show **Works offline**. To install it, use the **Install** button or your browser's install menu. On iPhone and iPad, choose **Add to Home Screen** from the Safari share menu.
 
 ### Command line
 
@@ -83,20 +83,20 @@ These tools are in the web app only. Everything runs locally, and images are nev
 
 | Tab | What it does |
 | --- | --- |
-| **Generate** | Makes one code, or several from comma-separated URLs |
+| **Create** | Makes one code from a link, text, or WiFi details, with a live preview. Adds `https://` to a bare domain, can print text below the code, and can share the image or send to LINE |
 | **Batch** | Makes up to 500 codes from a pasted list or CSV, Excel, and TXT files, as PNG, JPG, SVG, or PDF in a ZIP file. Also prints them on label sheets |
-| **Scanner** | Reads QR codes from the camera, a photo, or a pasted screenshot. Links only open when you click them |
-| **Detector** | Reports whether a code can be scanned, with a grade, version, error correction level, contrast, quiet zone, and a map of damaged modules |
+| **Scan** | Reads QR codes from the camera, a photo, or a pasted screenshot. Links only open when you click them |
+| **Check** | Tells you whether a code will scan and how to improve it, with a grade, contrast, margin, and a map of damaged modules |
 | **Barcode** | Makes barcodes at true print size, and re-reads each one with a separate decoder whenever you change it |
 
-**Barcode types:** EAN-13, EAN-8, UPC-A, UPC-E, ISBN, Code 128, ITF-14, GS1-128, SSCC-18, and Data Matrix. Check digits are calculated if you leave them out, and verified if you include them.
+**Barcode types:** EAN-13, EAN-8, UPC-A, UPC-E, ISBN, Code 128, ITF-14, GS1-128, SSCC-18, and Data Matrix. Check digits are calculated if you leave them out, and verified if you include them. You can also add text below a barcode, such as a product name, in Chinese or any other language. It's printed only, and scanners won't read it.
 
 **Barcode downloads:** PNG at 300, 600, or 1200 dpi, SVG, EPS, and PDF in millimetres, or a full label sheet as a PDF.
 
 **Label sheets:** L7160, L7163, and L7165 (A4), and 5160 and 5163 (US Letter). These follow the published sheet dimensions, and QRForge isn't affiliated with Avery. Print at 100% scale and test on plain paper first.
 
 > [!NOTE]
-> Detector grades are estimates from the image, not an ISO/IEC 15415 or 15416 verification. Test a printed sample before a large print run.
+> Check grades are estimates from the image, not an ISO/IEC 15415 or 15416 verification. Test a printed sample before a large print run.
 
 ## Input formats
 
@@ -151,11 +151,11 @@ For CSV and Excel rows, the filename is the first of these that applies:
 
 Characters that are illegal in filenames (`\ / : * ? " < > |`) are removed.
 
-In the Quick Generate form, an empty filename defaults to `Qrcode_YYYYMMDD_HHMM_001`.
+In the Create tab, an empty filename defaults to `Qrcode_YYYYMMDD_HHMM_001`.
 
 ## Configuration
 
-The CLI reads its settings from [`config/settings.py`](config/settings.py). In the web app, the QR and format settings are under **Advanced Options**.
+The CLI reads its settings from [`config/settings.py`](config/settings.py). In the web app, the format is next to the download button, and the other QR settings are under **More settings**.
 
 | Key | Default | Description |
 | --- | --- | --- |
@@ -191,8 +191,9 @@ qrforge/
 ├── index.html              # Web app entry point
 ├── css/style.css           # Web app styles
 ├── js/app.js               # QR generation, a browser port of main.py
+├── js/i18n.js              # Interface language
 ├── js/tabs.js              # Tab navigation and on-demand library loading
-├── js/scanner.js           # QR scanner and detector interface
+├── js/scanner.js           # Scan and Check tabs
 ├── js/qr-analyze.js        # Module sampling, error correction, and grading
 ├── js/barcode.js           # Barcode generator interface
 ├── js/barcode-rules.js     # Barcode validation and check digits
@@ -227,9 +228,10 @@ Offline support requires HTTPS or `localhost`. The app still opens from `file://
 - **CSV files with a BOM (CLI):** a UTF-8 file with a byte order mark, such as Excel's "CSV UTF-8" export, fails with a missing-column error. Use a file without a BOM, an `.xlsx` file, or the web app.
 - **WiFi security default:** the web app treats an empty security value as `WPA`. The CLI only does so when the column is missing entirely, so fill it in for CLI input.
 - **WiFi special characters:** `;`, `,`, `:`, `\`, and `"` in an SSID or password are not escaped, so the resulting code may not connect.
-- **Commas in URLs:** TXT files and the Quick Generate URL field treat commas as separators, so a URL containing one is split.
-- **Label sheets:** labels contain only the code, with no text caption.
-- **Detector and scanner:** each image is read for one QR code, so only one result is returned when an image contains several.
+- **Commas in URLs:** TXT files treat commas as separators, so a URL containing one is split. Use the Batch tab's paste box or a CSV file instead.
+- **Label sheets:** QR code labels from the Batch tab contain only the code, with no text below it.
+- **Sharing:** the Share image button needs a browser that can share files, over HTTPS or `localhost`. Where it isn't available, it's hidden, and you can copy or download the image instead.
+- **Scan and Check:** each image is read for one QR code, so only one result is returned when an image contains several.
 - **Multi-line CSV fields (web):** the browser's CSV parser reads line by line, so quoted fields containing line breaks aren't supported.
 
 ## Contributing

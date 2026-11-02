@@ -1,6 +1,6 @@
 // @ts-nocheck
 /* ===================================================================
-   QR Code Batch Generator — browser port of main.py
+   QR Code generation — browser port of main.py
    QRCode / XLSX / JSZip are loaded from libs/ before this script.
    =================================================================== */
 
@@ -18,7 +18,7 @@ const BATCH_LIMIT = 500;
 
 /* ── Helpers ─────────────────────────────────────────────────────── */
 const _URL_RE      = /^https?:\/\/[^\s]+$/;
-const _NON_URL_RE  = /[\u4e00-\u9fff\u3040-\u30ff\u3400-\u4dbf\uff00-\uffef]/;
+const _NON_URL_RE  = /[一-鿿぀-ヿ㐀-䶿＀-￯]/;
 const _ILLEGAL_RE  = /[\\/:*?"<>|]/g;
 
 function sanitizeFilename(name) {
@@ -42,10 +42,13 @@ function splitTokens(content) {
 }
 
 /* ── Logging ─────────────────────────────────────────────────────── */
+// Details stay folded away unless something needs the user's attention.
+const logWrap = document.getElementById("log-wrap");
 const logArea = document.getElementById("log-area");
 
 function log(msg, cls = "log-info") {
-  logArea.classList.add("visible");
+  logWrap.hidden = false;
+  if (cls === "log-err" || cls === "log-warn") logWrap.open = true;
   const line = document.createElement("div");
   line.className = cls;
   line.textContent = msg;
@@ -59,22 +62,23 @@ function logWarn(msg) { log("⚠ " + msg, "log-warn"); }
 
 function clearLog() {
   logArea.innerHTML = "";
-  logArea.classList.remove("visible");
+  logWrap.hidden = true;
+  logWrap.open = false;
 }
 
 /* ── Spinner ─────────────────────────────────────────────────────── */
 const spinner    = document.getElementById("spinner");
 const spinnerMsg = document.getElementById("spinner-msg");
 
-function showSpinner(msg = "處理中 Processing…") {
-  spinnerMsg.textContent = msg;
+function showSpinner() {
+  spinnerMsg.textContent = tr("處理中…", "Working…");
   spinner.classList.add("visible");
 }
 function hideSpinner() {
   spinner.classList.remove("visible");
 }
 
-/* ── Read advanced settings from UI ──────────────────────────────── */
+/* ── Read settings from the UI ───────────────────────────────────── */
 function getSettings() {
   return {
     ecl:    document.getElementById("opt-ecl").value,
@@ -98,7 +102,7 @@ function makeQr(data) {
   const moduleMm = scale * 0.25;
 
   if (format === "SVG") {
-    const svgStr = qr.createSvgTag(scale, 4);
+    const svgStr = qr.createSvgTag(scale, 4 * scale);
     return { format: "SVG", svg: svgStr, matrix, moduleMm };
   }
 
@@ -123,6 +127,20 @@ function makeQr(data) {
   return { format, canvas, matrix, moduleMm };
 }
 
+function previewNode(filename, qr) {
+  if (qr.format === "SVG") {
+    const img = document.createElement("img");
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(qr.svg);
+    img.alt = filename;
+    return img;
+  }
+  const display = document.createElement("canvas");
+  display.width  = qr.canvas.width;
+  display.height = qr.canvas.height;
+  display.getContext("2d").drawImage(qr.canvas, 0, 0);
+  return display;
+}
+
 /* ── Results state ───────────────────────────────────────────────── */
 // Each entry: { filename: string, qr: { format, matrix, moduleMm, canvas?, svg? } }
 const results = [];
@@ -135,72 +153,43 @@ function clearResults() {
   document.getElementById("toolbar").classList.remove("visible");
 }
 
-const DL_ICON = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-    <polyline points="7 10 12 15 17 10"></polyline>
-    <line x1="12" y1="15" x2="12" y2="3"></line>
-  </svg>`;
-
 function renderCard(filename, qr) {
-  const grid = document.getElementById("results-grid");
-  const ext  = qr.format.toLowerCase();
-
   const card = document.createElement("div");
   card.className = "qr-card";
 
   const wrap = document.createElement("div");
   wrap.className = "qr-canvas-wrap";
-
-  if (qr.format === "SVG") {
-    const img = document.createElement("img");
-    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(qr.svg);
-    img.alt = filename;
-    wrap.appendChild(img);
-  } else {
-    const display = document.createElement("canvas");
-    display.width  = qr.canvas.width;
-    display.height = qr.canvas.height;
-    display.getContext("2d").drawImage(qr.canvas, 0, 0);
-    wrap.appendChild(display);
-  }
+  wrap.appendChild(previewNode(filename, qr));
 
   const label = document.createElement("div");
   label.className = "qr-filename";
-  label.textContent = `${filename}.${ext}`;
+  label.textContent = `${filename}.${qr.format.toLowerCase()}`;
 
   const dlBtn = document.createElement("button");
+  dlBtn.type = "button";
   dlBtn.className = "btn btn-secondary btn-sm";
-  dlBtn.innerHTML = `${DL_ICON} 下載`;
+  dlBtn.textContent = tr("下載", "Download");
   dlBtn.addEventListener("click", () => downloadSingle(filename, qr));
 
   card.appendChild(wrap);
   card.appendChild(label);
   card.appendChild(dlBtn);
-  grid.appendChild(card);
+  document.getElementById("results-grid").appendChild(card);
 }
 
-function updateToolbar() {
-  const toolbar    = document.getElementById("toolbar");
-  const countLabel = document.getElementById("count-label");
-  const zipBtn     = document.getElementById("zip-btn");
-  const dlBtn      = document.getElementById("single-dl-btn");
+const zipLabel = () => tr("全部下載 (ZIP)", "Download all (ZIP)");
 
-  if (results.length === 0) {
-    toolbar.classList.remove("visible");
-  } else if (results.length === 1) {
-    // Single result: show direct download button, hide ZIP
-    toolbar.classList.add("visible");
-    countLabel.textContent = "共產生 1 張 QR Code / 1 QR code generated";
-    zipBtn.style.display = "none";
-    dlBtn.style.display  = "";
-  } else {
-    // Multiple results: show ZIP button, hide single download
-    toolbar.classList.add("visible");
-    countLabel.textContent = `共產生 ${results.length} 張 QR Code / ${results.length} QR codes generated`;
-    zipBtn.style.display = "";
-    dlBtn.style.display  = "none";
-  }
+function updateToolbar() {
+  const toolbar = document.getElementById("toolbar");
+  const zipBtn  = document.getElementById("zip-btn");
+  const dlBtn   = document.getElementById("single-dl-btn");
+  const n       = results.length;
+
+  toolbar.classList.toggle("visible", n > 0);
+  document.getElementById("count-label").textContent = tr(`已產生 ${n} 張`, `${n} QR code${n === 1 ? "" : "s"} ready`);
+  document.getElementById("zip-label").textContent = zipLabel();
+  zipBtn.hidden = n < 2;
+  dlBtn.hidden  = n !== 1;
 }
 
 /* ── Add a single generated QR to the UI ─────────────────────────── */
@@ -208,7 +197,7 @@ function limitReached() {
   if (results.length < BATCH_LIMIT) return false;
   if (!limitWarned) {
     limitWarned = true;
-    logWarn(`已達每批 ${BATCH_LIMIT} 張上限,其餘內容未產生 / Reached the limit of ${BATCH_LIMIT} per batch; the rest was skipped`);
+    logWarn(tr(`已達每批 ${BATCH_LIMIT} 張上限，其餘內容未產生`, `Reached the limit of ${BATCH_LIMIT} per batch. The rest was skipped`));
   }
   return true;
 }
@@ -228,7 +217,7 @@ function downloadSingle(filename, qr) {
   const ext = qr.format.toLowerCase();
 
   if (qr.format === "PDF") {
-    const blob = new Blob([QRPrint.qrPdf(qr.matrix, qr.moduleMm)], { type: "application/pdf" });
+    const blob = new Blob([QRPrint.qrPdf(qr.matrix, qr.moduleMm, qr.caption)], { type: "application/pdf" });
     a.href     = URL.createObjectURL(blob);
     a.download = `${filename}.pdf`;
     a.click();
@@ -247,18 +236,12 @@ function downloadSingle(filename, qr) {
   }
 }
 
-const ZIP_ICON = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-    stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-    <polyline points="7 10 12 15 17 10"></polyline>
-    <line x1="12" y1="15" x2="12" y2="3"></line>
-  </svg>`;
-
 document.getElementById("zip-btn").addEventListener("click", async () => {
   if (results.length === 0) return;
   const zipBtn = document.getElementById("zip-btn");
+  const label  = document.getElementById("zip-label");
   zipBtn.disabled = true;
-  zipBtn.textContent = "打包中…";
+  label.textContent = tr("打包中…", "Packing…");
 
   const zip = new JSZip();
   for (const { filename, qr } of results) {
@@ -283,7 +266,7 @@ document.getElementById("zip-btn").addEventListener("click", async () => {
   URL.revokeObjectURL(url);
 
   zipBtn.disabled = false;
-  zipBtn.innerHTML = `${ZIP_ICON} 全部下載 (ZIP)`;
+  label.textContent = zipLabel();
 });
 
 /* ── Label sheet PDF ─────────────────────────────────────────────── */
@@ -302,7 +285,10 @@ document.getElementById("label-btn").addEventListener("click", () => {
   const tooSmall = results.filter(({ qr }) =>
     QRPrint.qrLabelModule(qr.matrix, layout.label[0], layout.label[1]) < MIN_LABEL_MODULE_MM).length;
   if (tooSmall) {
-    logWarn(`${tooSmall} 張 QR Code 在此標籤上模組小於 ${MIN_LABEL_MODULE_MM} mm,可能難以掃描,建議改用較大的標籤 / ${tooSmall} QR code(s) have modules under ${MIN_LABEL_MODULE_MM} mm on this label and may be hard to scan. Consider a larger label`);
+    logWarn(tr(
+      `${tooSmall} 張 QR Code 在這種標籤上會太小，可能難以掃描，建議改用較大的標籤`,
+      `${tooSmall} QR code(s) would be too small on this label and may be hard to scan. Try a larger label`,
+    ));
   }
 
   const bytes = QRPrint.labelSheet(key, results.length, (cell, pageHeight) =>
@@ -314,7 +300,7 @@ document.getElementById("label-btn").addEventListener("click", () => {
   a.click();
   URL.revokeObjectURL(url);
   const sheets = Math.ceil(results.length / (layout.cols * layout.rows));
-  logOk(`標籤 PDF:${results.length} 張,共 ${sheets} 頁,請以 100% 比例列印 / Label PDF: ${results.length} labels on ${sheets} page(s). Print at 100% scale`);
+  logOk(tr(`標籤 PDF：${results.length} 張，共 ${sheets} 頁`, `Label PDF: ${results.length} labels on ${sheets} page(s)`));
 });
 
 /* ── Business logic ──────────────────────────────────────────────── */
@@ -335,7 +321,7 @@ function formatQrData(row) {
     const security = row.security || "WPA";
     return `WIFI:T:${security};S:${row.ssid || ""};P:${row.password || ""};;`;
   }
-  throw new Error(`不支援類型 / Unsupported type: "${row.type}"`);
+  throw new Error(tr(`不支援的類型「${row.type}」`, `Unsupported type: "${row.type}"`));
 }
 
 function generateFilename(row, index) {
@@ -348,13 +334,13 @@ function generateFilename(row, index) {
 /* ── TXT processing ──────────────────────────────────────────────── */
 async function processTxt(content, stem) {
   const trimmed = content.trim();
-  if (!trimmed) { logWarn(`${stem}.txt — 檔案為空 / empty file`); return; }
+  if (!trimmed) { logWarn(tr(`${stem}.txt：檔案是空的`, `${stem}.txt: the file is empty`)); return; }
 
   const tokens = splitTokens(trimmed);
   const flags  = tokens.map(isUrl);
 
   if (tokens.length > 0 && flags.every(Boolean)) {
-    logInfo(`${stem}.txt — 判斷為 URL（${tokens.length} 筆 / detected as URLs: ${tokens.length}）`);
+    logInfo(tr(`${stem}.txt：判斷為 ${tokens.length} 個網址`, `${stem}.txt: found ${tokens.length} URL(s)`));
     if (tokens.length === 1) {
       await addResult(stem, tokens[0]);
       logOk(`${stem}`);
@@ -367,8 +353,7 @@ async function processTxt(content, stem) {
       }
     }
   } else {
-    const firstNonUrl = tokens.find((_, i) => !flags[i]);
-    logInfo(`${stem}.txt — 判斷為文本（含非網址內容：「${(firstNonUrl || "").slice(0, 40)}」/ treated as plain text）`);
+    logInfo(tr(`${stem}.txt：判斷為純文字，整份檔案產生一張`, `${stem}.txt: treated as plain text, one code for the whole file`));
     await addResult(stem, trimmed);
     logOk(stem);
   }
@@ -376,13 +361,13 @@ async function processTxt(content, stem) {
 
 /* ── CSV processing ──────────────────────────────────────────────── */
 async function processCsv(content, stem) {
-  const text = content.replace(/^\uFEFF/, "");
+  const text = content.replace(/^﻿/, "");
   const lines = text.split(/\r?\n/);
-  if (lines.length === 0) { logWarn(`${stem}.csv — 空檔案`); return; }
+  if (lines.length === 0) { logWarn(tr(`${stem}.csv：檔案是空的`, `${stem}.csv: the file is empty`)); return; }
 
   const headers = parseCsvLine(lines[0]);
   if (!headers.includes("類型")) {
-    logErr(`${stem}.csv — 缺少必要欄位「類型」/ missing required column "類型"`);
+    logErr(tr(`${stem}.csv：缺少必要欄位「類型」，可下載範本參考`, `${stem}.csv: missing the required column "類型". See the template`));
     return;
   }
 
@@ -400,13 +385,13 @@ async function processCsv(content, stem) {
       if (!data) continue;
       const fname = generateFilename(row, count + 1);
       await addResult(fname, data);
-      logOk(`行 ${i} → ${fname}`);
+      logOk(fname);
       count++;
     } catch (err) {
-      logErr(`${stem}.csv 第 ${i} 行：${err.message}`);
+      logErr(tr(`${stem}.csv 第 ${i} 行：${err.message}`, `${stem}.csv line ${i}: ${err.message}`));
     }
   }
-  if (count === 0) logWarn(`${stem}.csv — 沒有產生任何 QR code`);
+  if (count === 0) logWarn(tr(`${stem}.csv：沒有可產生的內容`, `${stem}.csv: nothing to create`));
 }
 
 function parseCsvLine(line) {
@@ -433,14 +418,14 @@ function parseCsvLine(line) {
 async function processExcel(arrayBuffer, stem) {
   const wb    = XLSX.read(arrayBuffer, { type: "array" });
   const sheet = wb.Sheets[wb.SheetNames[0]];
-  if (!sheet) { logErr(`${stem}.xlsx — 無法讀取工作表 / cannot read sheet`); return; }
+  if (!sheet) { logErr(tr(`${stem}.xlsx：無法讀取工作表`, `${stem}.xlsx: can't read the sheet`)); return; }
 
   const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
-  if (aoa.length === 0) { logWarn(`${stem}.xlsx — 空工作表 / empty sheet`); return; }
+  if (aoa.length === 0) { logWarn(tr(`${stem}.xlsx：工作表是空的`, `${stem}.xlsx: the sheet is empty`)); return; }
 
   const headers = aoa[0].map(h => String(h ?? "").trim());
   if (!headers.includes("類型")) {
-    logErr(`${stem}.xlsx — 缺少必要欄位「類型」/ missing required column "類型"`);
+    logErr(tr(`${stem}.xlsx：缺少必要欄位「類型」，可下載範本參考`, `${stem}.xlsx: missing the required column "類型". See the template`));
     return;
   }
 
@@ -459,13 +444,13 @@ async function processExcel(arrayBuffer, stem) {
       if (!data) continue;
       const fname = generateFilename(row, count + 1);
       await addResult(fname, data);
-      logOk(`行 ${i} → ${fname}`);
+      logOk(fname);
       count++;
     } catch (err) {
-      logErr(`${stem}.xlsx 第 ${i} 行：${err.message}`);
+      logErr(tr(`${stem}.xlsx 第 ${i} 行：${err.message}`, `${stem}.xlsx row ${i}: ${err.message}`));
     }
   }
-  if (count === 0) logWarn(`${stem}.xlsx — 沒有產生任何 QR code`);
+  if (count === 0) logWarn(tr(`${stem}.xlsx：沒有可產生的內容`, `${stem}.xlsx: nothing to create`));
 }
 
 /* ── File dispatcher ─────────────────────────────────────────────── */
@@ -474,8 +459,6 @@ async function processFile(file) {
   const ext  = name.slice(name.lastIndexOf(".")).toLowerCase();
   const stem = sanitizeFilename(name.slice(0, name.lastIndexOf(".")));
 
-  logInfo(`開始處理 / Processing: ${name}`);
-
   if (ext === ".txt") {
     await processTxt(await readAsText(file), stem);
   } else if (ext === ".csv") {
@@ -483,7 +466,7 @@ async function processFile(file) {
   } else if (ext === ".xlsx") {
     await processExcel(await readAsArrayBuffer(file), stem);
   } else {
-    logErr(`不支援的格式 / Unsupported format: ${name}`);
+    logErr(tr(`不支援這種檔案：${name}`, `Unsupported file: ${name}`));
   }
 }
 
@@ -506,143 +489,295 @@ function readAsArrayBuffer(file) {
   });
 }
 
-/* ── Main entry: handle a FileList ───────────────────────────────── */
-async function handleFiles(fileList) {
-  if (!fileList || fileList.length === 0) return;
+/* ── Batch runs ──────────────────────────────────────────────────── */
+// Remembered so that changing the format or size can rebuild the batch.
+let lastBatchRun = null;
+
+async function runBatch(work) {
+  lastBatchRun = () => runBatch(work);
   clearLog();
   clearResults();
   showSpinner();
-
-  for (const file of Array.from(fileList)) {
-    if (limitReached()) break;
-    await processFile(file);
-  }
-
+  await work();
   hideSpinner();
-  const n = results.length;
-  if (n > 0) {
-    logInfo(`✅ 完成！共產生 ${n} 張 QR Code / Done! ${n} QR code(s) generated.`);
-    updateToolbar();
-  } else {
-    logWarn("沒有產生任何 QR code，請確認輸入檔案格式。/ No QR codes generated — check input file format.");
+  updateToolbar();
+  if (results.length === 0) {
+    logWarn(tr("沒有產生任何 QR Code，請確認內容或檔案格式", "No QR codes were created. Check the content or file format"));
   }
 }
 
+function handleFiles(fileList) {
+  const files = Array.from(fileList);
+  if (files.length === 0) return;
+  runBatch(async () => {
+    for (const file of files) {
+      if (limitReached()) break;
+      await processFile(file);
+    }
+  });
+}
+
 /* ── Batch list: one QR code per line ────────────────────────────── */
-document.getElementById("batch-list-btn").addEventListener("click", async () => {
+document.getElementById("batch-list-btn").addEventListener("click", () => {
   const lines = document.getElementById("batch-list").value
     .split(/\r?\n/).map(line => line.trim()).filter(Boolean);
   const error = document.getElementById("batch-list-error");
   error.textContent = "";
-  if (lines.length === 0) { error.textContent = "請至少輸入一行 / Enter at least one line"; return; }
+  if (lines.length === 0) { error.textContent = tr("請至少輸入一行", "Enter at least one line"); return; }
 
-  clearLog();
-  clearResults();
-  showSpinner();
-  for (let i = 0; i < lines.length; i++) {
-    if (limitReached()) break;
-    const row = { type: isUrl(lines[i]) ? "url" : "text" };
-    const fname = generateFilename(row, i + 1);
-    try {
-      await addResult(fname, lines[i]);
-      logOk(fname);
-    } catch (err) {
-      logErr(`第 ${i + 1} 行 / Line ${i + 1}: ${err.message}`);
+  runBatch(async () => {
+    for (let i = 0; i < lines.length; i++) {
+      if (limitReached()) break;
+      const fname = generateFilename({ type: isUrl(lines[i]) ? "url" : "text" }, i + 1);
+      try {
+        await addResult(fname, lines[i]);
+        logOk(fname);
+      } catch (err) {
+        logErr(tr(`第 ${i + 1} 行：內容太長`, `Line ${i + 1}: the content is too long`));
+      }
     }
-  }
-  hideSpinner();
-  logInfo(`✅ 完成!共產生 ${results.length} 張 QR Code / Done! ${results.length} QR code(s) generated.`);
-  updateToolbar();
+  });
 });
 
-/* ── Quick input wiring ──────────────────────────────────────────── */
-const qiType     = document.getElementById("qi-type");
-const qiDataRow  = document.getElementById("qi-data-row");
-const qiWifiRows = document.getElementById("qi-wifi-rows");
-const qiError    = document.getElementById("qi-error");
+/* ── Create tab: the preview updates as you type ─────────────────── */
+const stage       = document.getElementById("qp-stage");
+const stageEmpty  = document.getElementById("qp-empty");
+const qiError     = document.getElementById("qi-error");
+const qiData      = document.getElementById("qi-data");
+const qiDownload  = document.getElementById("qp-download");
+const qiCaption   = document.getElementById("qi-caption");
+const shareStatus = document.getElementById("qp-share-status");
+let quickQr = null;
 
-const qiDataField = document.getElementById("qi-data");
+const qiType = () => document.querySelector("input[name='qi-type']:checked").value;
 
-function qiTimestampBase() {
+function qiDefaultName() {
   const now = new Date();
   const pad = (n, l = 2) => String(n).padStart(l, "0");
   const date = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
   const time = `${pad(now.getHours())}${pad(now.getMinutes())}`;
-  return `Qrcode_${date}_${time}`;
+  return `Qrcode_${date}_${time}_001`;
 }
 
-function qiDefaultName(index = 1) {
-  return `${qiTimestampBase()}_${String(index).padStart(3, "0")}`;
+// A bare domain would scan as plain text, so make it a real link.
+function completeUrl(value) {
+  const looksLikeDomain = /^[^\s/:@]+\.[^\s/:@.]{2,}(?:[/?#:]\S*)?$/.test(value);
+  return looksLikeDomain ? `https://${value}` : value;
 }
 
-const QI_PLACEHOLDERS = {
-  url:  "https://example.com, https://github.com（逗號分隔多筆 / comma-separated）",
-  text: "在此輸入文字內容… / Enter text content here…",
-};
+function quickPayload() {
+  if (qiType() === "url") return completeUrl(qiData.value.trim());
+  if (qiType() === "text") return qiData.value.trim();
+  const ssid = document.getElementById("qi-ssid").value.trim();
+  if (!ssid) return "";
+  const password = document.getElementById("qi-password").value.trim();
+  const security = document.getElementById("qi-security").value;
+  return `WIFI:T:${security};S:${ssid};P:${security === "nopass" ? "" : password};;`;
+}
 
-qiType.addEventListener("change", () => {
-  const type   = qiType.value;
-  const isWifi = type === "wifi";
-  qiDataRow.style.display = isWifi ? "none" : "";
-  qiWifiRows.classList.toggle("visible", isWifi);
-  qiDataField.classList.toggle("expanded", type === "text");
-  qiDataField.placeholder = QI_PLACEHOLDERS[type] ?? "";
+function emptyMessage() {
+  if (qiType() === "wifi") return tr("輸入 WiFi 名稱後，QR Code 會顯示在這裡", "Enter a network name and your QR code appears here");
+  return tr("開始輸入，QR Code 就會顯示在這裡", "Start typing and your QR code appears here");
+}
+
+// Sized from the code's width, so the text keeps its proportions at any size.
+function captionLimits(widthMm) {
+  return { size: widthMm * 0.07, minSize: widthMm * 0.035, gap: 0, bottom: widthMm * 0.04, margin: widthMm * 0.04 };
+}
+
+// The quiet zone stays intact because the text goes below it.
+function withCaption(qr) {
+  const widthMm = (qr.matrix.size + 8) * qr.moduleMm;
+  const caption = QRPrint.layoutCaption(qiCaption.value, widthMm, captionLimits(widthMm));
+  if (!caption) return qr;
+  if (caption.tooLong) throw new RangeError("caption");
+
+  if (qr.format !== "SVG") {
+    const pxPerMm = qr.canvas.width / widthMm;
+    return { ...qr, caption, canvas: QRPrint.paintWithCaption(document.createElement("canvas"), qr.canvas, caption, pxPerMm) };
+  }
+  const unitMm = qr.moduleMm / getSettings().scale;
+  const width  = Math.round(widthMm / unitMm);
+  const height = Math.round((widthMm + caption.extra) / unitMm);
+  const path   = QRPrint.captionPath(caption, widthMm, width + caption.gap / unitMm, unitMm);
+  const svg = qr.svg
+    .replace(/ width="[^"]*" height="[^"]*"/, ` width="${width}px" height="${height}px"`)
+    .replace(/viewBox="[^"]*"/, `viewBox="0 0 ${width} ${height}"`)
+    .replace("</svg>", `<path d="${path}" fill="black" fill-rule="evenodd"/></svg>`);
+  return { ...qr, caption, svg };
+}
+
+function renderQuick() {
   qiError.textContent = "";
+  shareStatus.textContent = "";
+  const data = quickPayload();
+  quickQr = null;
+  stage.querySelectorAll("canvas, img").forEach(node => node.remove());
+  stageEmpty.textContent = emptyMessage();
+  stageEmpty.hidden = false;
+
+  if (data) {
+    try {
+      quickQr = withCaption(makeQr(data));
+      stage.appendChild(previewNode(tr("QR Code 預覽", "QR code preview"), quickQr));
+      stageEmpty.hidden = true;
+    } catch (err) {
+      qiError.textContent = err instanceof RangeError
+        ? tr("下方文字太長，請縮短文字", "The text below the code is too long. Please shorten it")
+        : tr("內容太長，放不進一張 QR Code。請縮短內容或降低防損傷程度。", "That's too much for one QR code. Shorten it or lower the damage protection.");
+    }
+  }
+  qiDownload.disabled = !quickQr;
+  updateShareRow();
+  const typed = qiData.value.trim();
+  document.getElementById("qi-data-hint").textContent = qiType() === "url" && data && data !== typed
+    ? tr(`會自動加上 https://，掃描後開啟 ${data}`, `https:// was added, so it opens ${data}`)
+    : "";
+  document.getElementById("qp-download-label").textContent = tr(`下載 ${getSettings().format}`, `Download ${getSettings().format}`);
+}
+
+function updateTypeFields() {
+  const type = qiType();
+  const isWifi = type === "wifi";
+  document.getElementById("qi-data-row").hidden = isWifi;
+  document.getElementById("qi-wifi-rows").hidden = !isWifi;
+  document.getElementById("qi-data-label").textContent = type === "url" ? tr("網址", "Link") : tr("文字內容", "Text");
+  qiData.placeholder = type === "url" ? "https://example.com" : tr("在這裡輸入文字…", "Type your text here…");
+  document.getElementById("qi-password-row").hidden = document.getElementById("qi-security").value === "nopass";
+}
+
+let quickTimer = null;
+function scheduleQuick() {
+  clearTimeout(quickTimer);
+  quickTimer = setTimeout(renderQuick, 100);
+}
+
+document.querySelectorAll("input[name='qi-type']").forEach(input => input.addEventListener("change", () => {
+  updateTypeFields();
+  renderQuick();
+  if (qiType() !== "wifi") qiData.focus();
+}));
+document.getElementById("qi-security").addEventListener("change", () => { updateTypeFields(); renderQuick(); });
+for (const id of ["qi-data", "qi-ssid", "qi-password", "qi-caption"]) {
+  document.getElementById(id).addEventListener("input", scheduleQuick);
+}
+
+qiDownload.addEventListener("click", () => {
+  if (!quickQr) return;
+  const name = document.getElementById("qi-name").value.trim();
+  downloadSingle(name ? sanitizeFilename(name) : qiDefaultName(), quickQr);
 });
 
-document.getElementById("qi-btn").addEventListener("click", async () => {
-  qiError.textContent = "";
-  const type = qiType.value;
+/* ── Sharing the current QR code ─────────────────────────────────── */
+// Sharing always sends a PNG, whichever download format is selected,
+// because that is what chat apps can show.
+const SHARE_PX_PER_MODULE = 12;
 
-  let data = "";
-
-  clearLog();
-  clearResults();
-  showSpinner();
-
-  if (type === "wifi") {
-    const ssid     = document.getElementById("qi-ssid").value.trim();
-    const password = document.getElementById("qi-password").value.trim();
-    const security = document.getElementById("qi-security").value;
-    if (!ssid) { hideSpinner(); qiError.textContent = "請填寫 WiFi 名稱 / SSID is required"; return; }
-    data = `WIFI:T:${security};S:${ssid};P:${password};;`;
-    const nameInput = document.getElementById("qi-name").value.trim();
-    const filename  = nameInput ? sanitizeFilename(nameInput) : qiDefaultName();
-    try {
-      await addResult(filename, data);
-      logOk(`${filename} — 產生成功 / generated`);
-    } catch (err) { logErr(err.message); }
-
-  } else if (type === "url") {
-    const raw = document.getElementById("qi-data").value.trim();
-    if (!raw) { hideSpinner(); qiError.textContent = "請填寫 URL / URL is required"; return; }
-    const urls = raw.split(",").map(u => u.trim()).filter(Boolean);
-    const nameInput = document.getElementById("qi-name").value.trim();
-    // Pre-compute base name once so all URLs in the batch share the same timestamp.
-    const base = nameInput ? sanitizeFilename(nameInput) : qiTimestampBase();
-    for (let i = 0; i < urls.length; i++) {
-      if (limitReached()) break;
-      const seq   = String(i + 1).padStart(3, "0");
-      const fname = urls.length === 1 ? base : `${base}_${seq}`;
-      try {
-        await addResult(fname, urls[i]);
-        logOk(`${fname} — ${urls[i].slice(0, 50)}`);
-      } catch (err) { logErr(`${urls[i].slice(0, 40)}: ${err.message}`); }
+function quickPngBlob() {
+  const { matrix, moduleMm, caption } = quickQr;
+  const size   = (matrix.size + 8) * SHARE_PX_PER_MODULE;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = "#000";
+  for (let r = 0; r < matrix.size; r++) {
+    for (let c = 0; c < matrix.size; c++) {
+      if (matrix.isDark(r, c)) ctx.fillRect((c + 4) * SHARE_PX_PER_MODULE, (r + 4) * SHARE_PX_PER_MODULE, SHARE_PX_PER_MODULE, SHARE_PX_PER_MODULE);
     }
-
-  } else {
-    data = document.getElementById("qi-data").value.trim();
-    if (!data) { hideSpinner(); qiError.textContent = "請填寫資料 / Data is required"; return; }
-    const nameInput = document.getElementById("qi-name").value.trim();
-    const filename  = nameInput ? sanitizeFilename(nameInput) : qiDefaultName();
-    try {
-      await addResult(filename, data);
-      logOk(`${filename} — 產生成功 / generated`);
-    } catch (err) { logErr(err.message); }
   }
+  const out = QRPrint.paintWithCaption(document.createElement("canvas"), canvas, caption, SHARE_PX_PER_MODULE / moduleMm);
+  return new Promise(resolve => out.toBlob(resolve, "image/png"));
+}
 
-  hideSpinner();
-  updateToolbar();
+const quickFilename = () => {
+  const name = document.getElementById("qi-name").value.trim();
+  return name ? sanitizeFilename(name) : qiDefaultName();
+};
+
+function canShareFiles() {
+  if (!navigator.canShare) return false;
+  return navigator.canShare({ files: [new File([""], "qrcode.png", { type: "image/png" })] });
+}
+
+const canCopyImage = () => Boolean(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write);
+
+function updateShareRow() {
+  const row  = document.getElementById("qp-share-row");
+  const line = document.getElementById("qp-line");
+  const type = qiType();
+  row.hidden = !quickQr;
+  document.getElementById("qp-share").hidden = !canShareFiles();
+  document.getElementById("qp-copy").hidden  = !canCopyImage();
+
+  // WiFi is left out so a password never ends up in a link.
+  line.hidden = !quickQr || type === "wifi";
+  if (line.hidden) return;
+  line.href = `https://line.me/R/share?text=${encodeURIComponent(quickPayload())}`;
+  line.textContent = type === "url" ? tr("用 LINE 傳連結", "Send link on LINE") : tr("用 LINE 傳文字", "Send text on LINE");
+}
+
+document.getElementById("qp-share").addEventListener("click", async () => {
+  if (!quickQr) return;
+  shareStatus.textContent = "";
+  try {
+    const blob = await quickPngBlob();
+    await navigator.share({ files: [new File([blob], `${quickFilename()}.png`, { type: "image/png" })] });
+  } catch (err) {
+    // AbortError means the user closed the share sheet, which isn't a failure.
+    if (err.name !== "AbortError") {
+      shareStatus.textContent = tr("無法分享，請改用下載或複製圖片", "Couldn't share. Try downloading or copying the image");
+    }
+  }
+});
+
+document.getElementById("qp-copy").addEventListener("click", async () => {
+  if (!quickQr) return;
+  try {
+    // Safari needs the clipboard write to start before the image is ready.
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": quickPngBlob() })]);
+    shareStatus.textContent = tr("已複製，到 LINE 或其他對話貼上即可", "Copied. Paste it into LINE or any other chat");
+  } catch {
+    shareStatus.textContent = tr("無法複製，請改用下載", "Couldn't copy. Try downloading instead");
+  }
+});
+
+/* ── Shared settings ─────────────────────────────────────────────── */
+const settingsNode = document.getElementById("qr-settings");
+
+function updateFormatHint() {
+  const hints = {
+    PNG: tr("適合大多數用途，例如網頁、文件與一般列印", "Good for most uses: web, documents, and everyday printing"),
+    SVG: tr("可任意放大不失真，適合設計與大型印刷", "Scales to any size. Best for design work and large prints"),
+    JPG: tr("適合只接受 JPG 的系統", "For systems that only accept JPG"),
+    PDF: tr("可直接列印或交給印刷廠", "Ready to print or send to a print shop"),
+  };
+  document.getElementById("format-hint").textContent = hints[getSettings().format];
+}
+
+let settingsTimer = null;
+settingsNode.addEventListener("input", () => {
+  updateFormatHint();
+  clearTimeout(settingsTimer);
+  settingsTimer = setTimeout(() => {
+    renderQuick();
+    if (results.length > 0 && lastBatchRun) lastBatchRun();
+  }, 200);
+});
+
+// The settings sit in the tab being used, and are hidden on the others.
+document.addEventListener("qrtabchange", (e) => {
+  const slot = document.getElementById(`settings-slot-${e.detail}`);
+  settingsNode.hidden = !slot;
+  if (slot) slot.appendChild(settingsNode);
+});
+
+document.addEventListener("qrlangchange", () => {
+  updateTypeFields();
+  updateFormatHint();
+  renderQuick();
+  if (results.length > 0) updateToolbar();
 });
 
 /* ── Single-result direct download button ────────────────────────── */
@@ -656,7 +791,10 @@ document.getElementById("single-dl-btn").addEventListener("click", () => {
 const dropZone  = document.getElementById("drop-zone");
 const fileInput = document.getElementById("file-input");
 
-dropZone.addEventListener("click", e => { if (e.target.closest("a")) return; fileInput.click(); });
+dropZone.addEventListener("click", e => {
+  if (e.target.closest("a") || e.target === fileInput) return;
+  fileInput.click();
+});
 dropZone.addEventListener("keydown", e => {
   if (e.key === "Enter" || e.key === " ") { e.preventDefault(); fileInput.click(); }
 });
@@ -676,3 +814,7 @@ dropZone.addEventListener("drop", e => {
   const files = e.dataTransfer.files;
   if (files.length) handleFiles(files);
 });
+
+updateTypeFields();
+updateFormatHint();
+renderQuick();

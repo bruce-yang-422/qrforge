@@ -4,11 +4,12 @@
   const status = document.getElementById('pwa-status');
   let installPrompt = null;
   let offlineReady = false;
+  let failed = false;
 
   function updateStatus() {
-    status.textContent = offlineReady
-      ? (navigator.onLine ? '已可離線使用 / Offline ready' : '離線模式 / Offline mode')
-      : '';
+    if (failed) status.textContent = tr('離線功能尚未就緒', 'Offline mode not ready');
+    else if (!offlineReady) status.textContent = '';
+    else status.textContent = navigator.onLine ? tr('✓ 可離線使用', '✓ Works offline') : tr('離線模式', 'Offline');
   }
 
   window.addEventListener('beforeinstallprompt', (event) => {
@@ -36,6 +37,7 @@
   });
   window.addEventListener('online', updateStatus);
   window.addEventListener('offline', updateStatus);
+  document.addEventListener('qrlangchange', updateStatus);
 
   if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
 
@@ -44,10 +46,10 @@
       await navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' });
       await navigator.serviceWorker.ready;
       offlineReady = true;
-      updateStatus();
     } catch (error) {
-      status.textContent = '離線功能尚未就緒，請連線後重新整理。';
+      failed = true;
       console.warn('Service worker registration failed:', error);
     }
+    updateStatus();
   });
 })();

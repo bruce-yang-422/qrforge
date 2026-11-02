@@ -8,16 +8,20 @@
   const PREVIEW_SCALE = 3;
   const MM_PER_PT = 25.4 / 72;
   const MAX_CANVAS = 16000;
+  /* Text below the barcode, in mm. */
+  const CAPTION = { size: 3, minSize: 1.8, gap: 1, bottom: 1, margin: 1 };
 
   const $ = (id) => document.getElementById(id);
   const typeSelect = $("bc-type");
   const dataInput = $("bc-data");
+  const captionInput = $("bc-caption");
   const xInput = $("bc-x");
   const heightInput = $("bc-height");
   const textInput = $("bc-text");
   const dpiSelect = $("bc-dpi");
   const sheetSelect = $("bc-sheet");
   const preview = $("bc-preview");
+  const emptyBox = $("bc-empty");
   const errorBox = $("bc-error");
   const infoBox = $("bc-info");
   const scanBox = $("bc-scan");
@@ -33,11 +37,11 @@
     const key = typeSelect.value;
     const type = BarcodeRules.TYPES[key];
     const value = dataInput.value;
-    if (!value.trim()) throw new Error("請輸入內容 / enter a value");
+    if (!value.trim()) return null;
     const xDim = parseFloat(xInput.value);
-    if (!(xDim >= 0.1 && xDim <= 2)) throw new Error("模組寬度需介於 0.1 到 2 mm / module width must be 0.1 to 2 mm");
+    if (!(xDim >= 0.1 && xDim <= 2)) throw new Error(tr("線條寬度需介於 0.1 到 2 mm", "Bar width must be 0.1 to 2 mm"));
     const barHeight = parseFloat(heightInput.value);
-    if (!type.twoD && !(barHeight >= 2 && barHeight <= 200)) throw new Error("條高需介於 2 到 200 mm / bar height must be 2 to 200 mm");
+    if (!type.twoD && !(barHeight >= 2 && barHeight <= 200)) throw new Error(tr("條碼高度需介於 2 到 200 mm", "Bar height must be 2 to 200 mm"));
     return { key, type, xDim, barHeight, rule: type.normalize(value) };
   }
 
@@ -71,38 +75,65 @@
     }
   }
 
+  function addCaptionToSvg(svg, caption, unitMm) {
+    if (!caption) return svg;
+    const [, width, height] = /viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(svg);
+    const top = Number(height) + caption.gap / unitMm;
+    const path = QRPrint.captionPath(caption, Number(width) * unitMm, top, unitMm);
+    const taller = (Number(height) + caption.extra / unitMm).toFixed(2);
+    return svg
+      .replace(/viewBox="[^"]+"/, `viewBox="0 0 ${width} ${taller}"`)
+      .replace("</svg>", `<path d="${path}" fill-rule="evenodd" />\n</svg>`);
+  }
+
   function showScan(result, spec) {
-    scanBox.className = `bc-scan ${result.ok ? "pass" : "fail"}`;
-    if (result.ok) scanBox.textContent = `✓ 掃描測試通過 / Scan test passed: ${result.scanned}`;
-    else if (result.scanned === null) scanBox.textContent = "✗ 掃描測試失敗:讀不到條碼 / Scan test failed: could not read the barcode";
-    else scanBox.textContent = `✗ 掃描測試失敗:讀到 ${result.scanned},預期 ${spec.rule.expected} / Scan test failed: read ${result.scanned}, expected ${spec.rule.expected}`;
+    scanBox.className = `scan-badge ${result.ok ? "pass" : "fail"}`;
+    if (result.ok) scanBox.textContent = tr(`✓ 掃描測試通過，讀到 ${result.scanned}`, `✓ Scan test passed: read ${result.scanned}`);
+    else if (result.scanned === null) scanBox.textContent = tr("✗ 掃描測試失敗：讀不到這個條碼", "✗ Scan test failed: couldn't read this barcode");
+    else scanBox.textContent = tr(`✗ 掃描測試失敗：讀到 ${result.scanned}，應為 ${spec.rule.expected}`, `✗ Scan test failed: read ${result.scanned}, expected ${spec.rule.expected}`);
+  }
+
+  function clearOutput() {
+    current = null;
+    preview.hidden = true;
+    downloads.hidden = true;
+    infoBox.textContent = "";
+    scanBox.className = "scan-badge";
+    scanBox.textContent = "";
   }
 
   function update() {
     if (!ready) return;
     errorBox.textContent = "";
-    current = null;
-    downloads.hidden = true;
+    clearOutput();
+    emptyBox.hidden = false;
+    emptyBox.textContent = tr("輸入內容後，條碼會顯示在這裡", "Enter the content and your barcode appears here");
     try {
       const spec = readSpec();
-      bwipjs.toCanvas(preview, bwipOptions(spec, PREVIEW_SCALE));
-      preview.hidden = false;
-
-      const svg = bwipjs.toSVG(bwipOptions(spec, VECTOR_SCALE));
-      const vector = QRPrint.parseSvg(svg);
+      if (!spec) return;
       const unitMm = spec.xDim / VECTOR_SCALE;
-      current = { spec, svg, vector, unitMm, width: vector.width * unitMm, height: vector.height * unitMm };
+      const plainSvg = bwipjs.toSVG(bwipOptions(spec, VECTOR_SCALE));
+      const caption = QRPrint.layoutCaption(captionInput.value, QRPrint.parseSvg(plainSvg).width * unitMm, CAPTION);
+      if (caption && caption.tooLong) throw new Error(tr("下方文字太長，請縮短文字或加大線條寬度", "The text below the barcode is too long. Shorten it or increase the bar width"));
+      const svg = addCaptionToSvg(plainSvg, caption, unitMm);
+      const vector = QRPrint.parseSvg(svg);
 
-      const check = spec.rule.check === undefined ? "" : ` · 校驗碼 / check digit ${spec.rule.check}${spec.rule.computed ? "(已計算 / calculated)" : "(已驗證 / verified)"}`;
-      infoBox.textContent = `${spec.rule.text} · ${current.width.toFixed(2)} × ${current.height.toFixed(2)} mm(含靜區 / with quiet zone)${check}`;
-      showScan(scanTest(preview, spec), spec);
+      /* The scan test reads the barcode alone, since the caption isn't data. */
+      const plain = bwipjs.toCanvas(document.createElement("canvas"), bwipOptions(spec, PREVIEW_SCALE));
+      QRPrint.paintWithCaption(preview, plain, caption, PREVIEW_SCALE / spec.xDim);
+      preview.hidden = false;
+      emptyBox.hidden = true;
+      current = { spec, svg, vector, unitMm, caption, width: vector.width * unitMm, height: vector.height * unitMm };
+
+      const size = tr(`列印尺寸 ${current.width.toFixed(1)} × ${current.height.toFixed(1)} mm`, `Print size ${current.width.toFixed(1)} × ${current.height.toFixed(1)} mm`);
+      const check = spec.rule.computed ? tr(`，已自動補上校驗碼 ${spec.rule.check}`, `, check digit ${spec.rule.check} added`) : "";
+      infoBox.textContent = size + check;
+      showScan(scanTest(plain, spec), spec);
       updateDpiNote();
       downloads.hidden = false;
     } catch (err) {
-      preview.hidden = true;
-      infoBox.textContent = "";
-      scanBox.className = "bc-scan";
-      scanBox.textContent = "";
+      clearOutput();
+      emptyBox.hidden = true;
       errorBox.textContent = String(err.message || err).replace(/^[\w.]+: /, "");
     }
   }
@@ -112,7 +143,7 @@
     timer = setTimeout(update, 200);
   }
 
-  /* Modules land on whole pixels, so report the X-dimension actually printed. */
+  /* Modules land on whole pixels, so warn if that moves the printed size. */
   function pixelsPerModule() {
     const dpi = Number(dpiSelect.value);
     return { dpi, px: Math.max(1, Math.round((current.spec.xDim / 25.4) * dpi)) };
@@ -122,7 +153,9 @@
     const { dpi, px } = pixelsPerModule();
     const actual = (px / dpi) * 25.4;
     const drift = Math.abs(actual - current.spec.xDim) / current.spec.xDim;
-    $("bc-dpi-note").textContent = `${dpi} dpi:每模組 ${px} px,實際 ${actual.toFixed(3)} mm / ${px} px per module, ${actual.toFixed(3)} mm actual${drift > 0.05 ? " ⚠ 與設定值差距超過 5%,建議提高 dpi / more than 5% off, use a higher dpi" : ""}`;
+    $("bc-dpi-note").textContent = drift > 0.05
+      ? tr(`⚠ ${dpi} dpi 會讓線條寬度偏差超過 5%，建議選更高的解析度`, `⚠ ${dpi} dpi puts the bar width more than 5% off. Choose a higher resolution`)
+      : "";
   }
 
   function save(bytes, type, extension) {
@@ -137,9 +170,10 @@
 
   $("bc-png").addEventListener("click", () => {
     const { dpi, px } = pixelsPerModule();
-    const canvas = bwipjs.toCanvas(document.createElement("canvas"), bwipOptions(current.spec, px));
+    const plain = bwipjs.toCanvas(document.createElement("canvas"), bwipOptions(current.spec, px));
+    const canvas = QRPrint.paintWithCaption(document.createElement("canvas"), plain, current.caption, px / current.spec.xDim);
     if (canvas.width > MAX_CANVAS || canvas.height > MAX_CANVAS) {
-      errorBox.textContent = "圖片過大,請降低 dpi / image too large, lower the dpi";
+      errorBox.textContent = tr("圖片太大了，請選較低的解析度", "The image is too large. Choose a lower resolution");
       return;
     }
     canvas.toBlob(async (blob) => {
@@ -166,7 +200,10 @@
     const key = sheetSelect.value;
     const layout = QRPrint.LABEL_LAYOUTS[key];
     if (current.width > layout.label[0] || current.height > layout.label[1]) {
-      errorBox.textContent = `條碼 ${current.width.toFixed(1)} × ${current.height.toFixed(1)} mm 超出標籤 ${layout.label[0]} × ${layout.label[1]} mm,請縮小或改選其他標籤 / The barcode doesn't fit this label: reduce it or choose another`;
+      errorBox.textContent = tr(
+        `條碼 ${current.width.toFixed(1)} × ${current.height.toFixed(1)} mm 比這種標籤大，請改選較大的標籤`,
+        `The ${current.width.toFixed(1)} × ${current.height.toFixed(1)} mm barcode is bigger than this label. Choose a larger one`,
+      );
       return;
     }
     errorBox.textContent = "";
@@ -180,38 +217,62 @@
     save(bytes, "application/pdf", "pdf");
   });
 
+  /* Types are grouped by what people use them for, not by symbology. */
+  function buildTypeMenu() {
+    const selected = typeSelect.value;
+    typeSelect.replaceChildren();
+    for (const group of BarcodeRules.groups()) {
+      const optgroup = document.createElement("optgroup");
+      optgroup.label = group.label;
+      for (const key of group.keys) optgroup.append(new Option(BarcodeRules.TYPES[key].label(), key));
+      typeSelect.append(optgroup);
+    }
+    if (selected) typeSelect.value = selected;
+  }
+
+  function updateDataHint() {
+    const hint = BarcodeRules.TYPES[typeSelect.value].hint();
+    $("bc-data-hint").textContent = hint;
+  }
+
   function applyDefaults() {
     const type = BarcodeRules.TYPES[typeSelect.value];
     dataInput.value = type.sample;
     xInput.value = type.xDim;
     heightInput.value = type.barHeight;
     const hide = Boolean(type.twoD);
-    heightInput.closest("label").hidden = hide;
-    textInput.closest("label").hidden = hide;
+    $("bc-height-row").hidden = hide;
+    $("bc-text-row").hidden = hide;
+    updateDataHint();
   }
 
-  for (const [key, type] of Object.entries(BarcodeRules.TYPES)) typeSelect.add(new Option(type.label, key));
+  buildTypeMenu();
   for (const [key, layout] of Object.entries(QRPrint.LABEL_LAYOUTS)) sheetSelect.add(new Option(layout.name, key));
 
   typeSelect.addEventListener("change", () => { applyDefaults(); update(); });
-  for (const input of [dataInput, xInput, heightInput]) input.addEventListener("input", schedule);
+  for (const input of [dataInput, captionInput, xInput, heightInput]) input.addEventListener("input", schedule);
   textInput.addEventListener("change", update);
   dpiSelect.addEventListener("change", () => { if (current) updateDpiNote(); });
+
+  document.addEventListener("qrlangchange", () => {
+    buildTypeMenu();
+    updateDataHint();
+    update();
+  });
 
   applyDefaults();
 
   /* The barcode libraries are large, so load them when the tab first opens. */
   document.addEventListener("qrtabchange", async (e) => {
     if (e.detail !== "barcode" || ready) return;
-    infoBox.textContent = "載入中 / Loading…";
+    emptyBox.textContent = tr("載入中…", "Loading…");
     try {
       await libraries();
       ready = true;
-      infoBox.textContent = "";
       update();
     } catch {
-      infoBox.textContent = "";
-      errorBox.textContent = "條碼元件載入失敗,請連線後重新整理 / Couldn't load the barcode tools. Reconnect and reload";
+      emptyBox.hidden = true;
+      errorBox.textContent = tr("條碼工具載入失敗，請連線後重新整理", "Couldn't load the barcode tools. Reconnect and reload the page");
     }
   });
 })();

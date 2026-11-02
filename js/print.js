@@ -68,10 +68,15 @@ const QRPrint = (() => {
   }
 
   /* One QR code per page, with the standard 4-module quiet zone. */
-  function qrPdf(matrix, moduleMm) {
+  function qrPdf(matrix, moduleMm, caption = null) {
     const side = (matrix.size + 8) * moduleMm;
-    const content = matrixOps(matrix, 4 * moduleMm, 4 * moduleMm, moduleMm, side);
-    return buildPdf([{ width: side, height: side, content }]);
+    const height = side + (caption ? caption.extra : 0);
+    let content = matrixOps(matrix, 4 * moduleMm, 4 * moduleMm, moduleMm, height);
+    if (caption) {
+      const shapes = [{ stroke: 0, segments: parsePath(captionPath(caption, side, side + caption.gap, 1)) }];
+      content += vectorOps({ width: side, height, shapes }, 0, 0, 1, height);
+    }
+    return buildPdf([{ width: side, height, content }]);
   }
 
   /* Calls draw(cell, pageHeight) for each label and returns the PDF bytes. */
@@ -187,6 +192,86 @@ const QRPrint = (() => {
     );
   }
 
+  /* ── Text below a code ─────────────────────────────────────────── */
+  const CAPTION_TRACE_PER_MM = 16; /* About 400 dpi. */
+  const captionFont = (px) => `${px}px -apple-system, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", sans-serif`;
+
+  /* Fits the text to widthMm. Returns null when empty, { tooLong: true } if it can't fit.
+     limits: { size, minSize, gap, bottom, margin }, all in mm. */
+  function layoutCaption(value, widthMm, limits) {
+    const text = value.trim();
+    if (!text) return null;
+    const ctx = document.createElement("canvas").getContext("2d");
+    ctx.font = captionFont(100);
+    const widthPerMm = ctx.measureText(text).width / 100;
+    const size = Math.min(limits.size, (widthMm - limits.margin * 2) / widthPerMm);
+    if (size < limits.minSize) return { tooLong: true };
+    const height = size * 1.25;
+    return { text, size, height, gap: limits.gap, extra: limits.gap + height + limits.bottom };
+  }
+
+  /* Copies a rendered code to target and adds the caption underneath. */
+  function paintWithCaption(target, source, caption, pxPerMm) {
+    target.width = source.width;
+    target.height = source.height + (caption ? Math.round(caption.extra * pxPerMm) : 0);
+    const ctx = target.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, target.width, target.height);
+    ctx.drawImage(source, 0, 0);
+    if (caption) {
+      ctx.fillStyle = "#000";
+      ctx.font = captionFont(caption.size * pxPerMm);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(caption.text, target.width / 2, source.height + (caption.gap + caption.height / 2) * pxPerMm);
+    }
+    return target;
+  }
+
+  /* Traces the caption into rectangles, so vector files need no embedded font. */
+  function captionPath(caption, widthMm, topUnits, unitMm) {
+    const scale = CAPTION_TRACE_PER_MM;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(widthMm * scale);
+    canvas.height = Math.ceil(caption.height * scale);
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#000";
+    ctx.font = captionFont(caption.size * scale);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(caption.text, canvas.width / 2, canvas.height / 2);
+    const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    const unit = 1 / (scale * unitMm);
+    const n = (v) => String(Math.round(v * 100) / 100);
+    let path = "";
+    const flush = (x0, x1, y0, y1) => {
+      const left = n(x0 * unit), right = n(x1 * unit), top = n(topUnits + y0 * unit), bottom = n(topUnits + y1 * unit);
+      path += `M${left} ${top}L${right} ${top}L${right} ${bottom}L${left} ${bottom}Z`;
+    };
+    /* Identical runs on consecutive rows merge into one taller rectangle. */
+    let open = new Map();
+    for (let y = 0; y <= height; y++) {
+      const next = new Map();
+      for (let x = 0; y < height && x < width; x++) {
+        if (data[(y * width + x) * 4] >= 128) continue;
+        const start = x;
+        while (x + 1 < width && data[(y * width + x + 1) * 4] < 128) x++;
+        const key = `${start}-${x + 1}`;
+        next.set(key, open.has(key) ? open.get(key) : y);
+        open.delete(key);
+      }
+      for (const [key, startRow] of open) {
+        const [x0, x1] = key.split("-").map(Number);
+        flush(x0, x1, startRow, y);
+      }
+      open = next;
+    }
+    return path;
+  }
+
   /* ── PNG resolution metadata ───────────────────────────────────── */
   const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
     let c = n;
@@ -224,5 +309,6 @@ const QRPrint = (() => {
     LABEL_LAYOUTS, PT_PER_MM,
     buildPdf, qrPdf, labelSheet, qrLabelOps, qrLabelModule,
     parseSvg, vectorOps, vectorPdf, vectorEps, setPngDpi,
+    layoutCaption, paintWithCaption, captionPath,
   };
 })();

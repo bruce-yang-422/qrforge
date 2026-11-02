@@ -1,6 +1,6 @@
 /* ===================================================================
-   QR scanner (camera, photo, screenshot) and QR detector (grade,
-   contrast, damage map). Images stay in the browser.
+   Scan (camera, photo, screenshot) and Check (grade, contrast, damage
+   map) tabs. Images stay in the browser.
    =================================================================== */
 (() => {
   const MAX_SIDE = 2000;
@@ -37,13 +37,13 @@
   }
 
   async function readFile(file) {
-    if (!file.type.startsWith("image/")) throw new Error("請選擇圖片檔 / please choose an image file");
+    if (!file.type.startsWith("image/")) throw new Error(tr("請選擇圖片檔", "Please choose an image file"));
     return createImageBitmap(file);
   }
 
   /* Wires a drop zone to its hidden file input. */
   function wireDropZone(zone, input, onFile) {
-    zone.addEventListener("click", () => input.click());
+    zone.addEventListener("click", (e) => { if (e.target !== input) input.click(); });
     zone.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); }
     });
@@ -60,25 +60,31 @@
     });
   }
 
-  /* ── Scanner ───────────────────────────────────────────────────── */
+  /* ── Scan ──────────────────────────────────────────────────────── */
   const video = $("scan-video");
-  const cameraBtn = $("scan-camera-btn");
+  const cameraLabel = $("scan-camera-label");
   const scanStatus = $("scan-status");
   const scanResults = $("scan-results");
+  const toDetect = $("scan-to-detect");
   const seen = new Set();
   let stream = null;
   let timer = null;
+  let lastFailedFile = null;
+
+  const updateCameraLabel = () => {
+    cameraLabel.textContent = stream ? tr("關閉相機", "Stop camera") : tr("用相機掃描", "Scan with camera");
+  };
 
   function describe(text) {
     if (/^WIFI:/i.test(text)) {
       const ssid = /[:;]S:((?:\\.|[^;])*)/i.exec(text);
-      return { kind: "WiFi", detail: ssid ? `SSID: ${ssid[1]}` : "" };
+      return { kind: "WiFi", detail: ssid ? `${tr("網路名稱", "Network")}: ${ssid[1]}` : "" };
     }
-    if (/^https?:\/\//i.test(text)) return { kind: "URL", href: text };
-    if (/^BEGIN:VCARD/i.test(text)) return { kind: "vCard" };
+    if (/^https?:\/\//i.test(text)) return { kind: tr("網址", "Link"), href: text };
+    if (/^BEGIN:VCARD/i.test(text)) return { kind: tr("聯絡人", "Contact") };
     if (/^mailto:/i.test(text)) return { kind: "Email" };
-    if (/^tel:/i.test(text)) return { kind: "Phone" };
-    return { kind: "Text" };
+    if (/^tel:/i.test(text)) return { kind: tr("電話", "Phone") };
+    return { kind: tr("文字", "Text") };
   }
 
   function addScanResult(text) {
@@ -104,19 +110,6 @@
 
     const actions = document.createElement("div");
     actions.className = "scan-actions";
-    const copy = document.createElement("button");
-    copy.type = "button";
-    copy.className = "btn btn-secondary btn-sm";
-    copy.textContent = "複製 / Copy";
-    copy.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(text);
-        copy.textContent = "已複製 / Copied";
-      } catch {
-        copy.textContent = "無法複製 / Copy failed";
-      }
-    });
-    actions.append(copy);
     /* Links are never opened automatically: a QR code is untrusted input. */
     if (info.href) {
       const open = document.createElement("a");
@@ -124,9 +117,22 @@
       open.href = info.href;
       open.target = "_blank";
       open.rel = "noopener noreferrer";
-      open.textContent = "開啟連結 / Open link";
+      open.textContent = tr("開啟連結", "Open link");
       actions.append(open);
     }
+    const copy = document.createElement("button");
+    copy.type = "button";
+    copy.className = "btn btn-secondary btn-sm";
+    copy.textContent = tr("複製", "Copy");
+    copy.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        copy.textContent = tr("已複製", "Copied");
+      } catch {
+        copy.textContent = tr("無法複製", "Couldn't copy");
+      }
+    });
+    actions.append(copy);
     row.append(actions);
     scanResults.prepend(row);
   }
@@ -138,7 +144,7 @@
     stream = null;
     video.srcObject = null;
     video.hidden = true;
-    cameraBtn.textContent = "開啟相機 / Start Camera";
+    updateCameraLabel();
   }
 
   function scanFrame() {
@@ -153,8 +159,9 @@
   }
 
   async function startCamera() {
+    toDetect.hidden = true;
     if (!navigator.mediaDevices || !window.isSecureContext) {
-      scanStatus.textContent = "相機需要 HTTPS 或 localhost / The camera requires HTTPS or localhost";
+      scanStatus.textContent = tr("這個網址無法使用相機，請改用 HTTPS 開啟，或選擇圖片", "The camera needs HTTPS. Open the app over HTTPS, or choose an image");
       return;
     }
     try {
@@ -163,29 +170,32 @@
       video.srcObject = stream;
       video.hidden = false;
       await video.play();
-      cameraBtn.textContent = "關閉相機 / Stop Camera";
-      scanStatus.textContent = "將 QR Code 對準相機 / Point the camera at a QR code";
+      updateCameraLabel();
+      scanStatus.textContent = tr("將 QR Code 對準相機", "Point the camera at a QR code");
       scanFrame();
     } catch (err) {
       stopCamera();
       scanStatus.textContent = err.name === "NotAllowedError"
-        ? "相機權限被拒絕 / Camera permission was denied"
-        : `無法開啟相機 / Could not start the camera: ${err.message}`;
+        ? tr("相機權限被拒絕，可在瀏覽器設定中允許，或改選圖片", "Camera access was denied. Allow it in your browser settings, or choose an image")
+        : tr("無法開啟相機，可以改選圖片", "Couldn't start the camera. Try choosing an image");
     }
   }
 
-  cameraBtn.addEventListener("click", () => (stream ? stopCamera() : startCamera()));
+  $("scan-camera-btn").addEventListener("click", () => (stream ? stopCamera() : startCamera()));
 
   async function scanImage(file) {
-    scanStatus.textContent = "掃描中 / Scanning…";
+    scanStatus.textContent = tr("讀取中…", "Reading…");
+    toDetect.hidden = true;
     try {
       const { code } = await decodeBitmap(await readFile(file));
       if (code && code.data) {
         seen.delete(code.data);
         addScanResult(code.data);
-        scanStatus.textContent = "掃描成功 / Scan succeeded";
+        scanStatus.textContent = "";
       } else {
-        scanStatus.textContent = "找不到 QR Code,可以用偵測器檢查原因 / No QR code found. Try the Detector to see why";
+        lastFailedFile = file;
+        scanStatus.textContent = tr("這張圖片讀不到 QR Code", "No QR code could be read from this image");
+        toDetect.hidden = false;
       }
     } catch (err) {
       scanStatus.textContent = err.message;
@@ -194,15 +204,21 @@
 
   wireDropZone($("scan-drop"), $("scan-file"), scanImage);
 
-  /* ── Detector ──────────────────────────────────────────────────── */
+  toDetect.addEventListener("click", () => {
+    QRTabs.select("detect");
+    if (lastFailedFile) detectImage(lastFailedFile);
+  });
+
+  /* ── Check ─────────────────────────────────────────────────────── */
   const report = $("detect-report");
-  const GRADE_TEXT = {
-    A: "可靠掃描 / Scans reliably",
-    B: "良好 / Good",
-    C: "可掃描,但有風險 / Scannable, with some risk",
-    D: "部分掃描器可能失敗 / Some scanners may fail",
-    F: "很可能無法掃描 / Likely to fail",
-  };
+
+  const verdictText = (grade) => ({
+    A: tr("可以順利掃描", "Scans reliably"),
+    B: tr("可以掃描，品質良好", "Scans well"),
+    C: tr("大多可以掃描，但有風險", "Usually scans, with some risk"),
+    D: tr("部分手機可能掃不出來", "Some phones may not scan it"),
+    F: tr("很可能掃不出來", "Likely won't scan"),
+  })[grade];
 
   function statRow(label, value, grade) {
     const row = document.createElement("tr");
@@ -220,26 +236,42 @@
     return row;
   }
 
-  function verdict(grade, title) {
+  function verdict(grade, title, subtitle) {
     const box = document.createElement("div");
     box.className = "detect-verdict";
     const letter = document.createElement("div");
     letter.className = `detect-grade grade-${grade}`;
     letter.textContent = grade;
     const text = document.createElement("div");
-    text.textContent = title;
+    const heading = document.createElement("strong");
+    heading.textContent = title;
+    const sub = document.createElement("span");
+    sub.className = "hint";
+    sub.textContent = subtitle;
+    text.append(heading, sub);
     box.append(letter, text);
     return box;
   }
 
+  function tipList(tips) {
+    const list = document.createElement("ul");
+    list.className = "detect-tips";
+    for (const tip of tips) {
+      const li = document.createElement("li");
+      li.textContent = tip;
+      list.append(li);
+    }
+    return list;
+  }
+
   /* Draws the symbol as sampled, with damaged modules marked in colour. */
   function damageMap(sample, analysis) {
-    const CELL = Math.max(4, Math.min(10, Math.floor(400 / (analysis.size + 2))));
+    const CELL = Math.max(4, Math.min(10, Math.floor(320 / (analysis.size + 2))));
     const canvas = document.createElement("canvas");
     canvas.width = canvas.height = (analysis.size + 2) * CELL;
     canvas.className = "detect-map";
     canvas.setAttribute("role", "img");
-    canvas.setAttribute("aria-label", "損傷圖 / Damage map");
+    canvas.setAttribute("aria-label", tr("損傷圖", "Damage map"));
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = "#fff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -270,68 +302,94 @@
   }
 
   function showFailure(image) {
-    report.replaceChildren(verdict("F", "偵測不到 QR Code,目前無法掃描 / No QR code detected, so it can't be scanned as is"));
     const contrast = imageContrast(image);
-    const table = document.createElement("table");
-    table.className = "detect-table";
-    table.append(statRow("影像對比(估計)/ Image contrast (estimate)", `${contrast.toFixed(1)}:1`));
-    const tips = document.createElement("ul");
-    tips.className = "detect-tips";
-    for (const tip of [
-      "確認圖片中有完整的 QR Code,三個角落的定位方塊都要清楚 / Make sure the whole code is visible, including all three corner squares",
-      "避免模糊、反光與過度傾斜 / Avoid blur, glare, and steep angles",
-      contrast < 3 ? "對比太低,請加深圖案或淡化背景 / Contrast is too low: darken the code or lighten the background" : "",
-    ].filter(Boolean)) {
-      const li = document.createElement("li");
-      li.textContent = tip;
-      tips.append(li);
-    }
-    report.append(table, tips);
+    const tips = [
+      tr("確認整個 QR Code 都在圖片內，三個角落的方塊要清楚", "Make sure the whole code is in the image, including the three corner squares"),
+      tr("避免模糊、反光與過度傾斜", "Avoid blur, glare, and steep angles"),
+    ];
+    if (contrast < 3) tips.push(tr("圖片對比太低，請加深圖案或淡化背景", "Contrast is too low. Darken the code or lighten the background"));
+    report.replaceChildren(verdict("F", tr("找不到可讀取的 QR Code", "No readable QR code found"), tr("可以試試這些方法：", "Try these fixes:")), tipList(tips));
+  }
+
+  /* Plain-language advice for whatever lowered the grade. */
+  function adviceFor(sample, grades) {
+    const tips = [];
+    if (grades.contrast !== "A") tips.push(tr("對比偏低：加深圖案顏色，或使用較淺的背景", "Low contrast: use a darker code or a lighter background"));
+    if (grades.quiet !== "A") tips.push(tr("周圍留白不足：在 QR Code 四周多留一些空白", "Tight margins: leave more blank space around the code"));
+    if (grades.damage !== "A") tips.push(tr("圖案有損傷：請更換圖片，或提高防損傷程度後重新產生", "Damage found: use a cleaner image, or recreate the code with more damage protection"));
+    if (sample.inverted) tips.push(tr("淺色圖案配深色背景：部分掃描器讀不到，建議改為深色圖案", "Light code on a dark background: some scanners can't read this, so a dark code is safer"));
+    return tips;
   }
 
   function showReport(code, image) {
     const sample = QRAnalyze.sampleSymbol(image, code.location, code.version);
     const analysis = QRAnalyze.analyzeMatrix(sample.modules);
     const grades = QRAnalyze.grade({ ...sample, ...analysis });
+    const used = Math.round(analysis.capacityUsed * 100);
 
+    const body = document.createElement("tbody");
+    body.append(
+      statRow(tr("內容", "Content"), code.data || tr(`${code.binaryData.length} 位元組的資料`, `${code.binaryData.length} bytes of data`)),
+      statRow(tr("對比", "Contrast"), `${sample.contrast.toFixed(1)}:1`, grades.contrast),
+      statRow(tr("周圍留白", "Margin"), tr(`${sample.quietZone >= 4 ? "足夠" : `${sample.quietZone} 格，建議 4 格`}`, `${sample.quietZone >= 4 ? "Enough" : `${sample.quietZone} of 4 recommended`}`), grades.quiet),
+      statRow(tr("損傷", "Damage"), analysis.erroredCodewords || analysis.functionErrors || analysis.uncorrectable
+        ? tr(`已用掉 ${used}% 的修復能力`, `${used}% of repair capacity used`)
+        : tr("沒有發現損傷", "None found"), grades.damage),
+    );
     const table = document.createElement("table");
     table.className = "detect-table";
-    const body = document.createElement("tbody");
-    const used = Math.round(analysis.capacityUsed * 100);
-    body.append(
-      statRow("內容 / Content", code.data || `(${code.binaryData.length} bytes)`),
-      statRow("版本 / Version", `${analysis.version} (${analysis.size} × ${analysis.size})`),
-      statRow("容錯等級 / Error correction", analysis.level),
-      statRow("遮罩 / Mask", String(analysis.mask)),
-      statRow("對比 / Contrast", `${sample.contrast.toFixed(1)}:1${sample.inverted ? "(反白 / inverted)" : ""}`, grades.contrast),
-      statRow("靜區 / Quiet zone", `${sample.quietZone}${sample.quietZone >= 4 ? "+" : ""} 模組 / modules(建議 4 / 4 recommended)`, grades.quiet),
-      statRow(
-        "損傷 / Damage",
-        `${analysis.erroredCodewords} / ${analysis.totalCodewords} 碼字 / codewords,容錯已用 ${used}% / ${used}% of correction used`,
-        grades.damage,
-      ),
-    );
     table.append(body);
 
-    const map = document.createElement("figure");
-    map.className = "detect-figure";
+    const techBody = document.createElement("tbody");
+    techBody.append(
+      statRow(tr("版本", "Version"), `${analysis.version} (${analysis.size} × ${analysis.size})`),
+      statRow(tr("容錯等級", "Error correction"), analysis.level),
+      statRow(tr("遮罩", "Mask"), String(analysis.mask)),
+      statRow(tr("錯誤碼字", "Codeword errors"), `${analysis.erroredCodewords} / ${analysis.totalCodewords}`),
+    );
+    const techTable = document.createElement("table");
+    techTable.className = "detect-table";
+    techTable.append(techBody);
+    const tech = document.createElement("details");
+    tech.className = "more";
+    const techSummary = document.createElement("summary");
+    techSummary.textContent = tr("技術資訊", "Technical details");
+    tech.append(techSummary, techTable);
+
+    const side = document.createElement("div");
+    side.className = "detect-side";
+    side.append(table, tech);
+
+    const figure = document.createElement("figure");
+    figure.className = "detect-figure";
     const caption = document.createElement("figcaption");
-    caption.innerHTML = '<span class="key key-data"></span>資料損傷 / Data damage <span class="key key-function"></span>定位或格式區損傷 / Finder or format damage';
-    map.append(damageMap(sample, analysis), caption);
+    const keyData = document.createElement("span");
+    keyData.className = "key key-data";
+    const keyFunction = document.createElement("span");
+    keyFunction.className = "key key-function";
+    caption.append(keyData, tr("內容損傷", "Content damage"), keyFunction, tr("定位區損傷", "Corner or format damage"));
+    figure.append(damageMap(sample, analysis), caption);
 
     const layout = document.createElement("div");
     layout.className = "detect-layout";
-    layout.append(table, map);
+    layout.append(side, figure);
 
     const note = document.createElement("p");
     note.className = "detect-note";
-    note.textContent = "評等是依影像估算,並非 ISO/IEC 15415 正式驗證。重要印刷品請實際列印後再測試。 / Grades are estimates from the image, not an ISO/IEC 15415 verification. Test a printed sample before a large print run.";
+    note.textContent = tr(
+      "評等是依圖片估算，不是 ISO/IEC 15415 正式驗證。大量印刷前請先實際印一張測試。",
+      "Grades are estimates from the image, not an ISO/IEC 15415 verification. Test a printed sample before a large print run.",
+    );
 
-    report.replaceChildren(verdict(grades.overall, GRADE_TEXT[grades.overall]), layout, note);
+    const tips = adviceFor(sample, grades);
+    const nodes = [verdict(grades.overall, verdictText(grades.overall), tips.length ? tr("可以這樣改善：", "How to improve it:") : tr("沒有發現問題。", "No problems found."))];
+    if (tips.length) nodes.push(tipList(tips));
+    nodes.push(layout, note);
+    report.replaceChildren(...nodes);
   }
 
   async function detectImage(file) {
-    report.textContent = "分析中 / Analyzing…";
+    report.textContent = tr("檢測中…", "Checking…");
     try {
       const { code, image } = await decodeBitmap(await readFile(file));
       if (code) showReport(code, image);
@@ -354,4 +412,7 @@
   /* Release the camera as soon as it isn't on screen. */
   document.addEventListener("qrtabchange", stopCamera);
   document.addEventListener("visibilitychange", () => { if (document.hidden) stopCamera(); });
+  document.addEventListener("qrlangchange", updateCameraLabel);
+
+  updateCameraLabel();
 })();
