@@ -62,18 +62,16 @@
 
   /* ── Scan ──────────────────────────────────────────────────────── */
   const video = $("scan-video");
-  const cameraLabel = $("scan-camera-label");
+  const overlay = $("scan-overlay");
+  const overlayHint = $("scan-overlay-hint");
   const scanStatus = $("scan-status");
   const scanResults = $("scan-results");
   const toDetect = $("scan-to-detect");
   const seen = new Set();
   let stream = null;
   let timer = null;
+  let cameraSession = 0;
   let lastFailedFile = null;
-
-  const updateCameraLabel = () => {
-    cameraLabel.textContent = stream ? tr("關閉相機", "Stop camera") : tr("用相機掃描", "Scan with camera");
-  };
 
   function describe(text) {
     if (/^WIFI:/i.test(text)) {
@@ -137,14 +135,29 @@
     scanResults.prepend(row);
   }
 
+  /* Each camera start gets a number, so a close during the permission prompt wins. */
   function stopCamera() {
+    cameraSession++;
     clearTimeout(timer);
     timer = null;
     if (stream) stream.getTracks().forEach((track) => track.stop());
     stream = null;
     video.srcObject = null;
-    video.hidden = true;
-    updateCameraLabel();
+    if (overlay.hidden) return;
+    overlay.hidden = true;
+    document.body.classList.remove("camera-open");
+    $("scan-camera-btn").focus();
+    /* Drop the history entry added on opening, unless Back already removed it. */
+    if (history.state && history.state.qrCamera) history.back();
+  }
+
+  function finishScan(text) {
+    seen.delete(text);
+    addScanResult(text);
+    stopCamera();
+    scanStatus.textContent = "";
+    if (navigator.vibrate) navigator.vibrate(100);
+    scanResults.scrollIntoView({ block: "center" });
   }
 
   function scanFrame() {
@@ -153,27 +166,41 @@
       const scale = Math.min(1, 800 / Math.max(video.videoWidth, video.videoHeight));
       const image = toImageData(video, video.videoWidth, video.videoHeight, scale);
       const code = jsQR(image.data, image.width, image.height, { inversionAttempts: "attemptBoth" });
-      if (code && code.data) addScanResult(code.data);
+      if (code && code.data) {
+        finishScan(code.data);
+        return;
+      }
     }
     timer = setTimeout(scanFrame, 200);
   }
 
   async function startCamera() {
     toDetect.hidden = true;
+    scanStatus.textContent = "";
     if (!navigator.mediaDevices || !window.isSecureContext) {
       scanStatus.textContent = tr("這個網址無法使用相機，請改用 HTTPS 開啟，或選擇圖片", "The camera needs HTTPS. Open the app over HTTPS, or choose an image");
       return;
     }
+    const session = ++cameraSession;
+    overlay.hidden = false;
+    document.body.classList.add("camera-open");
+    history.pushState({ qrCamera: true }, "");
+    overlayHint.textContent = tr("正在開啟相機…", "Starting the camera…");
+    $("scan-close").focus();
     try {
       await JSQR();
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      const opened = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      if (session !== cameraSession) {
+        opened.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      stream = opened;
       video.srcObject = stream;
-      video.hidden = false;
       await video.play();
-      updateCameraLabel();
-      scanStatus.textContent = tr("將 QR Code 對準相機", "Point the camera at a QR code");
+      overlayHint.textContent = tr("將 QR Code 對準框內", "Point the camera at a QR code");
       scanFrame();
     } catch (err) {
+      if (session !== cameraSession) return;
       stopCamera();
       scanStatus.textContent = err.name === "NotAllowedError"
         ? tr("相機權限被拒絕，可在瀏覽器設定中允許，或改選圖片", "Camera access was denied. Allow it in your browser settings, or choose an image")
@@ -181,7 +208,11 @@
     }
   }
 
-  $("scan-camera-btn").addEventListener("click", () => (stream ? stopCamera() : startCamera()));
+  $("scan-camera-btn").addEventListener("click", startCamera);
+  $("scan-close").addEventListener("click", stopCamera);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") stopCamera(); });
+  /* On phones, Back should close the camera rather than leave the site. */
+  window.addEventListener("popstate", stopCamera);
 
   async function scanImage(file) {
     scanStatus.textContent = tr("讀取中…", "Reading…");
@@ -412,7 +443,4 @@
   /* Release the camera as soon as it isn't on screen. */
   document.addEventListener("qrtabchange", stopCamera);
   document.addEventListener("visibilitychange", () => { if (document.hidden) stopCamera(); });
-  document.addEventListener("qrlangchange", updateCameraLabel);
-
-  updateCameraLabel();
 })();

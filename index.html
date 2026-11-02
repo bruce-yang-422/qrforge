@@ -225,7 +225,7 @@
       <div class="choice-grid">
         <button id="scan-camera-btn" type="button" class="choice-btn">
           <svg class="icon icon-lg"><use href="#i-camera"/></svg>
-          <strong id="scan-camera-label"></strong>
+          <strong data-i18n="用相機掃描|Scan with camera"></strong>
           <span class="hint" data-i18n="對準 QR Code 就會自動讀取|Point it at a code to read it"></span>
         </button>
         <div id="scan-drop" class="drop-zone" role="button" tabindex="0" data-i18n-label="選擇圖片|Choose an image">
@@ -235,7 +235,6 @@
           <input id="scan-file" type="file" accept="image/*" hidden />
         </div>
       </div>
-      <video id="scan-video" playsinline muted hidden></video>
       <p id="scan-status" class="status-text" role="status" aria-live="polite"></p>
       <button id="scan-to-detect" type="button" class="btn btn-secondary btn-sm" data-i18n="檢測這張圖片的問題|Check this image for problems" hidden></button>
       <div id="scan-results"></div>
@@ -335,6 +334,14 @@
   </section>
 
   </main>
+
+  <!-- Full-screen camera, so nothing has to be scrolled into view. -->
+  <div id="scan-overlay" role="dialog" aria-modal="true" data-i18n-label="相機掃描|Camera scanner" hidden>
+    <video id="scan-video" playsinline muted></video>
+    <div class="scan-frame" aria-hidden="true"></div>
+    <p id="scan-overlay-hint" class="scan-overlay-hint" role="status" aria-live="polite"></p>
+    <button id="scan-close" type="button" class="btn scan-close" data-i18n="關閉相機|Close camera"></button>
+  </div>
 
   <footer class="app-footer">
     <span data-i18n="所有處理都在你的裝置上完成，檔案不會上傳。|Everything runs on your device. Nothing is uploaded."></span>

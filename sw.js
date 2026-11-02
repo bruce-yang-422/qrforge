@@ -1,6 +1,6 @@
 /* Bump VERSION whenever a precached file changes. Updates activate once all
    existing app windows close, keeping each session on a consistent version. */
-const VERSION = 'v13';
+const VERSION = 'v14';
 const CACHE_PREFIX = `qrforge-${self.registration.scope}-`;
 const CACHE_NAME = `${CACHE_PREFIX}${VERSION}`;
 const APP_URL = new URL('./', self.registration.scope).href;
