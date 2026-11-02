@@ -1,190 +1,214 @@
-# QR Code Generator
+# QRForge
 
-## 多格式批次 QR Code 產生器
+**English** | [繁體中文](README.zh-TW.md)
 
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/bruce-yang-422/qrforge/blob/main/LICENSE)
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![Stars](https://img.shields.io/github/stars/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge)
+Batch-generate QR codes from CSV, Excel, and TXT files, in your browser or from the command line.
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Last Commit](https://img.shields.io/github/last-commit/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge/commits/main)
 [![Issues](https://img.shields.io/github/issues/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge/issues)
-![Status](https://img.shields.io/badge/status-active-success)
 
+**[Open the web app](https://bruce-yang-422.github.io/qrforge)** · [Report a bug](https://github.com/bruce-yang-422/qrforge/issues)
 
-批次將 CSV、Excel、TXT 來源資料轉換為 QR code 圖片的命令列工具。支援網頁版線上使用。
+QRForge comes in two forms that read the same input formats:
 
-Batch QR code generator — converts CSV, Excel, and TXT source files into QR code images via the command line. Also available as a web app.
+- **Web app:** an installable PWA with no setup. Files are processed locally in the browser and are never uploaded.
+- **Command-line tool:** a Python script that converts everything in a folder in one run.
 
-**網頁版 / Web App** → [https://bruce-yang-422.github.io/qrforge](https://bruce-yang-422.github.io/qrforge)
+The web interface is bilingual (Traditional Chinese and English).
 
----
+## Contents
 
-## 功能特色 / Features
+- [Features](#features)
+- [Getting started](#getting-started)
+- [Input formats](#input-formats)
+- [Output filenames](#output-filenames)
+- [Configuration](#configuration)
+- [Project structure](#project-structure)
+- [Deploying the web app](#deploying-the-web-app)
+- [Known limitations](#known-limitations)
+- [Contributing](#contributing)
+- [License](#license)
 
-- 🌐 **網頁版**：免安裝，直接於瀏覽器使用，支援快速產生與批次上傳
-- 支援 **CSV**、**Excel (.xlsx)**、**TXT** 三種輸入格式
-- TXT 自動偵測純網址 / 純文本，支援單筆、逗號分隔、換行分隔多筆 URL
-- 輸出格式：**PNG**、**JPG**、**SVG**（可於設定檔切換）
-- QR 容錯等級與縮放比例可調
-- 遞迴掃描 `input/` 資料夾下所有子目錄
-- 每次執行自動產生帶時間戳的 log 檔，並清空舊紀錄
+## Features
 
----
+- Generates QR codes for URLs, plain text, and WiFi credentials
+- Reads CSV, Excel (`.xlsx`), and TXT files
+- Detects whether a TXT file holds URLs or plain text
+- Exports PNG, JPG, or SVG with adjustable error correction and scale
+- **Web app:** quick single-code form, drag-and-drop upload of multiple files, ZIP download, and offline use
+- **CLI:** recursive scan of the input folder and a timestamped log for each run
 
-## 目錄結構 / Project Structure
+## Getting started
 
-```text
-qr_code_generator/
-├── config/
-│   └── settings.py       # 設定檔 / Configuration
-├── input/                # 放置來源檔案 / Input files go here
-├── output/               # QR code 圖片輸出 / Generated QR images
-├── logs/                 # 執行紀錄 / Run logs (auto-cleared each run)
-├── main.py               # 主程式 / Entry point
-└── README.md
-```
+### Web app
 
----
+Open <https://bruce-yang-422.github.io/qrforge>, then either fill in the **Quick Generate** form or drop your files onto the upload area. Sample templates can be downloaded from the upload area, and format, scale, and error correction are under **Advanced Options**.
 
-## 安裝 / Installation
+To use the app offline, open it once while connected and wait for the header to show **Offline ready**. To install it, use the **Install App** button or your browser's install menu. On iPhone and iPad, choose **Add to Home Screen** from the Safari share menu.
 
-建議使用虛擬環境 / Recommended to use a virtual environment:
+### Command line
+
+Requires Python 3.10 or later.
 
 ```bash
-python -m venv .venv
-.venv\Scripts\activate      # Windows
-# source .venv/bin/activate  # macOS / Linux
+git clone https://github.com/bruce-yang-422/qrforge.git
+cd qrforge
 
-pip install segno pillow openpyxl
+python -m venv .venv
+source .venv/bin/activate     # Windows: .venv\Scripts\activate
+
+pip install -r requirements.txt
 ```
 
----
-
-## 使用方式 / Usage
-
-1. 將來源檔案放入 `input/` 資料夾
-2. 依需求調整 `config/settings.py`
-3. 執行主程式
+Put your source files in `input/`, then run the script from the repository root:
 
 ```bash
 python main.py
 ```
 
-QR code 圖片會輸出至 `output/`，執行紀錄儲存於 `logs/run_YYYYMMDD_HHMMSS.log`。
+QR codes are written to `output/`, and the log is written to `logs/run_YYYYMMDD_HHMMSS.log`.
 
----
+> [!WARNING]
+> The log directory is deleted and recreated on every run, so only the latest log is kept. Don't store other files there.
 
-## 範本檔案 / Sample Templates
+## Input formats
 
-| 格式 | 下載 |
-| --- | --- |
-| CSV | [assets/sample.csv](assets/sample.csv) |
-| Excel | [assets/sample.xlsx](assets/sample.xlsx) |
-| TXT | [assets/sample.txt](assets/sample.txt) |
+Sample files: [CSV](assets/sample.csv) · [Excel](assets/sample.xlsx) · [TXT](assets/sample.txt)
 
----
+### CSV and Excel
 
-## 輸入格式說明 / Input Formats
+The first row is the header, and each following row produces one QR code. Header names must match the Traditional Chinese names below exactly. Only the first worksheet (web) or the active worksheet (CLI) of an Excel file is read.
 
-### CSV / Excel
-
-第一列為標題列，欄位名稱如下：
-
-| 欄位名稱 | 必填 | 說明 |
+| Column | Required | Description |
 | --- | --- | --- |
-| 類型 | ✅ | `url` / `text` / `line` / `wifi` |
-| 資料 | | URL 或文字內容（url / text / line 類型使用） |
-| WiFi名稱 | | WiFi SSID（wifi 類型使用） |
-| WiFi密碼 | | WiFi 密碼（wifi 類型使用） |
-| 加密方式 | | `WPA` / `WEP` / `nopass`，預設 `WPA` |
-| Qr-code檔案名稱 | | 自訂輸出檔名（不含副檔名），留空則自動命名 |
+| `類型` (type) | Yes | `url`, `text`, `line`, or `wifi` |
+| `資料` (data) | For `url`, `text`, `line` | Content to encode, used as is |
+| `WiFi名稱` (SSID) | For `wifi` | Network name |
+| `WiFi密碼` (password) | For `wifi` | Network password; leave empty for open networks |
+| `加密方式` (security) | For `wifi` | `WPA`, `WEP`, or `nopass` |
+| `Qr-code檔案名稱` (filename) | No | Output filename without extension |
 
-範例 / Example:
+Rows with no content to encode are skipped. An invalid row is logged and does not stop the run.
 
 ```csv
 類型,資料,WiFi名稱,WiFi密碼,加密方式,Qr-code檔案名稱
-url,https://example.com,,,, 官網
-wifi,,MySSID,MyPassword,WPA,辦公室WiFi
+url,https://example.com,,,,website
+wifi,,MySSID,MyPassword,WPA,office-wifi
 text,Hello World,,,,
 ```
 
 ### TXT
 
-每個 `.txt` 檔案產生一張（或多張）QR code，檔名取自檔案名稱（不含副檔名）。
+Content is split on commas and line breaks, then handled according to what it contains:
 
-**自動判斷邏輯：**
-
-| 內容格式 | 判定結果 | 輸出 |
+| Content | Treated as | Output |
 | --- | --- | --- |
-| 單一 URL | URL | `{檔名}.png` |
-| 多筆 URL（逗號或換行分隔） | URL × N | `{檔名}_00001.png`、`{檔名}_00002.png`… |
-| URL 夾雜中文或其他文字 | 純文本 | `{檔名}.png`（整個檔案當文字） |
-| 非 URL 內容 | 純文本 | `{檔名}.png` |
+| One URL | URL | `{stem}.png` |
+| Multiple URLs | One code per URL | `{stem}_00001.png`, `{stem}_00002.png`, … |
+| Anything else, including a mix of URLs and text | Plain text | `{stem}.png`, encoding the whole file |
 
-範例 — 多筆 URL（逗號分隔）:
-
-```text
-https://example.com,https://github.com,https://google.com
-```
-
-範例 — 多筆 URL（換行分隔）:
+`{stem}` is the source filename without its extension. A URL must start with `http://` or `https://` and contain no whitespace, CJK, or full-width characters.
 
 ```text
 https://example.com
 https://github.com
-https://google.com
 ```
 
----
+## Output filenames
 
-## 自動命名規則 / Auto Filename
+For CSV and Excel rows, the filename is the first of these that applies:
 
-未填寫 `Qr-code檔案名稱` 時，依下列優先順序決定檔名：
+1. The `Qr-code檔案名稱` value
+2. The WiFi SSID
+3. `{type}_{number}`, such as `url_00001`
 
-1. `Qr-code檔案名稱` 欄位值
-2. WiFi SSID（wifi 類型）
-3. `{類型}_{序號5碼}`，例如 `url_00001`、`wifi_00003`
+Characters that are illegal in filenames (`\ / : * ? " < > |`) are removed.
 
----
+In the Quick Generate form, an empty filename defaults to `Qrcode_YYYYMMDD_HHMM_001`.
 
-## 設定檔 / Configuration
+## Configuration
 
-`config/settings.py`：
+The CLI reads its settings from [`config/settings.py`](config/settings.py). In the web app, the QR and format settings are under **Advanced Options**.
 
-```python
-CONFIG = {
-    "paths": {
-        "input_dir": "input",    # 來源資料夾
-        "output_dir": "output",  # 輸出資料夾
-        "log_dir": "logs",       # log 資料夾
-    },
-    "qr": {
-        "error_correction": "M", # 容錯等級：L / M / Q / H
-        "scale": 8,              # 每格放大倍數（px）
-    },
-    "output": {
-        "format": "PNG",         # 輸出格式：PNG / JPG / SVG
-    },
-    "csv": {
-        "delimiter": ",",        # CSV 分隔符號
-    },
-}
-```
-
-### 容錯等級 / Error Correction Levels
-
-| 等級 | 容錯率 | 適用情境 |
+| Key | Default | Description |
 | --- | --- | --- |
-| L | 7% | 環境乾淨、QR 不易損壞 |
-| M | 15% | 一般用途（預設） |
-| Q | 25% | 可能有部分遮蔽或污損 |
-| H | 30% | 高損壞風險，如印在衣物或貼紙上 |
+| `paths.input_dir` | `input` | Folder scanned for source files |
+| `paths.output_dir` | `output` | Folder for generated images |
+| `paths.log_dir` | `logs` | Folder for logs, cleared on each run |
+| `qr.error_correction` | `M` | `L`, `M`, `Q`, or `H` |
+| `qr.scale` | `8` | Pixels per QR module |
+| `output.format` | `SVG` | `PNG`, `JPG`, or `SVG`, in uppercase |
+| `csv.delimiter` | `,` | CSV field delimiter; use `"\t"` for TSV |
 
----
+The web app defaults to PNG, accepts a scale of 2 to 20, and always reads CSV files as comma-delimited.
 
-## 相依套件 / Dependencies
+Higher error correction tolerates more damage but produces a denser code:
 
-| 套件 | 用途 |
-| --- | --- |
-| [segno](https://github.com/heuer/segno) | QR code 產生 |
-| [Pillow](https://python-pillow.org/) | PNG / JPG 圖片輸出 |
-| [openpyxl](https://openpyxl.readthedocs.io/) | Excel 檔案讀取 |
+| Level | Recovery capacity | Typical use |
+| --- | --- | --- |
+| `L` | ~7% | Clean environments |
+| `M` | ~15% | General use |
+| `Q` | ~25% | Codes that may be partly obscured or dirty |
+| `H` | ~30% | High risk of damage, such as stickers or clothing |
+
+## Project structure
+
+```text
+qrforge/
+├── main.py                 # CLI entry point
+├── requirements.txt        # Python dependencies
+├── config/settings.py      # CLI settings
+├── input/                  # CLI source files (git-ignored)
+├── output/                 # CLI generated images (git-ignored)
+├── logs/                   # CLI run logs (git-ignored)
+├── index.html              # Web app entry point
+├── css/style.css           # Web app styles
+├── js/app.js               # Browser port of the main.py logic
+├── js/pwa.js               # Install prompt and offline status
+├── sw.js                   # Service worker
+├── manifest.webmanifest    # PWA manifest
+├── libs/                   # Vendored browser libraries
+└── assets/                 # Sample templates and app icons
+```
+
+## Deploying the web app
+
+The web app is a static site with no build step. To preview it locally:
+
+```bash
+python -m http.server 8000
+```
+
+Then open <http://localhost:8000>.
+
+To deploy, publish `index.html`, `manifest.webmanifest`, `sw.js`, `css/`, `js/`, `libs/`, and `assets/` to any static host. All paths are relative, so subdirectories such as GitHub Pages' `/qrforge/` work.
+
+Offline support requires HTTPS or `localhost`. The app still opens from `file://`, but without offline support or installation. See [Service Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) on MDN for details.
+
+> [!IMPORTANT]
+> Bump `VERSION` in [`sw.js`](sw.js) whenever a cached file changes, or returning users will keep the old version. A new version takes effect after all open windows and tabs of the app are closed. If the update fails, the previous version stays available offline.
+
+## Known limitations
+
+- **CLI filename collisions:** all images go directly into `output/`, regardless of input subfolders, and existing files with the same name are overwritten. Automatic numbering restarts for each source file, so unnamed rows from different files can overwrite each other. Filling in the filename column avoids this.
+- **CSV files with a BOM (CLI):** a UTF-8 file with a byte order mark, such as Excel's "CSV UTF-8" export, fails with a missing-column error. Use a file without a BOM, an `.xlsx` file, or the web app.
+- **WiFi security default:** the web app treats an empty security value as `WPA`. The CLI only does so when the column is missing entirely, so fill it in for CLI input.
+- **WiFi special characters:** `;`, `,`, `:`, `\`, and `"` in an SSID or password are not escaped, so the resulting code may not connect.
+- **Commas in URLs:** TXT files and the Quick Generate URL field treat commas as separators, so a URL containing one is split.
+- **Multi-line CSV fields (web):** the browser's CSV parser reads line by line, so quoted fields containing line breaks aren't supported.
+
+## Contributing
+
+Issues and pull requests are welcome. Before submitting a change, keep in mind:
+
+- `js/app.js` mirrors the logic in `main.py`, so apply input and filename changes to both.
+- There is no automated test suite yet, so test changes manually using the [sample files](assets/).
+- To update a browser library, follow the steps in [`libs/README.md`](libs/README.md).
+
+## License
+
+Released under the [MIT License](LICENSE).
+
+Built with [segno](https://github.com/heuer/segno), [Pillow](https://python-pillow.org/), and [openpyxl](https://openpyxl.readthedocs.io/) for the CLI, and [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator), [SheetJS](https://sheetjs.com/), and [JSZip](https://stuk.github.io/jszip/) for the web app. Versions and license files for the browser libraries are listed in [`libs/README.md`](libs/README.md).

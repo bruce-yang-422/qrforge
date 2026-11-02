@@ -17,9 +17,7 @@ input/*
 script/project_tree_structure_generator.py
 project_tree_structure.txt
 
-# Local lib copies (CDN used by default) / 本地套件（預設使用 CDN）
-libs/*
-!libs/.gitkeep
+# Browser dependencies in libs/ are committed for offline PWA support.
 
 # Python cache / Python 快取
 __pycache__/

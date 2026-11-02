@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "QRForge — 多格式批次 QR Code 產生器",
+  "short_name": "QRForge",
+  "description": "離線產生 QR Code，支援 CSV、Excel、TXT 批次匯入與 PNG、JPG、SVG 輸出。",
+  "lang": "zh-TW",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#2563eb",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -35,6 +35,17 @@ header p {
 }
 
 /* ── Upload zone ───────────────────────────────────────── */
+.pwa-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1rem;
+}
+.pwa-controls [hidden] { display: none; }
+#pwa-status { font-size: .85rem; color: #64748b; }
+
 #drop-zone {
   border: 2.5px dashed #93c5fd;
   border-radius: 14px;

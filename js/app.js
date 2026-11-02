@@ -1,7 +1,7 @@
 // @ts-nocheck
 /* ===================================================================
    QR Code Batch Generator — browser port of main.py
-   QRCode / XLSX / JSZip are loaded via CDN before this script.
+   QRCode / XLSX / JSZip are loaded from libs/ before this script.
    =================================================================== */
 
 /* ── Column map (mirrors Python COLUMN_MAP) ──────────────────────── */

@@ -4,14 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>QR Code Generator — 多格式批次 QR Code 產生器</title>
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="QRForge" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" href="assets/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
 
   <!-- Styles -->
   <link rel="stylesheet" href="css/style.css" />
 
-  <!-- CDN libraries (loaded before app.js) -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <!-- Local libraries keep all features available offline. -->
+  <script src="libs/qrcode.min.js"></script>
+  <script src="libs/xlsx.full.min.js"></script>
+  <script src="libs/jszip.min.js"></script>
 </head>
 <body>
 <div class="page-wrap">
@@ -20,6 +27,10 @@
   <header>
     <h1>QR Code Generator</h1>
     <p>多格式批次 QR Code 產生器 &nbsp;|&nbsp; CSV / Excel / TXT</p>
+    <div class="pwa-controls">
+      <button id="install-btn" class="btn btn-primary" type="button" hidden>安裝應用程式 / Install App</button>
+      <span id="pwa-status" role="status" aria-live="polite"></span>
+    </div>
   </header>
 
   <!-- ── Quick generate ──────────────────────────────────── -->
@@ -181,5 +192,6 @@
 
 <!-- App logic -->
 <script src="js/app.js"></script>
+<script src="js/pwa.js"></script>
 </body>
 </html>
