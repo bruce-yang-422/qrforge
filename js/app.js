@@ -703,6 +703,18 @@ function canShareFiles() {
 
 const canCopyImage = () => Boolean(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write);
 
+const isPhoneOrTablet = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+// LINE sends line.me/R links to its home page when the browser says it's a
+// computer, so those browsers use LINE's web share page instead. That includes
+// iPads, which report themselves as Macs.
+function lineShareUrl(content) {
+  const encoded = encodeURIComponent(content);
+  if (isPhoneOrTablet()) return `https://line.me/R/share?text=${encoded}`;
+  const base = "https://social-plugins.line.me/lineit/share";
+  return /^https?:\/\//i.test(content) ? `${base}?url=${encoded}` : `${base}?url=&text=${encoded}`;
+}
+
 function updateShareRow() {
   const row  = document.getElementById("qp-share-row");
   const line = document.getElementById("qp-line");
@@ -714,7 +726,7 @@ function updateShareRow() {
   // WiFi is left out so a password never ends up in a link.
   line.hidden = !quickQr || type === "wifi";
   if (line.hidden) return;
-  line.href = `https://line.me/R/share?text=${encodeURIComponent(quickPayload())}`;
+  line.href = lineShareUrl(quickPayload());
   line.textContent = type === "url" ? tr("用 LINE 傳連結", "Send link on LINE") : tr("用 LINE 傳文字", "Send text on LINE");
 }
 
