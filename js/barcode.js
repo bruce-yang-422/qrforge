@@ -8,6 +8,7 @@
   const PREVIEW_SCALE = 3;
   const MM_PER_PT = 25.4 / 72;
   const MAX_CANVAS = 16000;
+  const SHARE_SCALE = 6;
   /* Text below the barcode, in mm. */
   const CAPTION = { size: 3, minSize: 1.8, gap: 1, bottom: 1, margin: 1 };
 
@@ -105,6 +106,7 @@
   function update() {
     if (!ready) return;
     errorBox.textContent = "";
+    $("bc-share-status").textContent = "";
     clearOutput();
     emptyBox.hidden = false;
     emptyBox.textContent = tr("輸入內容後，條碼會顯示在這裡", "Enter the content and your barcode appears here");
@@ -130,6 +132,7 @@
       infoBox.textContent = size + check;
       showScan(scanTest(plain, spec), spec);
       updateDpiNote();
+      updateShareButtons();
       downloads.hidden = false;
     } catch (err) {
       clearOutput();
@@ -158,12 +161,30 @@
       : "";
   }
 
+  const fileStem = () => {
+    const stem = sanitizeFilename(current.spec.rule.text).replace(/[()\s]+/g, "") || "barcode";
+    return `${current.spec.key}-${stem}`;
+  };
+
+  /* Sharp in a chat, while staying far smaller than a print-resolution file. */
+  function shareCanvas() {
+    const plain = bwipjs.toCanvas(document.createElement("canvas"), bwipOptions(current.spec, SHARE_SCALE));
+    return QRPrint.paintWithCaption(document.createElement("canvas"), plain, current.caption, SHARE_SCALE / current.spec.xDim);
+  }
+
+  const updateShareButtons = QRShare.wire({
+    shareButton: $("bc-share"),
+    copyButton: $("bc-copy"),
+    status: $("bc-share-status"),
+    getCanvas: shareCanvas,
+    getName: fileStem,
+  });
+
   function save(bytes, type, extension) {
     const url = URL.createObjectURL(new Blob([bytes], { type }));
     const a = document.createElement("a");
     a.href = url;
-    const stem = sanitizeFilename(current.spec.rule.text).replace(/[()\s]+/g, "") || "barcode";
-    a.download = `${current.spec.key}-${stem}.${extension}`;
+    a.download = `${fileStem()}.${extension}`;
     a.click();
     URL.revokeObjectURL(url);
   }

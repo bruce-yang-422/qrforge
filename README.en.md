@@ -11,7 +11,7 @@ Generate, scan, and test QR codes, and make print-ready barcodes. Runs in your b
 [![Last Commit](https://img.shields.io/github/last-commit/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge/commits/main)
 [![Issues](https://img.shields.io/github/issues/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge/issues)
 
-**[Open the web app](https://bruce-yang-422.github.io/qrforge)** · [Report a bug](https://github.com/bruce-yang-422/qrforge/issues)
+**[Open the web app](https://qrforge.stack-base.com)** · [Report a bug](https://github.com/bruce-yang-422/qrforge/issues)
 
 QRForge comes in two forms that read the same input formats:
 
@@ -48,7 +48,7 @@ The web interface is bilingual (Traditional Chinese and English).
 
 ### Web app
 
-Open <https://bruce-yang-422.github.io/qrforge>, then type in the **QR Code** tab and your QR code appears as you type, ready to download. To make many at once, use the **Batch** tab, where you can also download sample templates. The interface is in Traditional Chinese or English, and the button at the top right switches between them.
+Open <https://qrforge.stack-base.com>, then type in the **QR Code** tab and your QR code appears as you type, ready to download. To make many at once, use the **Batch** tab, where you can also download sample templates. The interface is in Traditional Chinese or English, and the button at the top right switches between them.
 
 To use the app offline, open it once while connected and wait for the header to show **Works offline**. To install it, use the **Install** button or your browser's install menu. On iPhone and iPad, choose **Add to Home Screen** from the Safari share menu.
 
@@ -83,11 +83,11 @@ These tools are in the web app only. Everything runs locally, and images are nev
 
 | Tab | What it does |
 | --- | --- |
-| **QR Code** | Makes one code from a link, text, or WiFi details, with a live preview. Adds `https://` to a bare domain, can print text below the code, and can share the image or send to LINE |
+| **QR Code** | Makes one code from a link, text, or WiFi details, with a live preview. Adds `https://` to a bare domain, can print text below the code, and can share or copy the image |
 | **Batch** | Makes up to 500 codes from a pasted list or CSV, Excel, and TXT files, as PNG, JPG, SVG, or PDF in a ZIP file. Also prints them on label sheets |
 | **Scan** | Reads QR codes from the camera, a photo, or a pasted screenshot. Links only open when you click them |
 | **Check** | Tells you whether a code will scan and how to improve it, with a grade, contrast, margin, and a map of damaged modules |
-| **Barcode** | Makes barcodes at true print size, and re-reads each one with a separate decoder whenever you change it |
+| **Barcode** | Makes barcodes at true print size, and re-reads each one with a separate decoder whenever you change it. Can also share or copy the image |
 
 **Barcode types:** EAN-13, EAN-8, UPC-A, UPC-E, ISBN, Code 128, ITF-14, GS1-128, SSCC-18, and Data Matrix. Check digits are calculated if you leave them out, and verified if you include them. You can also add text below a barcode, such as a product name. It's printed only, and scanners won't read it.
 
@@ -198,6 +198,7 @@ qrforge/
 ├── js/barcode.js           # Barcode generator interface
 ├── js/barcode-rules.js     # Barcode validation and check digits
 ├── js/print.js             # PDF, EPS, and label sheet output
+├── js/share.js             # Share and copy buttons
 ├── js/pwa.js               # Install prompt and offline status
 ├── sw.js                   # Service worker
 ├── manifest.webmanifest    # PWA manifest
@@ -230,7 +231,7 @@ Offline support requires HTTPS or `localhost`. The app still opens from `file://
 - **WiFi special characters:** `;`, `,`, `:`, `\`, and `"` in an SSID or password are not escaped, so the resulting code may not connect.
 - **Commas in URLs:** TXT files treat commas as separators, so a URL containing one is split. Use the Batch tab's paste box or a CSV file instead.
 - **Label sheets:** QR code labels from the Batch tab contain only the code, with no text below it.
-- **Sharing:** the Share image button needs a browser that can share files, over HTTPS or `localhost`. Where it isn't available, it's hidden, and you can copy or download the image instead.
+- **Sharing:** images are PNG where the browser allows it, otherwise JPG. The Share image button needs a browser that can share files, over HTTPS or `localhost`. Where it isn't available, it's hidden, and you can copy or download the image instead.
 - **Scan and Check:** each image is read for one QR code, so only one result is returned when an image contains several.
 - **Multi-line CSV fields (web):** the browser's CSV parser reads line by line, so quoted fields containing line breaks aren't supported.
 

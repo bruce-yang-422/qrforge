@@ -669,11 +669,10 @@ qiDownload.addEventListener("click", () => {
 });
 
 /* ── Sharing the current QR code ─────────────────────────────────── */
-// Sharing always sends a PNG, whichever download format is selected,
-// because that is what chat apps can show.
 const SHARE_PX_PER_MODULE = 12;
 
-function quickPngBlob() {
+// Drawn fresh at a size that looks sharp in a chat, whatever the download format.
+function quickShareCanvas() {
   const { matrix, moduleMm, caption } = quickQr;
   const size   = (matrix.size + 8) * SHARE_PX_PER_MODULE;
   const canvas = document.createElement("canvas");
@@ -687,8 +686,7 @@ function quickPngBlob() {
       if (matrix.isDark(r, c)) ctx.fillRect((c + 4) * SHARE_PX_PER_MODULE, (r + 4) * SHARE_PX_PER_MODULE, SHARE_PX_PER_MODULE, SHARE_PX_PER_MODULE);
     }
   }
-  const out = QRPrint.paintWithCaption(document.createElement("canvas"), canvas, caption, SHARE_PX_PER_MODULE / moduleMm);
-  return new Promise(resolve => out.toBlob(resolve, "image/png"));
+  return QRPrint.paintWithCaption(document.createElement("canvas"), canvas, caption, SHARE_PX_PER_MODULE / moduleMm);
 }
 
 const quickFilename = () => {
@@ -696,64 +694,18 @@ const quickFilename = () => {
   return name ? sanitizeFilename(name) : qiDefaultName();
 };
 
-function canShareFiles() {
-  if (!navigator.canShare) return false;
-  return navigator.canShare({ files: [new File([""], "qrcode.png", { type: "image/png" })] });
-}
-
-const canCopyImage = () => Boolean(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write);
-
-const isPhoneOrTablet = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-// LINE sends line.me/R links to its home page when the browser says it's a
-// computer, so those browsers use LINE's web share page instead. That includes
-// iPads, which report themselves as Macs.
-function lineShareUrl(content) {
-  const encoded = encodeURIComponent(content);
-  if (isPhoneOrTablet()) return `https://line.me/R/share?text=${encoded}`;
-  const base = "https://social-plugins.line.me/lineit/share";
-  return /^https?:\/\//i.test(content) ? `${base}?url=${encoded}` : `${base}?url=&text=${encoded}`;
-}
+const updateShareButtons = QRShare.wire({
+  shareButton: document.getElementById("qp-share"),
+  copyButton:  document.getElementById("qp-copy"),
+  status:      shareStatus,
+  getCanvas:   quickShareCanvas,
+  getName:     quickFilename,
+});
 
 function updateShareRow() {
-  const row  = document.getElementById("qp-share-row");
-  const line = document.getElementById("qp-line");
-  const type = qiType();
-  row.hidden = !quickQr;
-  document.getElementById("qp-share").hidden = !canShareFiles();
-  document.getElementById("qp-copy").hidden  = !canCopyImage();
-
-  // WiFi is left out so a password never ends up in a link.
-  line.hidden = !quickQr || type === "wifi";
-  if (line.hidden) return;
-  line.href = lineShareUrl(quickPayload());
-  line.textContent = type === "url" ? tr("用 LINE 傳連結", "Send link on LINE") : tr("用 LINE 傳文字", "Send text on LINE");
+  document.getElementById("qp-share-row").hidden = !quickQr;
+  updateShareButtons();
 }
-
-document.getElementById("qp-share").addEventListener("click", async () => {
-  if (!quickQr) return;
-  shareStatus.textContent = "";
-  try {
-    const blob = await quickPngBlob();
-    await navigator.share({ files: [new File([blob], `${quickFilename()}.png`, { type: "image/png" })] });
-  } catch (err) {
-    // AbortError means the user closed the share sheet, which isn't a failure.
-    if (err.name !== "AbortError") {
-      shareStatus.textContent = tr("無法分享，請改用下載或複製圖片", "Couldn't share. Try downloading or copying the image");
-    }
-  }
-});
-
-document.getElementById("qp-copy").addEventListener("click", async () => {
-  if (!quickQr) return;
-  try {
-    // Safari needs the clipboard write to start before the image is ready.
-    await navigator.clipboard.write([new ClipboardItem({ "image/png": quickPngBlob() })]);
-    shareStatus.textContent = tr("已複製，到 LINE 或其他對話貼上即可", "Copied. Paste it into LINE or any other chat");
-  } catch {
-    shareStatus.textContent = tr("無法複製，請改用下載", "Couldn't copy. Try downloading instead");
-  }
-});
 
 /* ── Shared settings ─────────────────────────────────────────────── */
 const settingsNode = document.getElementById("qr-settings");

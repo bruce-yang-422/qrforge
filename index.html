@@ -125,7 +125,6 @@
         <div id="qp-share-row" class="share-row" hidden>
           <button id="qp-share" type="button" class="btn btn-secondary"><svg class="icon"><use href="#i-share"/></svg><span data-i18n="分享圖片|Share image"></span></button>
           <button id="qp-copy" type="button" class="btn btn-secondary" data-i18n="複製圖片|Copy image"></button>
-          <a id="qp-line" class="btn btn-line" target="_blank" rel="noopener noreferrer"></a>
         </div>
         <p id="qp-share-status" class="hint" role="status" aria-live="polite"></p>
       </aside>
@@ -312,6 +311,11 @@
             </select>
           </div>
           <p id="bc-dpi-note" class="hint"></p>
+          <div class="share-row">
+            <button id="bc-share" type="button" class="btn btn-secondary"><svg class="icon"><use href="#i-share"/></svg><span data-i18n="分享圖片|Share image"></span></button>
+            <button id="bc-copy" type="button" class="btn btn-secondary" data-i18n="複製圖片|Copy image"></button>
+          </div>
+          <p id="bc-share-status" class="hint" role="status" aria-live="polite"></p>
           <div class="bc-formats">
             <span class="field-label" data-i18n="向量檔（印刷廠適用）|Vector (for print shops)"></span>
             <button id="bc-svg" type="button" class="btn btn-secondary btn-sm">SVG</button>
@@ -342,6 +346,7 @@
 <!-- App logic -->
 <script src="js/i18n.js"></script>
 <script src="js/print.js"></script>
+<script src="js/share.js"></script>
 <script src="js/tabs.js"></script>
 <script src="js/app.js"></script>
 <script src="js/qr-analyze.js"></script>

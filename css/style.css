@@ -147,11 +147,10 @@ h2 { font-size: 1.15rem; font-weight: 700; color: var(--ink); margin-bottom: 1re
 .btn-sm { min-height: 34px; padding: .3rem .8rem; font-size: .82rem; border-radius: 8px; }
 .btn-lg { min-height: 50px; width: 100%; font-size: 1rem; }
 
-.btn-line { background: #06c755; color: #fff; }
-.btn-line:hover { background: #05b34c; }
 .share-row { display: flex; flex-wrap: wrap; gap: .5rem; }
 .share-row .btn { flex: 1 1 auto; }
-#qp-share-status:empty { display: none; }
+#qp-share-status:empty, #bc-share-status:empty { display: none; }
+#bc-downloads .share-row, #bc-share-status { margin-top: .6rem; }
 
 /* ── Form fields ───────────────────────────────────────── */
 .field { display: flex; flex-direction: column; gap: .35rem; margin-top: 1rem; }

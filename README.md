@@ -11,7 +11,7 @@
 [![Last Commit](https://img.shields.io/github/last-commit/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge/commits/main)
 [![Issues](https://img.shields.io/github/issues/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge/issues)
 
-**[開啟網頁版](https://bruce-yang-422.github.io/qrforge)** · [回報問題](https://github.com/bruce-yang-422/qrforge/issues)
+**[開啟網頁版](https://qrforge.stack-base.com)** · [回報問題](https://github.com/bruce-yang-422/qrforge/issues)
 
 QRForge 提供兩種使用方式，兩者讀取相同的輸入格式：
 
@@ -48,7 +48,7 @@ QRForge 提供兩種使用方式，兩者讀取相同的輸入格式：
 
 ### 網頁版
 
-開啟 <https://bruce-yang-422.github.io/qrforge>，在「QR Code」分頁輸入內容，QR Code 會立即出現，可直接下載。要一次產生多張，請用「批次」分頁，那裡也可以下載範本檔案。介面支援繁體中文與英文，可用右上角的按鈕切換。
+開啟 <https://qrforge.stack-base.com>，在「QR Code」分頁輸入內容，QR Code 會立即出現，可直接下載。要一次產生多張，請用「批次」分頁，那裡也可以下載範本檔案。介面支援繁體中文與英文，可用右上角的按鈕切換。
 
 如需離線使用，請先在連線狀態下開啟一次，等頁首顯示「可離線使用」即可。如需安裝，請使用「安裝」按鈕或瀏覽器選單的安裝功能;iPhone 和 iPad 請在 Safari 分享選單選擇「加入主畫面」。
 
@@ -83,7 +83,7 @@ QR Code 會輸出至 `output/`，記錄檔則寫入 `logs/run_YYYYMMDD_HHMMSS.lo
 
 | 分頁 | 功能 |
 | --- | --- |
-| **QR Code** | 從網址、文字或 WiFi 資訊產生單張 QR Code，輸入時即時預覽。只輸入網域時會自動加上 `https://`，可在下方加上文字，也可分享圖片或傳到 LINE |
+| **QR Code** | 從網址、文字或 WiFi 資訊產生單張 QR Code，輸入時即時預覽。只輸入網域時會自動加上 `https://`，可在下方加上文字，也可將圖片傳到 LINE 或其他 App |
 | **批次** | 從貼上的清單或 CSV、Excel、TXT 檔案產生最多 500 張，可輸出 PNG、JPG、SVG 或 PDF 並打包成 ZIP，也可排版成標籤紙 |
 | **掃描** | 從相機、照片或貼上的截圖讀取 QR Code。連結只有在你點選後才會開啟 |
 | **檢測** | 告訴你 QR Code 能否掃描及如何改善，並提供評等、對比、周圍留白與損傷模組圖 |
@@ -231,6 +231,7 @@ python -m http.server 8000
 - **網址中的逗號：** TXT 檔以逗號作為分隔符號，因此含逗號的網址會被拆開。請改用「批次」分頁的貼上清單或 CSV 檔。
 - **標籤紙：** 「批次」分頁的 QR Code 標籤上只有圖案本身，沒有下方文字。
 - **分享：** 「分享圖片」按鈕需要支援檔案分享的瀏覽器，並透過 HTTPS 或 `localhost` 開啟。不支援時按鈕會隱藏，可改用複製或下載。
+- **LINE：** 網頁無法直接選擇對話或將圖片傳進 LINE。手機上請在分享選單選 LINE，電腦上圖片會先複製，再到對話中貼上。
 - **掃描與檢測：** 每張圖片只讀取一個 QR Code，圖片中有多個時只會回傳一個結果。
 - **多行 CSV 欄位（網頁版）:** 瀏覽器端的 CSV 解析器逐行讀取，不支援引號內含換行的欄位。
 
