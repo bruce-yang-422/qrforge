@@ -1,6 +1,7 @@
-/* Bump VERSION whenever a precached file changes. Updates activate once all
+/* Bump VERSION whenever a precached file changes, and match it in the ?v= of
+   the js/ and css/ addresses in index.html, so CDNs can't serve older copies. Updates activate once all
    existing app windows close, keeping each session on a consistent version. */
-const VERSION = 'v14';
+const VERSION = 'v15';
 const CACHE_PREFIX = `qrforge-${self.registration.scope}-`;
 const CACHE_NAME = `${CACHE_PREFIX}${VERSION}`;
 const APP_URL = new URL('./', self.registration.scope).href;
@@ -38,7 +39,12 @@ const ASSETS = [
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
     const cache = await caches.open(CACHE_NAME);
-    await cache.addAll(ASSETS.map((url) => new Request(url, { cache: 'reload' })));
+    // The version in the address gets past CDNs that would serve an older copy.
+    await Promise.all(ASSETS.map(async (url) => {
+      const response = await fetch(new Request(`${url}?v=${VERSION}`, { cache: 'reload' }));
+      if (!response.ok) throw new Error(`Failed to cache ${url}`);
+      await cache.put(url, response);
+    }));
   })());
 });
 

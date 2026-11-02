@@ -71,6 +71,7 @@
   let stream = null;
   let timer = null;
   let cameraSession = 0;
+  let cameraOpening = false;
   let lastFailedFile = null;
 
   function describe(text) {
@@ -188,28 +189,40 @@
     overlayHint.textContent = tr("正在開啟相機…", "Starting the camera…");
     $("scan-close").focus();
     try {
-      await JSQR();
+      /* Ask right away, while the tap still counts as the reason for the prompt. */
+      const library = JSQR();
+      cameraOpening = true;
       const opened = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      cameraOpening = false;
       if (session !== cameraSession) {
         opened.getTracks().forEach((track) => track.stop());
         return;
       }
       stream = opened;
       video.srcObject = stream;
-      await video.play();
+      await library;
+      if (session !== cameraSession) return;
       overlayHint.textContent = tr("將 QR Code 對準框內", "Point the camera at a QR code");
+      /* Some browsers only start the picture after a tap on it. */
+      video.play().catch(() => {
+        overlayHint.textContent = tr("輕觸畫面開始", "Tap the screen to start");
+      });
       scanFrame();
     } catch (err) {
+      cameraOpening = false;
       if (session !== cameraSession) return;
       stopCamera();
       scanStatus.textContent = err.name === "NotAllowedError"
         ? tr("相機權限被拒絕，可在瀏覽器設定中允許，或改選圖片", "Camera access was denied. Allow it in your browser settings, or choose an image")
-        : tr("無法開啟相機，可以改選圖片", "Couldn't start the camera. Try choosing an image");
+        : tr(`無法開啟相機（${err.name}），可以改選圖片`, `Couldn't start the camera (${err.name}). Try choosing an image`);
     }
   }
 
   $("scan-camera-btn").addEventListener("click", startCamera);
   $("scan-close").addEventListener("click", stopCamera);
+  video.addEventListener("click", () => {
+    video.play().then(() => { overlayHint.textContent = tr("將 QR Code 對準框內", "Point the camera at a QR code"); }).catch(() => {});
+  });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") stopCamera(); });
   /* On phones, Back should close the camera rather than leave the site. */
   window.addEventListener("popstate", stopCamera);
@@ -442,5 +455,6 @@
 
   /* Release the camera as soon as it isn't on screen. */
   document.addEventListener("qrtabchange", stopCamera);
-  document.addEventListener("visibilitychange", () => { if (document.hidden) stopCamera(); });
+  /* Android hides the page while its own permission dialog is up, so wait that out. */
+  document.addEventListener("visibilitychange", () => { if (document.hidden && !cameraOpening) stopCamera(); });
 })();

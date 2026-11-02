@@ -221,7 +221,7 @@ To deploy, publish `index.html`, `manifest.webmanifest`, `sw.js`, `css/`, `js/`,
 Offline support requires HTTPS or `localhost`. The app still opens from `file://`, but without offline support or installation. See [Service Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) on MDN for details.
 
 > [!IMPORTANT]
-> Bump `VERSION` in [`sw.js`](sw.js) whenever a cached file changes, or returning users will keep the old version. A new version takes effect after all open windows and tabs of the app are closed. If the update fails, the previous version stays available offline.
+> Bump `VERSION` in [`sw.js`](sw.js) and the matching `?v=` in `index.html` whenever a cached file changes, or returning users will keep the old version. A new version takes effect after all open windows and tabs of the app are closed. If the update fails, the previous version stays available offline.
 
 ## Known limitations
 

@@ -220,7 +220,7 @@ python -m http.server 8000
 離線功能需要 HTTPS 或 `localhost`。直接以 `file://` 開啟仍可使用網頁，但無法離線使用或安裝。詳情請參閱 MDN 的 [Service Worker API](https://developer.mozilla.org/zh-TW/docs/Web/API/Service_Worker_API)。
 
 > [!IMPORTANT]
-> 快取的檔案有變更時，請遞增 [`sw.js`](sw.js) 中的 `VERSION`，否則已造訪過的使用者會繼續使用舊版。新版本會在關閉應用程式所有已開啟的視窗與分頁後生效;更新失敗時，舊版本仍可離線使用。
+> 快取的檔案有變更時，請遞增 [`sw.js`](sw.js) 中的 `VERSION` 與 `index.html` 中對應的 `?v=`，否則已造訪過的使用者會繼續使用舊版。新版本會在關閉應用程式所有已開啟的視窗與分頁後生效;更新失敗時，舊版本仍可離線使用。
 
 ## 已知限制
 
