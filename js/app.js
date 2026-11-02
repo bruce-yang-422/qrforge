@@ -14,6 +14,8 @@ const COLUMN_MAP = {
   "Qr-code檔案名稱": "name",
 };
 
+const BATCH_LIMIT = 500;
+
 /* ── Helpers ─────────────────────────────────────────────────────── */
 const _URL_RE      = /^https?:\/\/[^\s]+$/;
 const _NON_URL_RE  = /[\u4e00-\u9fff\u3040-\u30ff\u3400-\u4dbf\uff00-\uffef]/;
@@ -76,12 +78,12 @@ function hideSpinner() {
 function getSettings() {
   return {
     ecl:    document.getElementById("opt-ecl").value,
-    scale:  Math.max(2, parseInt(document.getElementById("opt-scale").value, 10) || 8),
+    scale:  Math.min(20, Math.max(2, parseInt(document.getElementById("opt-scale").value, 10) || 8)),
     format: document.querySelector("input[name='opt-fmt']:checked").value,
   };
 }
 
-/* ── QR generation — returns { format, canvas?, svg? } ───────────── */
+/* ── QR generation — returns { format, matrix, moduleMm, canvas?, svg? } ── */
 // Uses qrcode-generator (global: `qrcode` lowercase function).
 function makeQr(data) {
   const { ecl, scale, format } = getSettings();
@@ -91,13 +93,16 @@ function makeQr(data) {
   qr.addData(data, "Byte");
   qr.make();
 
+  const modules = qr.getModuleCount();
+  const matrix  = { size: modules, isDark: (r, c) => qr.isDark(r, c) };
+  const moduleMm = scale * 0.25;
+
   if (format === "SVG") {
     const svgStr = qr.createSvgTag(scale, 4);
-    return { format: "SVG", svg: svgStr };
+    return { format: "SVG", svg: svgStr, matrix, moduleMm };
   }
 
-  // Render onto an off-screen canvas (PNG / JPG).
-  const modules = qr.getModuleCount();
+  // Render onto an off-screen canvas (PNG / JPG, and the PDF preview).
   const margin  = 4 * scale;
   const size    = modules * scale + margin * 2;
   const canvas  = document.createElement("canvas");
@@ -115,15 +120,17 @@ function makeQr(data) {
     }
   }
 
-  return { format, canvas };
+  return { format, canvas, matrix, moduleMm };
 }
 
 /* ── Results state ───────────────────────────────────────────────── */
-// Each entry: { filename: string, qr: { format, canvas?, svg? } }
+// Each entry: { filename: string, qr: { format, matrix, moduleMm, canvas?, svg? } }
 const results = [];
+let limitWarned = false;
 
 function clearResults() {
   results.length = 0;
+  limitWarned = false;
   document.getElementById("results-grid").innerHTML = "";
   document.getElementById("toolbar").classList.remove("visible");
 }
@@ -197,11 +204,22 @@ function updateToolbar() {
 }
 
 /* ── Add a single generated QR to the UI ─────────────────────────── */
+function limitReached() {
+  if (results.length < BATCH_LIMIT) return false;
+  if (!limitWarned) {
+    limitWarned = true;
+    logWarn(`已達每批 ${BATCH_LIMIT} 張上限,其餘內容未產生 / Reached the limit of ${BATCH_LIMIT} per batch; the rest was skipped`);
+  }
+  return true;
+}
+
 async function addResult(filename, data) {
   const qr = makeQr(data);
   results.push({ filename, qr });
   renderCard(filename, qr);
   updateToolbar();
+  // Let the page repaint during large batches.
+  if (results.length % 25 === 0) await new Promise(resolve => setTimeout(resolve));
 }
 
 /* ── Download helpers ────────────────────────────────────────────── */
@@ -209,7 +227,13 @@ function downloadSingle(filename, qr) {
   const a   = document.createElement("a");
   const ext = qr.format.toLowerCase();
 
-  if (qr.format === "SVG") {
+  if (qr.format === "PDF") {
+    const blob = new Blob([QRPrint.qrPdf(qr.matrix, qr.moduleMm)], { type: "application/pdf" });
+    a.href     = URL.createObjectURL(blob);
+    a.download = `${filename}.pdf`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } else if (qr.format === "SVG") {
     const blob = new Blob([qr.svg], { type: "image/svg+xml;charset=utf-8" });
     a.href     = URL.createObjectURL(blob);
     a.download = `${filename}.svg`;
@@ -239,7 +263,9 @@ document.getElementById("zip-btn").addEventListener("click", async () => {
   const zip = new JSZip();
   for (const { filename, qr } of results) {
     const ext = qr.format.toLowerCase();
-    if (qr.format === "SVG") {
+    if (qr.format === "PDF") {
+      zip.file(`${filename}.pdf`, QRPrint.qrPdf(qr.matrix, qr.moduleMm));
+    } else if (qr.format === "SVG") {
       zip.file(`${filename}.svg`, qr.svg);
     } else {
       const mime   = qr.format === "JPG" ? "image/jpeg" : "image/png";
@@ -258,6 +284,37 @@ document.getElementById("zip-btn").addEventListener("click", async () => {
 
   zipBtn.disabled = false;
   zipBtn.innerHTML = `${ZIP_ICON} 全部下載 (ZIP)`;
+});
+
+/* ── Label sheet PDF ─────────────────────────────────────────────── */
+const labelSelect = document.getElementById("label-layout");
+for (const [key, layout] of Object.entries(QRPrint.LABEL_LAYOUTS)) {
+  labelSelect.add(new Option(layout.name, key));
+}
+
+// Below this size many phone cameras struggle to resolve the modules.
+const MIN_LABEL_MODULE_MM = 0.33;
+
+document.getElementById("label-btn").addEventListener("click", () => {
+  if (results.length === 0) return;
+  const key    = labelSelect.value;
+  const layout = QRPrint.LABEL_LAYOUTS[key];
+  const tooSmall = results.filter(({ qr }) =>
+    QRPrint.qrLabelModule(qr.matrix, layout.label[0], layout.label[1]) < MIN_LABEL_MODULE_MM).length;
+  if (tooSmall) {
+    logWarn(`${tooSmall} 張 QR Code 在此標籤上模組小於 ${MIN_LABEL_MODULE_MM} mm,可能難以掃描,建議改用較大的標籤 / ${tooSmall} QR code(s) have modules under ${MIN_LABEL_MODULE_MM} mm on this label and may be hard to scan. Consider a larger label`);
+  }
+
+  const bytes = QRPrint.labelSheet(key, results.length, (cell, pageHeight) =>
+    QRPrint.qrLabelOps(results[cell.index].qr.matrix, cell, pageHeight));
+  const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+  const a   = document.createElement("a");
+  a.href     = url;
+  a.download = `qrcode-labels-${key}.pdf`;
+  a.click();
+  URL.revokeObjectURL(url);
+  const sheets = Math.ceil(results.length / (layout.cols * layout.rows));
+  logOk(`標籤 PDF:${results.length} 張,共 ${sheets} 頁,請以 100% 比例列印 / Label PDF: ${results.length} labels on ${sheets} page(s). Print at 100% scale`);
 });
 
 /* ── Business logic ──────────────────────────────────────────────── */
@@ -303,6 +360,7 @@ async function processTxt(content, stem) {
       logOk(`${stem}`);
     } else {
       for (let i = 0; i < tokens.length; i++) {
+        if (limitReached()) break;
         const fname = `${stem}_${String(i + 1).padStart(5, "0")}`;
         await addResult(fname, tokens[i]);
         logOk(fname);
@@ -330,6 +388,7 @@ async function processCsv(content, stem) {
 
   let count = 0;
   for (let i = 1; i < lines.length; i++) {
+    if (limitReached()) break;
     const line = lines[i].trim();
     if (!line) continue;
     const values = parseCsvLine(line);
@@ -387,6 +446,7 @@ async function processExcel(arrayBuffer, stem) {
 
   let count = 0;
   for (let i = 1; i < aoa.length; i++) {
+    if (limitReached()) break;
     const values = aoa[i];
     const rawRow = {};
     headers.forEach((h, idx) => {
@@ -454,6 +514,7 @@ async function handleFiles(fileList) {
   showSpinner();
 
   for (const file of Array.from(fileList)) {
+    if (limitReached()) break;
     await processFile(file);
   }
 
@@ -466,6 +527,33 @@ async function handleFiles(fileList) {
     logWarn("沒有產生任何 QR code，請確認輸入檔案格式。/ No QR codes generated — check input file format.");
   }
 }
+
+/* ── Batch list: one QR code per line ────────────────────────────── */
+document.getElementById("batch-list-btn").addEventListener("click", async () => {
+  const lines = document.getElementById("batch-list").value
+    .split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  const error = document.getElementById("batch-list-error");
+  error.textContent = "";
+  if (lines.length === 0) { error.textContent = "請至少輸入一行 / Enter at least one line"; return; }
+
+  clearLog();
+  clearResults();
+  showSpinner();
+  for (let i = 0; i < lines.length; i++) {
+    if (limitReached()) break;
+    const row = { type: isUrl(lines[i]) ? "url" : "text" };
+    const fname = generateFilename(row, i + 1);
+    try {
+      await addResult(fname, lines[i]);
+      logOk(fname);
+    } catch (err) {
+      logErr(`第 ${i + 1} 行 / Line ${i + 1}: ${err.message}`);
+    }
+  }
+  hideSpinner();
+  logInfo(`✅ 完成!共產生 ${results.length} 張 QR Code / Done! ${results.length} QR code(s) generated.`);
+  updateToolbar();
+});
 
 /* ── Quick input wiring ──────────────────────────────────────────── */
 const qiType     = document.getElementById("qi-type");
@@ -533,6 +621,7 @@ document.getElementById("qi-btn").addEventListener("click", async () => {
     // Pre-compute base name once so all URLs in the batch share the same timestamp.
     const base = nameInput ? sanitizeFilename(nameInput) : qiTimestampBase();
     for (let i = 0; i < urls.length; i++) {
+      if (limitReached()) break;
       const seq   = String(i + 1).padStart(3, "0");
       const fname = urls.length === 1 ? base : `${base}_${seq}`;
       try {

@@ -2,215 +2,246 @@
 
 # QRForge
 
-**English** | [繁體中文](README.zh-TW.md)
+**繁體中文** | [English](README.en.md)
 
-Batch-generate QR codes from CSV, Excel, and TXT files, in your browser or from the command line.
+產生、掃描與檢測 QR Code,並製作可直接印刷的條碼。可在瀏覽器中使用;批次產生 QR Code 也可用命令列。
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Last Commit](https://img.shields.io/github/last-commit/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge/commits/main)
 [![Issues](https://img.shields.io/github/issues/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge/issues)
 
-**[Open the web app](https://bruce-yang-422.github.io/qrforge)** · [Report a bug](https://github.com/bruce-yang-422/qrforge/issues)
+**[開啟網頁版](https://bruce-yang-422.github.io/qrforge)** · [回報問題](https://github.com/bruce-yang-422/qrforge/issues)
 
-QRForge comes in two forms that read the same input formats:
+QRForge 提供兩種使用方式,兩者讀取相同的輸入格式:
 
-- **Web app:** an installable PWA with no setup. Files are processed locally in the browser and are never uploaded.
-- **Command-line tool:** a Python script that converts everything in a folder in one run.
+- **網頁版:** 可安裝的 PWA,不需任何設定。檔案只在瀏覽器內處理,不會上傳。
+- **命令列工具:** Python 腳本,一次轉換資料夾內的所有檔案。
 
-The web interface is bilingual (Traditional Chinese and English).
+網頁介面為繁體中文與英文雙語。
 
-## Contents
+## 目錄
 
-- [Features](#features)
-- [Getting started](#getting-started)
-- [Input formats](#input-formats)
-- [Output filenames](#output-filenames)
-- [Configuration](#configuration)
-- [Project structure](#project-structure)
-- [Deploying the web app](#deploying-the-web-app)
-- [Known limitations](#known-limitations)
-- [Contributing](#contributing)
-- [License](#license)
+- [功能特色](#功能特色)
+- [開始使用](#開始使用)
+- [網頁版工具](#網頁版工具)
+- [輸入格式](#輸入格式)
+- [輸出檔名](#輸出檔名)
+- [設定](#設定)
+- [專案結構](#專案結構)
+- [部署網頁版](#部署網頁版)
+- [已知限制](#已知限制)
+- [參與貢獻](#參與貢獻)
+- [授權條款](#授權條款)
 
-## Features
+## 功能特色
 
-- Generates QR codes for URLs, plain text, and WiFi credentials
-- Reads CSV, Excel (`.xlsx`), and TXT files
-- Detects whether a TXT file holds URLs or plain text
-- Exports PNG, JPG, or SVG with adjustable error correction and scale
-- **Web app:** quick single-code form, drag-and-drop upload of multiple files, ZIP download, and offline use
-- **CLI:** recursive scan of the input folder and a timestamped log for each run
+- 可為網址、純文字與 WiFi 連線資訊產生 QR Code
+- 支援讀取 CSV、Excel(`.xlsx`)與 TXT 檔案
+- 自動判斷 TXT 檔的內容是網址或純文字
+- 可輸出 PNG、JPG 或 SVG,並可調整容錯等級與縮放比例
+- **網頁版:** 提供單筆快速產生表單、每批最多 500 張的批次產生、ZIP 與 PDF 下載、標籤紙與離線使用
+- **僅限網頁版:** QR Code 掃描器、QR Code 偵測器與條碼產生器
+- **命令列工具:** 遞迴掃描輸入資料夾,每次執行都會產生帶時間戳記的記錄檔
 
-## Getting started
+## 開始使用
 
-### Web app
+### 網頁版
 
-Open <https://bruce-yang-422.github.io/qrforge>, then either fill in the **Quick Generate** form or drop your files onto the upload area. Sample templates can be downloaded from the upload area, and format, scale, and error correction are under **Advanced Options**.
+開啟 <https://bruce-yang-422.github.io/qrforge>,填寫「快速產生」表單,或將檔案拖放到上傳區。上傳區可下載範本檔案,輸出格式、縮放比例與容錯等級則在「進階選項」中調整。
 
-To use the app offline, open it once while connected and wait for the header to show **Offline ready**. To install it, use the **Install App** button or your browser's install menu. On iPhone and iPad, choose **Add to Home Screen** from the Safari share menu.
+如需離線使用,請先在連線狀態下開啟一次,等頁首顯示「已可離線使用」即可。如需安裝,請使用「安裝應用程式」按鈕或瀏覽器選單的安裝功能;iPhone 和 iPad 請在 Safari 分享選單選擇「加入主畫面」。
 
-### Command line
+### 命令列工具
 
-Requires Python 3.10 or later.
+需要 Python 3.10 以上版本。
 
 ```bash
 git clone https://github.com/bruce-yang-422/qrforge.git
 cd qrforge
 
 python -m venv .venv
-source .venv/bin/activate     # Windows: .venv\Scripts\activate
+source .venv/bin/activate     # Windows:.venv\Scripts\activate
 
 pip install -r requirements.txt
 ```
 
-Put your source files in `input/`, then run the script from the repository root:
+將來源檔案放入 `input/`,然後在專案根目錄執行:
 
 ```bash
 python main.py
 ```
 
-QR codes are written to `output/`, and the log is written to `logs/run_YYYYMMDD_HHMMSS.log`.
+QR Code 會輸出至 `output/`,記錄檔則寫入 `logs/run_YYYYMMDD_HHMMSS.log`。
 
 > [!WARNING]
-> The log directory is deleted and recreated on every run, so only the latest log is kept. Don't store other files there.
+> 每次執行都會刪除並重建記錄資料夾,只保留最新一份記錄檔,請勿在其中存放其他檔案。
 
-## Input formats
+## 網頁版工具
 
-Sample files: [CSV](assets/sample.csv) · [Excel](assets/sample.xlsx) · [TXT](assets/sample.txt)
+這些工具僅限網頁版。所有處理都在本機進行,圖片不會上傳。
 
-### CSV and Excel
+| 分頁 | 功能 |
+| --- | --- |
+| **QR 產生** | 產生單張 QR Code,或以逗號分隔多個網址一次產生 |
+| **批次** | 從貼上的清單或 CSV、Excel、TXT 檔案產生最多 500 張,可輸出 PNG、JPG、SVG 或 PDF 並打包成 ZIP,也可排版成標籤紙 |
+| **掃描器** | 從相機、照片或貼上的截圖讀取 QR Code。連結只有在你點選後才會開啟 |
+| **偵測器** | 回報 QR Code 能否掃描,並提供評等、版本、容錯等級、對比、靜區與損傷模組圖 |
+| **條碼** | 以實際列印尺寸製作條碼,每次變更都會用另一套解碼器重新讀取驗證 |
 
-The first row is the header, and each following row produces one QR code. Header names must match the Traditional Chinese names below exactly. Only the first worksheet (web) or the active worksheet (CLI) of an Excel file is read.
+**條碼類型:** EAN-13、EAN-8、UPC-A、UPC-E、ISBN、Code 128、ITF-14、GS1-128、SSCC-18 與 Data Matrix。校驗碼省略時會自動計算,填寫時會加以驗證。
 
-| Column | Required | Description |
+**條碼下載:** 300、600 或 1200 dpi 的 PNG,以毫米為單位的 SVG、EPS、PDF,或整張標籤紙 PDF。
+
+**標籤紙:** L7160、L7163、L7165(A4)與 5160、5163(US Letter)。尺寸依公開的標籤紙規格設定,QRForge 與 Avery 沒有關聯。請以 100% 比例列印,並先用一般紙張試印。
+
+> [!NOTE]
+> 偵測器的評等是依影像估算,並非 ISO/IEC 15415 或 15416 正式驗證。大量印刷前請先實際列印測試。
+
+## 輸入格式
+
+範本檔案:[CSV](assets/sample.csv) · [Excel](assets/sample.xlsx) · [TXT](assets/sample.txt)
+
+### CSV 與 Excel
+
+第一列為標題列,之後每一列產生一張 QR Code。欄位名稱必須與下表完全相同。Excel 檔案只會讀取第一個工作表(網頁版)或作用中工作表(命令列工具)。
+
+| 欄位名稱 | 必填 | 說明 |
 | --- | --- | --- |
-| `類型` (type) | Yes | `url`, `text`, `line`, or `wifi` |
-| `資料` (data) | For `url`, `text`, `line` | Content to encode, used as is |
-| `WiFi名稱` (SSID) | For `wifi` | Network name |
-| `WiFi密碼` (password) | For `wifi` | Network password; leave empty for open networks |
-| `加密方式` (security) | For `wifi` | `WPA`, `WEP`, or `nopass` |
-| `Qr-code檔案名稱` (filename) | No | Output filename without extension |
+| `類型` | 是 | `url`、`text`、`line` 或 `wifi` |
+| `資料` | `url`、`text`、`line` 類型必填 | 要編碼的內容,會原樣寫入 |
+| `WiFi名稱` | `wifi` 類型必填 | 網路名稱(SSID) |
+| `WiFi密碼` | `wifi` 類型必填 | 網路密碼;開放網路請留空 |
+| `加密方式` | `wifi` 類型必填 | `WPA`、`WEP` 或 `nopass` |
+| `Qr-code檔案名稱` | 否 | 輸出檔名,不含副檔名 |
 
-Rows with no content to encode are skipped. An invalid row is logged and does not stop the run.
+沒有可編碼內容的資料列會被略過。無效的資料列會記錄錯誤,但不會中斷執行。
 
 ```csv
 類型,資料,WiFi名稱,WiFi密碼,加密方式,Qr-code檔案名稱
-url,https://example.com,,,,website
-wifi,,MySSID,MyPassword,WPA,office-wifi
+url,https://example.com,,,,官網
+wifi,,MySSID,MyPassword,WPA,辦公室WiFi
 text,Hello World,,,,
 ```
 
 ### TXT
 
-Content is split on commas and line breaks, then handled according to what it contains:
+內容會先以逗號和換行分割,再依內容決定處理方式:
 
-| Content | Treated as | Output |
+| 內容 | 判定結果 | 輸出 |
 | --- | --- | --- |
-| One URL | URL | `{stem}.png` |
-| Multiple URLs | One code per URL | `{stem}_00001.png`, `{stem}_00002.png`, … |
-| Anything else, including a mix of URLs and text | Plain text | `{stem}.png`, encoding the whole file |
+| 單一網址 | 網址 | `{檔名}.png` |
+| 多個網址 | 每個網址各一張 | `{檔名}_00001.png`、`{檔名}_00002.png`… |
+| 其他內容,包含網址與文字混合 | 純文字 | `{檔名}.png`,將整個檔案編碼為一張 |
 
-`{stem}` is the source filename without its extension. A URL must start with `http://` or `https://` and contain no whitespace, CJK, or full-width characters.
+`{檔名}` 是來源檔案不含副檔名的名稱。網址必須以 `http://` 或 `https://` 開頭,且不可包含空白、中日韓文字或全形字元。
 
 ```text
 https://example.com
 https://github.com
 ```
 
-## Output filenames
+## 輸出檔名
 
-For CSV and Excel rows, the filename is the first of these that applies:
+CSV 與 Excel 的資料列依下列順序決定檔名,採用第一個符合的項目:
 
-1. The `Qr-code檔案名稱` value
-2. The WiFi SSID
-3. `{type}_{number}`, such as `url_00001`
+1. `Qr-code檔案名稱` 欄位的值
+2. WiFi 名稱(SSID)
+3. `{類型}_{序號}`,例如 `url_00001`
 
-Characters that are illegal in filenames (`\ / : * ? " < > |`) are removed.
+檔名中的不合法字元(`\ / : * ? " < > |`)會被移除。
 
-In the Quick Generate form, an empty filename defaults to `Qrcode_YYYYMMDD_HHMM_001`.
+在「快速產生」表單中,檔名留空時預設為 `Qrcode_YYYYMMDD_HHMM_001`。
 
-## Configuration
+## 設定
 
-The CLI reads its settings from [`config/settings.py`](config/settings.py). In the web app, the QR and format settings are under **Advanced Options**.
+命令列工具的設定位於 [`config/settings.py`](config/settings.py)。網頁版的 QR Code 與輸出格式設定則在「進階選項」中調整。
 
-| Key | Default | Description |
+| 設定項目 | 預設值 | 說明 |
 | --- | --- | --- |
-| `paths.input_dir` | `input` | Folder scanned for source files |
-| `paths.output_dir` | `output` | Folder for generated images |
-| `paths.log_dir` | `logs` | Folder for logs, cleared on each run |
-| `qr.error_correction` | `M` | `L`, `M`, `Q`, or `H` |
-| `qr.scale` | `8` | Pixels per QR module |
-| `output.format` | `SVG` | `PNG`, `JPG`, or `SVG`, in uppercase |
-| `csv.delimiter` | `,` | CSV field delimiter; use `"\t"` for TSV |
+| `paths.input_dir` | `input` | 掃描來源檔案的資料夾 |
+| `paths.output_dir` | `output` | 圖片輸出資料夾 |
+| `paths.log_dir` | `logs` | 記錄檔資料夾,每次執行時清空 |
+| `qr.error_correction` | `M` | `L`、`M`、`Q` 或 `H` |
+| `qr.scale` | `8` | 每個 QR 模組的像素數 |
+| `output.format` | `SVG` | `PNG`、`JPG` 或 `SVG`,須為大寫 |
+| `csv.delimiter` | `,` | CSV 分隔符號;TSV 請使用 `"\t"` |
 
-The web app defaults to PNG, accepts a scale of 2 to 20, and always reads CSV files as comma-delimited.
+網頁版預設輸出 PNG,縮放比例可設為 2 到 20,CSV 一律以逗號分隔讀取。
 
-Higher error correction tolerates more damage but produces a denser code:
+容錯等級越高,可容許的損壞越多,但圖案也越密集:
 
-| Level | Recovery capacity | Typical use |
+| 等級 | 可復原比例 | 適用情境 |
 | --- | --- | --- |
-| `L` | ~7% | Clean environments |
-| `M` | ~15% | General use |
-| `Q` | ~25% | Codes that may be partly obscured or dirty |
-| `H` | ~30% | High risk of damage, such as stickers or clothing |
+| `L` | 約 7% | 環境乾淨 |
+| `M` | 約 15% | 一般用途 |
+| `Q` | 約 25% | 可能有部分遮蔽或髒污 |
+| `H` | 約 30% | 損壞風險高,例如貼紙或衣物 |
 
-## Project structure
+## 專案結構
 
 ```text
 qrforge/
-├── main.py                 # CLI entry point
-├── requirements.txt        # Python dependencies
-├── config/settings.py      # CLI settings
-├── input/                  # CLI source files (git-ignored)
-├── output/                 # CLI generated images (git-ignored)
-├── logs/                   # CLI run logs (git-ignored)
-├── index.html              # Web app entry point
-├── css/style.css           # Web app styles
-├── js/app.js               # Browser port of the main.py logic
-├── js/pwa.js               # Install prompt and offline status
-├── sw.js                   # Service worker
+├── main.py                 # 命令列工具進入點
+├── requirements.txt        # Python 相依套件
+├── config/settings.py      # 命令列工具設定
+├── input/                  # 命令列工具來源檔案(不納入 Git)
+├── output/                 # 命令列工具輸出圖片(不納入 Git)
+├── logs/                   # 命令列工具記錄檔(不納入 Git)
+├── index.html              # 網頁版進入點
+├── css/style.css           # 網頁版樣式
+├── js/app.js               # QR Code 產生,main.py 的瀏覽器移植版
+├── js/tabs.js              # 分頁切換與函式庫延遲載入
+├── js/scanner.js           # QR Code 掃描器與偵測器介面
+├── js/qr-analyze.js        # 模組取樣、錯誤更正與評等
+├── js/barcode.js           # 條碼產生器介面
+├── js/barcode-rules.js     # 條碼驗證與校驗碼
+├── js/print.js             # PDF、EPS 與標籤紙輸出
+├── js/pwa.js               # 安裝提示與離線狀態
+├── sw.js                   # Service Worker
 ├── manifest.webmanifest    # PWA manifest
-├── libs/                   # Vendored browser libraries
-└── assets/                 # Sample templates, app icons, and logo
+├── libs/                   # 內附的瀏覽器函式庫
+└── assets/                 # 範本檔案、應用程式圖示與標誌
 ```
 
-## Deploying the web app
+## 部署網頁版
 
-The web app is a static site with no build step. To preview it locally:
+網頁版是靜態網站,不需要建置步驟。本機預覽方式:
 
 ```bash
 python -m http.server 8000
 ```
 
-Then open <http://localhost:8000>.
+然後開啟 <http://localhost:8000>。
 
-To deploy, publish `index.html`, `manifest.webmanifest`, `sw.js`, `css/`, `js/`, `libs/`, and `assets/` to any static host. All paths are relative, so subdirectories such as GitHub Pages' `/qrforge/` work.
+部署時,請將 `index.html`、`manifest.webmanifest`、`sw.js`、`css/`、`js/`、`libs/` 與 `assets/` 發布到任一靜態主機。所有路徑皆為相對路徑,因此也支援 GitHub Pages 的 `/qrforge/` 這類子目錄。
 
-Offline support requires HTTPS or `localhost`. The app still opens from `file://`, but without offline support or installation. See [Service Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) on MDN for details.
+離線功能需要 HTTPS 或 `localhost`。直接以 `file://` 開啟仍可使用網頁,但無法離線使用或安裝。詳情請參閱 MDN 的 [Service Worker API](https://developer.mozilla.org/zh-TW/docs/Web/API/Service_Worker_API)。
 
 > [!IMPORTANT]
-> Bump `VERSION` in [`sw.js`](sw.js) whenever a cached file changes, or returning users will keep the old version. A new version takes effect after all open windows and tabs of the app are closed. If the update fails, the previous version stays available offline.
+> 快取的檔案有變更時,請遞增 [`sw.js`](sw.js) 中的 `VERSION`,否則已造訪過的使用者會繼續使用舊版。新版本會在關閉應用程式所有已開啟的視窗與分頁後生效;更新失敗時,舊版本仍可離線使用。
 
-## Known limitations
+## 已知限制
 
-- **CLI filename collisions:** all images go directly into `output/`, regardless of input subfolders, and existing files with the same name are overwritten. Automatic numbering restarts for each source file, so unnamed rows from different files can overwrite each other. Filling in the filename column avoids this.
-- **CSV files with a BOM (CLI):** a UTF-8 file with a byte order mark, such as Excel's "CSV UTF-8" export, fails with a missing-column error. Use a file without a BOM, an `.xlsx` file, or the web app.
-- **WiFi security default:** the web app treats an empty security value as `WPA`. The CLI only does so when the column is missing entirely, so fill it in for CLI input.
-- **WiFi special characters:** `;`, `,`, `:`, `\`, and `"` in an SSID or password are not escaped, so the resulting code may not connect.
-- **Commas in URLs:** TXT files and the Quick Generate URL field treat commas as separators, so a URL containing one is split.
-- **Multi-line CSV fields (web):** the browser's CSV parser reads line by line, so quoted fields containing line breaks aren't supported.
+- **命令列工具的檔名衝突:** 不論來源檔案位於哪個子資料夾,圖片都會直接輸出到 `output/`,同名檔案會被覆蓋。每個來源檔案的自動編號都會重新起算,因此不同檔案中未命名的資料列可能互相覆蓋。填寫檔名欄位即可避免。
+- **含 BOM 的 CSV 檔(命令列工具):** 含位元組順序標記的 UTF-8 檔案(例如 Excel 匯出的「CSV UTF-8」)會出現缺少欄位的錯誤。請改用不含 BOM 的檔案、`.xlsx` 檔或網頁版。
+- **WiFi 加密方式預設值:** 網頁版會將空白的加密方式視為 `WPA`;命令列工具只有在整個欄位不存在時才會如此,因此使用命令列工具時請填寫此欄位。
+- **WiFi 特殊字元:** SSID 或密碼中的 `;`、`,`、`:`、`\`、`"` 不會被跳脫,產生的 QR Code 可能無法連線。
+- **網址中的逗號:** TXT 檔與「快速產生」的網址欄位都以逗號作為分隔符號,因此含逗號的網址會被拆開。
+- **標籤紙:** 標籤上只有條碼本身,沒有文字說明。
+- **偵測器與掃描器:** 每張圖片只讀取一個 QR Code,圖片中有多個時只會回傳一個結果。
+- **多行 CSV 欄位(網頁版):** 瀏覽器端的 CSV 解析器逐行讀取,不支援引號內含換行的欄位。
 
-## Contributing
+## 參與貢獻
 
-Issues and pull requests are welcome. Before submitting a change, keep in mind:
+歡迎提交 Issue 與 Pull Request。提交變更前請留意:
 
-- `js/app.js` mirrors the logic in `main.py`, so apply input and filename changes to both.
-- There is no automated test suite yet, so test changes manually using the [sample files](assets/).
-- To update a browser library, follow the steps in [`libs/README.md`](libs/README.md).
+- `js/app.js` 與 `main.py` 的邏輯相互對應,修改輸入或檔名規則時請同步更新兩者。
+- 專案目前沒有自動化測試,請使用[範本檔案](assets/)手動測試。
+- 更新瀏覽器函式庫時,請依照 [`libs/README.md`](libs/README.md) 的步驟操作。
 
-## License
+## 授權條款
 
-Released under the [MIT License](LICENSE).
+本專案採用 [MIT 授權條款](LICENSE)。
 
-Built with [segno](https://github.com/heuer/segno), [Pillow](https://python-pillow.org/), and [openpyxl](https://openpyxl.readthedocs.io/) for the CLI, and [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator), [SheetJS](https://sheetjs.com/), and [JSZip](https://stuk.github.io/jszip/) for the web app. Versions and license files for the browser libraries are listed in [`libs/README.md`](libs/README.md).
+命令列工具使用 [segno](https://github.com/heuer/segno)、[Pillow](https://python-pillow.org/) 與 [openpyxl](https://openpyxl.readthedocs.io/);網頁版使用 [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator)、[SheetJS](https://sheetjs.com/)、[JSZip](https://stuk.github.io/jszip/)、[jsQR](https://github.com/cozmo/jsQR)、[bwip-js](https://github.com/metafloor/bwip-js) 與 [ZXing for JS](https://github.com/zxing-js/library)。瀏覽器函式庫的版本與授權檔案列於 [`libs/README.md`](libs/README.md)。

@@ -1,6 +1,6 @@
 /* Bump VERSION whenever a precached file changes. Updates activate once all
    existing app windows close, keeping each session on a consistent version. */
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE_PREFIX = `qrforge-${self.registration.scope}-`;
 const CACHE_NAME = `${CACHE_PREFIX}${VERSION}`;
 const APP_URL = new URL('./', self.registration.scope).href;
@@ -10,10 +10,19 @@ const ASSETS = [
   'css/style.css',
   'js/app.js',
   'js/pwa.js',
+  'js/print.js',
+  'js/tabs.js',
+  'js/qr-analyze.js',
+  'js/scanner.js',
+  'js/barcode-rules.js',
+  'js/barcode.js',
   'manifest.webmanifest',
   'libs/qrcode.min.js',
   'libs/xlsx.full.min.js',
   'libs/jszip.min.js',
+  'libs/jsQR.js',
+  'libs/bwip-js.min.js',
+  'libs/zxing.min.js',
   'assets/sample.csv',
   'assets/sample.xlsx',
   'assets/sample.txt',
