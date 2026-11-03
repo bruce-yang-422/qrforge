@@ -5,14 +5,18 @@
 
 # QRForge
 
+[![Web App](https://img.shields.io/website?url=https%3A%2F%2Fqrforge.stack-base.com&label=web%20app)](https://qrforge.stack-base.com)
+[![PWA: offline ready](https://img.shields.io/badge/PWA-offline%20ready-5A0FC8?logo=pwa&logoColor=white)](#網頁版)
+[![JavaScript: no build step](https://img.shields.io/badge/JavaScript-no%20build%20step-F7DF1E?logo=javascript&logoColor=black)](js/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![Languages: 繁體中文 and English](https://img.shields.io/badge/languages-%E7%B9%81%E9%AB%94%E4%B8%AD%E6%96%87%20%7C%20English-orange)](README.en.md)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Last Commit](https://img.shields.io/github/last-commit/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge/commits/main)
+[![Issues](https://img.shields.io/github/issues/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge/issues)
+
 **繁體中文** | [English](README.en.md)
 
 產生、掃描與檢測 QR Code（二維碼），並製作可直接印刷的條碼。可在瀏覽器中使用;批次產生 QR Code 也可用命令列。
-
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![Last Commit](https://img.shields.io/github/last-commit/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge/commits/main)
-[![Issues](https://img.shields.io/github/issues/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge/issues)
 
 **[開啟網頁版](https://qrforge.stack-base.com)** · [回報問題](https://github.com/bruce-yang-422/qrforge/issues)
 
