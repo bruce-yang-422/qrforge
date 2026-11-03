@@ -67,7 +67,10 @@
   const scanStatus = $("scan-status");
   const scanResults = $("scan-results");
   const toDetect = $("scan-to-detect");
-  const seen = new Set();
+  const liveBox = $("scan-live");
+  const resultsHome = scanResults.parentElement;
+  const seen = new Map();
+  let lastRead = null;
   let stream = null;
   let timer = null;
   let cameraSession = 0;
@@ -86,9 +89,12 @@
     return { kind: tr("文字", "Text") };
   }
 
+  /* Returns the row, moving it to the top if this text was already read. */
   function addScanResult(text) {
-    if (seen.has(text)) return;
-    seen.add(text);
+    if (seen.has(text)) {
+      scanResults.prepend(seen.get(text));
+      return seen.get(text);
+    }
     const info = describe(text);
 
     const row = document.createElement("div");
@@ -133,7 +139,9 @@
     });
     actions.append(copy);
     row.append(actions);
+    seen.set(text, row);
     scanResults.prepend(row);
+    return row;
   }
 
   /* Each camera start gets a number, so a close during the permission prompt wins. */
@@ -147,18 +155,23 @@
     if (overlay.hidden) return;
     overlay.hidden = true;
     document.body.classList.remove("camera-open");
+    resultsHome.append(scanResults);
     $("scan-camera-btn").focus();
     /* Drop the history entry added on opening, unless Back already removed it. */
     if (history.state && history.state.qrCamera) history.back();
+    if (lastRead !== null) scanResults.scrollIntoView({ block: "center" });
   }
 
-  function finishScan(text) {
-    seen.delete(text);
-    addScanResult(text);
-    stopCamera();
-    scanStatus.textContent = "";
+  /* The camera reads the same code many times a second, so react only to a change. */
+  function showCameraRead(text) {
+    if (text === lastRead) return;
+    lastRead = text;
+    const row = addScanResult(text);
+    row.classList.remove("just-read");
+    void row.offsetWidth;
+    row.classList.add("just-read");
+    liveBox.scrollTop = 0;
     if (navigator.vibrate) navigator.vibrate(100);
-    scanResults.scrollIntoView({ block: "center" });
   }
 
   function scanFrame() {
@@ -167,10 +180,7 @@
       const scale = Math.min(1, 800 / Math.max(video.videoWidth, video.videoHeight));
       const image = toImageData(video, video.videoWidth, video.videoHeight, scale);
       const code = jsQR(image.data, image.width, image.height, { inversionAttempts: "attemptBoth" });
-      if (code && code.data) {
-        finishScan(code.data);
-        return;
-      }
+      if (code && code.data) showCameraRead(code.data);
     }
     timer = setTimeout(scanFrame, 200);
   }
@@ -183,6 +193,8 @@
       return;
     }
     const session = ++cameraSession;
+    lastRead = null;
+    liveBox.prepend(scanResults);
     overlay.hidden = false;
     document.body.classList.add("camera-open");
     history.pushState({ qrCamera: true }, "");
@@ -233,7 +245,6 @@
     try {
       const { code } = await decodeBitmap(await readFile(file));
       if (code && code.data) {
-        seen.delete(code.data);
         addScanResult(code.data);
         scanStatus.textContent = "";
       } else {

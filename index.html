@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="css/style.css?v=17" />
+  <link rel="stylesheet" href="css/style.css?v=18" />
 
   <!-- Local libraries keep all features available offline. -->
   <script src="libs/qrcode.min.js"></script>
@@ -354,10 +354,15 @@
 
   <!-- Full-screen camera, so nothing has to be scrolled into view. -->
   <div id="scan-overlay" role="dialog" aria-modal="true" data-i18n-label="相機掃描|Camera scanner" hidden>
-    <video id="scan-video" playsinline muted autoplay></video>
-    <div class="scan-frame" aria-hidden="true"></div>
-    <p id="scan-overlay-hint" class="scan-overlay-hint" role="status" aria-live="polite"></p>
-    <button id="scan-close" type="button" class="btn scan-close" data-i18n="關閉相機|Close camera"></button>
+    <div class="scan-view">
+      <video id="scan-video" playsinline muted autoplay></video>
+      <div class="scan-frame" aria-hidden="true"></div>
+      <p id="scan-overlay-hint" class="scan-overlay-hint" role="status" aria-live="polite"></p>
+      <button id="scan-close" type="button" class="btn scan-close" data-i18n="關閉相機|Close camera"></button>
+    </div>
+    <div id="scan-live" aria-live="polite">
+      <p class="scan-live-empty" data-i18n="掃描到的內容會顯示在這裡|What the camera reads appears here"></p>
+    </div>
   </div>
 
   <footer class="app-footer">
@@ -368,16 +373,16 @@
 </div><!-- /.page-wrap -->
 
 <!-- App logic -->
-<script src="js/i18n.js?v=17"></script>
-<script src="js/print.js?v=17"></script>
-<script src="js/share.js?v=17"></script>
-<script src="js/tabs.js?v=17"></script>
-<script src="js/app.js?v=17"></script>
-<script src="js/qr-analyze.js?v=17"></script>
-<script src="js/scanner.js?v=17"></script>
-<script src="js/barcode-rules.js?v=17"></script>
-<script src="js/barcode.js?v=17"></script>
+<script src="js/i18n.js?v=18"></script>
+<script src="js/print.js?v=18"></script>
+<script src="js/share.js?v=18"></script>
+<script src="js/tabs.js?v=18"></script>
+<script src="js/app.js?v=18"></script>
+<script src="js/qr-analyze.js?v=18"></script>
+<script src="js/scanner.js?v=18"></script>
+<script src="js/barcode-rules.js?v=18"></script>
+<script src="js/barcode.js?v=18"></script>
 <script>QRTabs.start();</script>
-<script src="js/pwa.js?v=17"></script>
+<script src="js/pwa.js?v=18"></script>
 </body>
 </html>
