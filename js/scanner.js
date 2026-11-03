@@ -4,6 +4,7 @@
    =================================================================== */
 (() => {
   const MAX_SIDE = 2000;
+  const SVG_SIDE = 1500;
   const $ = (id) => document.getElementById(id);
 
   const JSQR = () => QRTabs.loadScript("libs/jsQR.js");
@@ -36,9 +37,37 @@
     return { code: null, image: toImageData(bitmap, bitmap.width, bitmap.height, base) };
   }
 
+  /* createImageBitmap can't open SVG, so draw it large enough to keep modules sharp.
+     As an <img> source, any script inside it never runs. */
+  async function readSvg(file) {
+    const url = URL.createObjectURL(new Blob([file], { type: "image/svg+xml" }));
+    try {
+      const image = new Image();
+      image.src = url;
+      await image.decode();
+      const longest = Math.max(image.naturalWidth, image.naturalHeight);
+      const scale = longest ? SVG_SIDE / longest : 1;
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(image.naturalWidth * scale) || SVG_SIDE;
+      canvas.height = Math.round(image.naturalHeight * scale) || SVG_SIDE;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      return await createImageBitmap(canvas);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
   async function readFile(file) {
-    if (!file.type.startsWith("image/")) throw new Error(tr("請選擇圖片檔", "Please choose an image file"));
-    return createImageBitmap(file);
+    const isSvg = file.type === "image/svg+xml" || /\.svg$/i.test(file.name);
+    if (!isSvg && !file.type.startsWith("image/")) throw new Error(tr("請選擇圖片檔", "Please choose an image file"));
+    try {
+      return await (isSvg ? readSvg(file) : createImageBitmap(file));
+    } catch {
+      throw new Error(tr("這個檔案無法開啟，可能已損毀", "This file couldn't be opened. It may be damaged"));
+    }
   }
 
   /* Wires a drop zone to its hidden file input. */

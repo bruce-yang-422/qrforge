@@ -15,7 +15,7 @@
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="css/style.css?v=20" />
+  <link rel="stylesheet" href="css/style.css?v=21" />
 
   <!-- Local libraries keep all features available offline. -->
   <script src="libs/qrcode.min.js"></script>
@@ -241,7 +241,7 @@
           <svg class="icon icon-lg"><use href="#i-image"/></svg>
           <strong data-i18n="選擇圖片或截圖|Choose an image or screenshot"></strong>
           <span class="hint" data-i18n="也可以拖曳，或按 Ctrl+V 貼上|You can also drop it, or paste with Ctrl+V"></span>
-          <input id="scan-file" type="file" accept="image/*" hidden />
+          <input id="scan-file" type="file" accept="image/*,.svg" hidden />
         </div>
       </div>
       <p id="scan-status" class="status-text" role="status" aria-live="polite"></p>
@@ -259,7 +259,7 @@
         <svg class="icon icon-lg"><use href="#i-image"/></svg>
         <strong data-i18n="選擇 QR Code 圖片|Choose a QR code image"></strong>
         <span class="hint" data-i18n="也可以拖曳，或按 Ctrl+V 貼上|You can also drop it, or paste with Ctrl+V"></span>
-        <input id="detect-file" type="file" accept="image/*" hidden />
+        <input id="detect-file" type="file" accept="image/*,.svg" hidden />
       </div>
       <div id="detect-report" role="status" aria-live="polite"></div>
     </div>
@@ -373,16 +373,16 @@
 </div><!-- /.page-wrap -->
 
 <!-- App logic -->
-<script src="js/i18n.js?v=20"></script>
-<script src="js/print.js?v=20"></script>
-<script src="js/share.js?v=20"></script>
-<script src="js/tabs.js?v=20"></script>
-<script src="js/app.js?v=20"></script>
-<script src="js/qr-analyze.js?v=20"></script>
-<script src="js/scanner.js?v=20"></script>
-<script src="js/barcode-rules.js?v=20"></script>
-<script src="js/barcode.js?v=20"></script>
+<script src="js/i18n.js?v=21"></script>
+<script src="js/print.js?v=21"></script>
+<script src="js/share.js?v=21"></script>
+<script src="js/tabs.js?v=21"></script>
+<script src="js/app.js?v=21"></script>
+<script src="js/qr-analyze.js?v=21"></script>
+<script src="js/scanner.js?v=21"></script>
+<script src="js/barcode-rules.js?v=21"></script>
+<script src="js/barcode.js?v=21"></script>
 <script>QRTabs.start();</script>
-<script src="js/pwa.js?v=20"></script>
+<script src="js/pwa.js?v=21"></script>
 </body>
 </html>
