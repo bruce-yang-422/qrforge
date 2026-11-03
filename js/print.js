@@ -212,6 +212,9 @@ const QRPrint = (() => {
     },
   };
   const FONT_RETRY_MS = 5000;
+  /* Outline width as a share of the text size. Much more and small text clogs up. */
+  const CAPTION_THICKEN = 0.03;
+  const EMOJI_RUN = /(?:\p{Extended_Pictographic}|\p{Regional_Indicator}|\p{Emoji_Modifier}|[\u200d\ufe0f\u20e3])+/gu;
 
   const captionFont = (px, key) => {
     const face = CAPTION_FACES[key];
@@ -257,6 +260,28 @@ const QRPrint = (() => {
     return { text, font, size, height, gap: limits.gap, extra: limits.gap + height + limits.bottom };
   }
 
+  /* Ming and Kai have hairlines that fade in print, so they get a thin outline.
+     Emoji are skipped, since it would only darken their edges. */
+  function drawCaption(ctx, caption, px, x, y) {
+    const { text } = caption;
+    ctx.font = captionFont(px, caption.font);
+    ctx.textBaseline = "middle";
+    if (CAPTION_FACES[caption.font]) {
+      ctx.strokeStyle = "#000";
+      ctx.lineWidth = CAPTION_THICKEN * px;
+      ctx.lineJoin = "round";
+      ctx.textAlign = "left";
+      const left = x - ctx.measureText(text).width / 2;
+      let at = 0;
+      for (const run of [...text.matchAll(EMOJI_RUN), { index: text.length, 0: "" }]) {
+        if (run.index > at) ctx.strokeText(text.slice(at, run.index), left + ctx.measureText(text.slice(0, at)).width, y);
+        at = run.index + run[0].length;
+      }
+    }
+    ctx.textAlign = "center";
+    ctx.fillText(text, x, y);
+  }
+
   /* Copies a rendered code to target and adds the caption underneath. */
   function paintWithCaption(target, source, caption, pxPerMm) {
     target.width = source.width;
@@ -267,10 +292,7 @@ const QRPrint = (() => {
     ctx.drawImage(source, 0, 0);
     if (caption) {
       ctx.fillStyle = "#000";
-      ctx.font = captionFont(caption.size * pxPerMm, caption.font);
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(caption.text, target.width / 2, source.height + (caption.gap + caption.height / 2) * pxPerMm);
+      drawCaption(ctx, caption, caption.size * pxPerMm, target.width / 2, source.height + (caption.gap + caption.height / 2) * pxPerMm);
     }
     return target;
   }
@@ -284,10 +306,7 @@ const QRPrint = (() => {
     canvas.height = Math.ceil(caption.height * scale);
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     ctx.fillStyle = "#000";
-    ctx.font = captionFont(caption.size * scale, caption.font);
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(caption.text, canvas.width / 2, canvas.height / 2);
+    drawCaption(ctx, caption, caption.size * scale, canvas.width / 2, canvas.height / 2);
     const { data, width, height } = ctx.getImageData(0, 0, canvas.width, canvas.height);
 
     /* Six levels per channel keeps emoji recognisable and the file small. */
