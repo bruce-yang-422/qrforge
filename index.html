@@ -11,10 +11,11 @@
   <meta name="apple-mobile-web-app-title" content="QRForge" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="assets/icons/favicon.ico" sizes="any" />
+  <link rel="icon" href="assets/icons/favicon-dark.ico" sizes="any" media="(prefers-color-scheme: dark)" />
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="css/style.css?v=15" />
+  <link rel="stylesheet" href="css/style.css?v=16" />
 
   <!-- Local libraries keep all features available offline. -->
   <script src="libs/qrcode.min.js"></script>
@@ -105,6 +106,14 @@
           <label for="qi-caption"><span data-i18n="QR Code 下方文字|Text below the QR code"></span> <span class="optional" data-i18n="（選填）|(optional)"></span></label>
           <input type="text" id="qi-caption" autocomplete="off" />
           <span class="hint" data-i18n="例如「掃描加入會員」。只會印在圖片上，掃描時不會讀到。|For example, “Scan to join”. It's only printed on the image, and scanners won't read it."></span>
+        </div>
+        <div class="field">
+          <label for="qi-font" data-i18n="文字字型|Text font"></label>
+          <select id="qi-font">
+            <option value="sans" data-i18n="正黑體|Sans-serif (Heiti)"></option>
+            <option value="ming" data-i18n="明體|Serif (Ming)"></option>
+            <option value="kai" data-i18n="標楷體|Regular script (Kai)"></option>
+          </select>
         </div>
 
         <div class="field">
@@ -275,6 +284,14 @@
           <input type="text" id="bc-caption" autocomplete="off" />
           <span class="hint" data-i18n="例如商品名稱。只會印在條碼下方，掃描時不會讀到。|For example, a product name. It's only printed, and scanners won't read it."></span>
         </div>
+        <div class="field">
+          <label for="bc-font" data-i18n="文字字型|Text font"></label>
+          <select id="bc-font">
+            <option value="sans" data-i18n="正黑體|Sans-serif (Heiti)"></option>
+            <option value="ming" data-i18n="明體|Serif (Ming)"></option>
+            <option value="kai" data-i18n="標楷體|Regular script (Kai)"></option>
+          </select>
+        </div>
         <details class="more">
           <summary data-i18n="尺寸設定|Size"></summary>
           <p class="hint" data-i18n="預設值已符合標準尺寸，一般不需更改。|The defaults are standard sizes, so you rarely need to change them."></p>
@@ -351,16 +368,16 @@
 </div><!-- /.page-wrap -->
 
 <!-- App logic -->
-<script src="js/i18n.js?v=15"></script>
-<script src="js/print.js?v=15"></script>
-<script src="js/share.js?v=15"></script>
-<script src="js/tabs.js?v=15"></script>
-<script src="js/app.js?v=15"></script>
-<script src="js/qr-analyze.js?v=15"></script>
-<script src="js/scanner.js?v=15"></script>
-<script src="js/barcode-rules.js?v=15"></script>
-<script src="js/barcode.js?v=15"></script>
+<script src="js/i18n.js?v=16"></script>
+<script src="js/print.js?v=16"></script>
+<script src="js/share.js?v=16"></script>
+<script src="js/tabs.js?v=16"></script>
+<script src="js/app.js?v=16"></script>
+<script src="js/qr-analyze.js?v=16"></script>
+<script src="js/scanner.js?v=16"></script>
+<script src="js/barcode-rules.js?v=16"></script>
+<script src="js/barcode.js?v=16"></script>
 <script>QRTabs.start();</script>
-<script src="js/pwa.js?v=15"></script>
+<script src="js/pwa.js?v=16"></script>
 </body>
 </html>

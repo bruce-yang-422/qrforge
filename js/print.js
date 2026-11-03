@@ -197,20 +197,64 @@ const QRPrint = (() => {
 
   /* ── Text below a code ─────────────────────────────────────────── */
   const CAPTION_TRACE_PER_MM = 16; /* About 400 dpi. */
-  const captionFont = (px) => `${px}px -apple-system, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+  const CAPTION_STACK = `-apple-system, "Segoe UI", "Noto Sans TC", "Microsoft JhengHei", "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif`;
+  /* Every device has a sans-serif. These two use the system's copy, or else download ours. */
+  const CAPTION_FACES = {
+    ming: {
+      family: "QRForge Ming",
+      local: ["PMingLiU", "新細明體", "Songti TC Regular", "STSongti-TC-Regular", "Noto Serif CJK TC", "Noto Serif TC"],
+      file: "fonts/noto-serif-tc.woff2",
+    },
+    kai: {
+      family: "QRForge Kai",
+      local: ["DFKai-SB", "標楷體", "BiauKai", "Kaiti TC Regular", "STKaiti-TC-Regular"],
+      file: "fonts/lxgw-wenkai-tc.woff2",
+    },
+  };
+  const FONT_RETRY_MS = 5000;
+
+  const captionFont = (px, key) => {
+    const face = CAPTION_FACES[key];
+    return `${px}px ${face ? `"${face.family}", ` : ""}${CAPTION_STACK}`;
+  };
+
+  /* Canvas text can't wait for a font, so callers hold their drawing until it's here.
+     Returns "ready", "loading" (onSettled runs when that ends) or "failed". */
+  function prepareCaptionFont(key, onSettled) {
+    const face = CAPTION_FACES[key];
+    if (!face || face.state === "ready") return "ready";
+    if (face.state === "loading") {
+      face.waiting.add(onSettled);
+      return "loading";
+    }
+    /* A failure stays failed for a moment, or redrawing would retry it in a loop. */
+    if (face.state === "failed" && Date.now() - face.failedAt < FONT_RETRY_MS) return "failed";
+    face.state = "loading";
+    face.waiting = new Set([onSettled]);
+    const sources = face.local.map((name) => `local("${name}")`);
+    const loading = new FontFace(face.family, [...sources, `url("${face.file}") format("woff2")`].join(", "));
+    loading.load().then(() => {
+      document.fonts.add(loading);
+      face.state = "ready";
+    }).catch(() => {
+      face.state = "failed";
+      face.failedAt = Date.now();
+    }).then(() => face.waiting.forEach((callback) => callback()));
+    return "loading";
+  }
 
   /* Fits the text to widthMm. Returns null when empty, { tooLong: true } if it can't fit.
      limits: { size, minSize, gap, bottom, margin }, all in mm. */
-  function layoutCaption(value, widthMm, limits) {
+  function layoutCaption(value, widthMm, limits, font) {
     const text = value.trim();
     if (!text) return null;
     const ctx = document.createElement("canvas").getContext("2d");
-    ctx.font = captionFont(100);
+    ctx.font = captionFont(100, font);
     const widthPerMm = ctx.measureText(text).width / 100;
     const size = Math.min(limits.size, (widthMm - limits.margin * 2) / widthPerMm);
     if (size < limits.minSize) return { tooLong: true };
     const height = size * 1.25;
-    return { text, size, height, gap: limits.gap, extra: limits.gap + height + limits.bottom };
+    return { text, font, size, height, gap: limits.gap, extra: limits.gap + height + limits.bottom };
   }
 
   /* Copies a rendered code to target and adds the caption underneath. */
@@ -223,7 +267,7 @@ const QRPrint = (() => {
     ctx.drawImage(source, 0, 0);
     if (caption) {
       ctx.fillStyle = "#000";
-      ctx.font = captionFont(caption.size * pxPerMm);
+      ctx.font = captionFont(caption.size * pxPerMm, caption.font);
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(caption.text, target.width / 2, source.height + (caption.gap + caption.height / 2) * pxPerMm);
@@ -240,7 +284,7 @@ const QRPrint = (() => {
     canvas.height = Math.ceil(caption.height * scale);
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     ctx.fillStyle = "#000";
-    ctx.font = captionFont(caption.size * scale);
+    ctx.font = captionFont(caption.size * scale, caption.font);
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(caption.text, canvas.width / 2, canvas.height / 2);
@@ -325,6 +369,6 @@ const QRPrint = (() => {
     LABEL_LAYOUTS, PT_PER_MM,
     buildPdf, qrPdf, labelSheet, qrLabelOps, qrLabelModule,
     parseSvg, vectorOps, vectorPdf, vectorEps, setPngDpi,
-    layoutCaption, paintWithCaption, captionSvg,
+    prepareCaptionFont, layoutCaption, paintWithCaption, captionSvg,
   };
 })();

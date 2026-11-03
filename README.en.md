@@ -1,4 +1,7 @@
-<img src="assets/brand/qrforge-mark-on-white.png" alt="QRForge logo" width="180" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/brand/qrforge-mark-dark.png" />
+  <img src="assets/brand/qrforge-mark-on-white.png" alt="QRForge logo" width="180" />
+</picture>
 
 # QRForge
 
@@ -83,13 +86,13 @@ These tools are in the web app only. Everything runs locally, and images are nev
 
 | Tab | What it does |
 | --- | --- |
-| **QR Code** | Makes one code from a link, text, or WiFi details, with a live preview. Adds `https://` to a bare domain, can print text below the code, and can share or copy the image |
+| **QR Code** | Makes one code from a link, text, or WiFi details, with a live preview. Adds `https://` to a bare domain, can print text below the code in a choice of fonts, and can share or copy the image |
 | **Batch** | Makes up to 500 codes from a pasted list or CSV, Excel, and TXT files, as PNG, JPG, SVG, or PDF in a ZIP file. Also prints them on label sheets |
 | **Scan** | Reads QR codes from the camera, a photo, or a pasted screenshot. Links only open when you click them |
 | **Check** | Tells you whether a code will scan and how to improve it, with a grade, contrast, margin, and a map of damaged modules |
 | **Barcode** | Makes barcodes at true print size, and re-reads each one with a separate decoder whenever you change it. Can also share or copy the image |
 
-**Barcode types:** EAN-13, EAN-8, UPC-A, UPC-E, ISBN, Code 128, ITF-14, GS1-128, SSCC-18, and Data Matrix. Check digits are calculated if you leave them out, and verified if you include them. You can also add text below a barcode, such as a product name. It's printed only, and scanners won't read it.
+**Barcode types:** EAN-13, EAN-8, UPC-A, UPC-E, ISBN, Code 128, ITF-14, GS1-128, SSCC-18, and Data Matrix. Check digits are calculated if you leave them out, and verified if you include them. You can also add text below a barcode, such as a product name, and choose its font. It's printed only, and scanners won't read it.
 
 **Barcode downloads:** PNG at 300, 600, or 1200 dpi, SVG, EPS, and PDF in millimetres, or a full label sheet as a PDF.
 
@@ -203,6 +206,7 @@ qrforge/
 ├── sw.js                   # Service worker
 ├── manifest.webmanifest    # PWA manifest
 ├── libs/                   # Vendored browser libraries
+├── fonts/                  # Serif and regular-script fonts for text below codes
 └── assets/                 # Sample templates, app icons, and logo
 ```
 

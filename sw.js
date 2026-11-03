@@ -1,10 +1,13 @@
 /* Bump VERSION whenever a precached file changes, and match it in the ?v= of
    the js/ and css/ addresses in index.html, so CDNs can't serve older copies. Updates activate once all
    existing app windows close, keeping each session on a consistent version. */
-const VERSION = 'v15';
+const VERSION = 'v16';
 const CACHE_PREFIX = `qrforge-${self.registration.scope}-`;
 const CACHE_NAME = `${CACHE_PREFIX}${VERSION}`;
+// Large and rarely needed, so kept from first use and across app versions.
+const FONT_CACHE = `qrforge-fonts-${self.registration.scope}`;
 const APP_URL = new URL('./', self.registration.scope).href;
+const FONTS_URL = new URL('fonts/', APP_URL).href;
 const ASSETS = [
   './',
   'index.html',
@@ -30,6 +33,7 @@ const ASSETS = [
   'assets/sample.xlsx',
   'assets/sample.txt',
   'assets/icons/favicon.ico',
+  'assets/icons/favicon-dark.ico',
   'assets/icons/icon-192.png',
   'assets/icons/icon-512.png',
   'assets/icons/icon-maskable-512.png',
@@ -63,6 +67,17 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   // Cache only application files, never uploaded data or unrelated origin paths.
   url.search = '';
+  if (url.href.startsWith(FONTS_URL)) {
+    event.respondWith((async () => {
+      const cache = await caches.open(FONT_CACHE);
+      const cached = await cache.match(url.href);
+      if (cached) return cached;
+      const response = await fetch(event.request);
+      if (response.ok) await cache.put(url.href, response.clone());
+      return response;
+    })());
+    return;
+  }
   if (!ASSETS.includes(url.href)) return;
   event.respondWith((async () => {
     const cache = await caches.open(CACHE_NAME);

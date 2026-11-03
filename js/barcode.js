@@ -16,6 +16,7 @@
   const typeSelect = $("bc-type");
   const dataInput = $("bc-data");
   const captionInput = $("bc-caption");
+  const fontSelect = $("bc-font");
   const xInput = $("bc-x");
   const heightInput = $("bc-height");
   const textInput = $("bc-text");
@@ -113,9 +114,14 @@
     try {
       const spec = readSpec();
       if (!spec) return;
+      const fontState = captionInput.value.trim() ? QRPrint.prepareCaptionFont(fontSelect.value, update) : "ready";
+      if (fontState === "loading") {
+        emptyBox.textContent = tr("正在下載字型，只有第一次需要…", "Downloading the font. This only happens once…");
+        return;
+      }
       const unitMm = spec.xDim / VECTOR_SCALE;
       const plainSvg = bwipjs.toSVG(bwipOptions(spec, VECTOR_SCALE));
-      const caption = QRPrint.layoutCaption(captionInput.value, QRPrint.parseSvg(plainSvg).width * unitMm, CAPTION);
+      const caption = QRPrint.layoutCaption(captionInput.value, QRPrint.parseSvg(plainSvg).width * unitMm, CAPTION, fontSelect.value);
       if (caption && caption.tooLong) throw new Error(tr("下方文字太長，請縮短文字或加大線條寬度", "The text below the barcode is too long. Shorten it or increase the bar width"));
       const svg = addCaptionToSvg(plainSvg, caption, unitMm);
       const vector = QRPrint.parseSvg(svg);
@@ -134,6 +140,7 @@
       updateDpiNote();
       updateShareButtons();
       downloads.hidden = false;
+      if (fontState === "failed") errorBox.textContent = tr("字型下載失敗，目前顯示的是黑體。連上網路後再改一次文字或字型即可重試。", "The font couldn't be downloaded, so this is using a sans-serif. Once you're online, change the text or font to try again.");
     } catch (err) {
       clearOutput();
       emptyBox.hidden = true;
@@ -273,6 +280,7 @@
   typeSelect.addEventListener("change", () => { applyDefaults(); update(); });
   for (const input of [dataInput, captionInput, xInput, heightInput]) input.addEventListener("input", schedule);
   textInput.addEventListener("change", update);
+  fontSelect.addEventListener("change", update);
   dpiSelect.addEventListener("change", () => { if (current) updateDpiNote(); });
 
   document.addEventListener("qrlangchange", () => {

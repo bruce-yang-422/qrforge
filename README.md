@@ -1,4 +1,7 @@
-<img src="assets/brand/qrforge-mark-on-white.png" alt="QRForge logo" width="180" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/brand/qrforge-mark-dark.png" />
+  <img src="assets/brand/qrforge-mark-on-white.png" alt="QRForge logo" width="180" />
+</picture>
 
 # QRForge
 
@@ -83,13 +86,13 @@ QR Code 會輸出至 `output/`，記錄檔則寫入 `logs/run_YYYYMMDD_HHMMSS.lo
 
 | 分頁 | 功能 |
 | --- | --- |
-| **QR Code** | 從網址、文字或 WiFi 資訊產生單張 QR Code，輸入時即時預覽。只輸入網域時會自動加上 `https://`，可在下方加上文字，也可將圖片傳到 LINE 或其他 App |
+| **QR Code** | 從網址、文字或 WiFi 資訊產生單張 QR Code，輸入時即時預覽。只輸入網域時會自動加上 `https://`，可在下方加上文字並選擇字型，也可將圖片傳到 LINE 或其他 App |
 | **批次** | 從貼上的清單或 CSV、Excel、TXT 檔案產生最多 500 張，可輸出 PNG、JPG、SVG 或 PDF 並打包成 ZIP，也可排版成標籤紙 |
 | **掃描** | 從相機、照片或貼上的截圖讀取 QR Code。連結只有在你點選後才會開啟 |
 | **檢測** | 告訴你 QR Code 能否掃描及如何改善，並提供評等、對比、周圍留白與損傷模組圖 |
 | **條碼** | 以實際列印尺寸製作條碼，每次變更都會用另一套解碼器重新讀取驗證 |
 
-**條碼類型：** EAN-13、EAN-8、UPC-A、UPC-E、ISBN、Code 128、ITF-14、GS1-128、SSCC-18 與 Data Matrix。校驗碼省略時會自動計算，填寫時會加以驗證。也可以在條碼下方加上文字，例如商品名稱。這段文字只會印出來，掃描時不會讀到。
+**條碼類型：** EAN-13、EAN-8、UPC-A、UPC-E、ISBN、Code 128、ITF-14、GS1-128、SSCC-18 與 Data Matrix。校驗碼省略時會自動計算，填寫時會加以驗證。也可以在條碼下方加上文字並選擇字型，例如商品名稱。這段文字只會印出來，掃描時不會讀到。
 
 **條碼下載：** 300、600 或 1200 dpi 的 PNG，以毫米為單位的 SVG、EPS、PDF，或整張標籤紙 PDF。
 
@@ -202,6 +205,7 @@ qrforge/
 ├── sw.js                   # Service Worker
 ├── manifest.webmanifest    # PWA manifest
 ├── libs/                   # 內附的瀏覽器函式庫
+├── fonts/                  # 下方文字用的明體與楷體
 └── assets/                 # 範本檔案、應用程式圖示與標誌
 ```
 

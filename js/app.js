@@ -546,6 +546,7 @@ const qiError     = document.getElementById("qi-error");
 const qiData      = document.getElementById("qi-data");
 const qiDownload  = document.getElementById("qp-download");
 const qiCaption   = document.getElementById("qi-caption");
+const qiFont      = document.getElementById("qi-font");
 const shareStatus = document.getElementById("qp-share-status");
 let quickQr = null;
 
@@ -588,7 +589,7 @@ function captionLimits(widthMm) {
 // The quiet zone stays intact because the text goes below it.
 function withCaption(qr) {
   const widthMm = (qr.matrix.size + 8) * qr.moduleMm;
-  const caption = QRPrint.layoutCaption(qiCaption.value, widthMm, captionLimits(widthMm));
+  const caption = QRPrint.layoutCaption(qiCaption.value, widthMm, captionLimits(widthMm), qiFont.value);
   if (!caption) return qr;
   if (caption.tooLong) throw new RangeError("caption");
 
@@ -616,11 +617,15 @@ function renderQuick() {
   stageEmpty.textContent = emptyMessage();
   stageEmpty.hidden = false;
 
-  if (data) {
+  const fontState = data && qiCaption.value.trim() ? QRPrint.prepareCaptionFont(qiFont.value, renderQuick) : "ready";
+  if (fontState === "loading") {
+    stageEmpty.textContent = tr("正在下載字型，只有第一次需要…", "Downloading the font. This only happens once…");
+  } else if (data) {
     try {
       quickQr = withCaption(makeQr(data));
       stage.appendChild(previewNode(tr("QR Code 預覽", "QR code preview"), quickQr));
       stageEmpty.hidden = true;
+      if (fontState === "failed") qiError.textContent = tr("字型下載失敗，目前顯示的是黑體。連上網路後再改一次文字或字型即可重試。", "The font couldn't be downloaded, so this is using a sans-serif. Once you're online, change the text or font to try again.");
     } catch (err) {
       qiError.textContent = err instanceof RangeError
         ? tr("下方文字太長，請縮短文字", "The text below the code is too long. Please shorten it")
@@ -658,6 +663,7 @@ document.querySelectorAll("input[name='qi-type']").forEach(input => input.addEve
   if (qiType() !== "wifi") qiData.focus();
 }));
 document.getElementById("qi-security").addEventListener("change", () => { updateTypeFields(); renderQuick(); });
+qiFont.addEventListener("change", renderQuick);
 for (const id of ["qi-data", "qi-ssid", "qi-password", "qi-caption"]) {
   document.getElementById(id).addEventListener("input", scheduleQuick);
 }
