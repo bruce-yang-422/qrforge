@@ -89,13 +89,36 @@
     return { kind: tr("文字", "Text") };
   }
 
+  /* jsQR only understands UTF-8 and returns "" for anything else, so try older
+     encodings. What still isn't text is shown as bytes rather than as "not found". */
+  function readCode(code) {
+    if (!code) return null;
+    if (code.data) return { text: code.data };
+    const bytes = Uint8Array.from(code.binaryData);
+    if (!bytes.length) return null;
+    for (const encoding of ["big5", "gb18030", "shift_jis"]) {
+      try {
+        const text = new TextDecoder(encoding, { fatal: true }).decode(bytes);
+        if (!/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/.test(text)) return { text };
+      } catch { /* Not this encoding. */ }
+    }
+    const pieces = (String.fromCharCode(...bytes).match(/[A-Za-z0-9][\x20-\x7e]{2,}/g) || []).map((piece) => piece.trim()).join(", ");
+    const size = tr(`${bytes.length} 位元組，不是一般文字`, `${bytes.length} bytes that aren't plain text`);
+    return {
+      text: Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(" "),
+      info: {
+        kind: tr("二進位資料", "Binary data"),
+        detail: pieces ? tr(`${size}。看得出的片段：${pieces}`, `${size}. Readable parts: ${pieces}`) : size,
+      },
+    };
+  }
+
   /* Returns the row, moving it to the top if this text was already read. */
-  function addScanResult(text) {
+  function addScanResult({ text, info = describe(text) }) {
     if (seen.has(text)) {
       scanResults.prepend(seen.get(text));
       return seen.get(text);
     }
-    const info = describe(text);
 
     const row = document.createElement("div");
     row.className = "scan-row";
@@ -163,10 +186,10 @@
   }
 
   /* The camera reads the same code many times a second, so react only to a change. */
-  function showCameraRead(text) {
-    if (text === lastRead) return;
-    lastRead = text;
-    const row = addScanResult(text);
+  function showCameraRead(result) {
+    if (result.text === lastRead) return;
+    lastRead = result.text;
+    const row = addScanResult(result);
     row.classList.remove("just-read");
     void row.offsetWidth;
     row.classList.add("just-read");
@@ -179,8 +202,8 @@
     if (video.videoWidth) {
       const scale = Math.min(1, 800 / Math.max(video.videoWidth, video.videoHeight));
       const image = toImageData(video, video.videoWidth, video.videoHeight, scale);
-      const code = jsQR(image.data, image.width, image.height, { inversionAttempts: "attemptBoth" });
-      if (code && code.data) showCameraRead(code.data);
+      const result = readCode(jsQR(image.data, image.width, image.height, { inversionAttempts: "attemptBoth" }));
+      if (result) showCameraRead(result);
     }
     timer = setTimeout(scanFrame, 200);
   }
@@ -244,8 +267,9 @@
     toDetect.hidden = true;
     try {
       const { code } = await decodeBitmap(await readFile(file));
-      if (code && code.data) {
-        addScanResult(code.data);
+      const result = readCode(code);
+      if (result) {
+        addScanResult(result);
         scanStatus.textContent = "";
       } else {
         lastFailedFile = file;
