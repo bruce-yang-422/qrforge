@@ -89,10 +89,13 @@ function getSettings() {
 
 /* ── QR generation — returns { format, matrix, moduleMm, canvas?, svg? } ── */
 // Uses qrcode-generator (global: `qrcode` lowercase function).
+// The library's default keeps only the low byte of each character, which corrupts CJK and emoji.
+qrcode.stringToBytes = qrcode.stringToBytesFuncs["UTF-8"];
+
 function makeQr(data) {
   const { ecl, scale, format } = getSettings();
 
-  // typeNumber 0 = auto-detect; 'Byte' mode handles UTF-8 / CJK characters.
+  // typeNumber 0 = auto-detect.
   const qr = qrcode(0, ecl);
   qr.addData(data, "Byte");
   qr.make();
