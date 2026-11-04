@@ -117,6 +117,8 @@ h2 { font-size: 1.15rem; font-weight: 700; color: var(--ink); margin-bottom: 1re
 .step-body > .field:first-child, .step-body > div > .field:first-child { margin-top: 0; }
 .step-lead { margin-bottom: .75rem; }
 .step-body .settings-group:first-child { padding-top: 0; border-top: 0; }
+.more-grid .field { margin-top: 0; }
+.step-body .check-row { margin-top: .9rem; }
 .step-body > .field + #style-slot-generate { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
 .batch-inputs { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
 
@@ -214,7 +216,6 @@ h2 { font-size: 1.15rem; font-weight: 700; color: var(--ink); margin-bottom: 1re
 .share-row { display: flex; flex-wrap: wrap; gap: .5rem; }
 .share-row .btn { flex: 1 1 auto; }
 #qp-share-status:empty, #bc-share-status:empty { display: none; }
-#bc-downloads .share-row, #bc-share-status { margin-top: .6rem; }
 
 /* ── Form fields ───────────────────────────────────────── */
 .field { display: flex; flex-direction: column; gap: .35rem; margin-top: 1rem; }
@@ -431,7 +432,7 @@ textarea { resize: vertical; }
 .bc-primary select { width: auto; flex-shrink: 0; }
 #bc-dpi-note { margin-top: .4rem; }
 #bc-dpi-note:empty { display: none; }
-.bc-formats { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; margin-top: .75rem; }
+.bc-formats { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
 .bc-formats .field-label { width: 100%; font-size: .8rem; color: var(--muted); }
 .bc-formats select { font-size: .82rem; padding: .4rem .5rem; }
 .scan-badge { padding: .55rem .8rem; border-radius: 10px; font-size: .86rem; font-weight: 600; word-break: break-all; }

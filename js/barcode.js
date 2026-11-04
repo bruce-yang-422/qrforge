@@ -151,6 +151,7 @@
       updateShareButtons();
       downloads.hidden = false;
       updateSheetFit();
+      updateStepSummaries();
       if (fontState === "failed") errorBox.textContent = tr("字型下載失敗，目前顯示的是黑體。連上網路後再改一次文字或字型即可重試。", "The font couldn't be downloaded, so this is using a sans-serif. Once you're online, change the text or font to try again.");
     } catch (err) {
       clearOutput();
@@ -233,6 +234,15 @@
   $("bc-pdf").addEventListener("click", () => {
     save(QRPrint.vectorPdf(current.vector, current.unitMm), "application/pdf", "pdf");
   });
+
+  // A collapsed step still says what it holds.
+  function updateStepSummaries() {
+    const parts = [];
+    if (captionInput.value.trim()) parts.push(tr("下方文字", "text below"));
+    if (!current.spec.type.twoD) parts.push(textInput.checked ? tr("顯示文字", "with text") : tr("不顯示文字", "no text"));
+    $("bc-style-summary").textContent = parts.join(" · ");
+    $("bc-size-summary").textContent = `${current.width.toFixed(1)} × ${current.height.toFixed(1)} mm`;
+  }
 
   /* How the current barcode sits on a label: "over", "tight" (under the margin), or "ok". */
   function labelFit(layout) {

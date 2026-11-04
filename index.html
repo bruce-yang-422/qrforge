@@ -67,7 +67,7 @@
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="css/style.css?v=34" />
+  <link rel="stylesheet" href="css/style.css?v=35" />
 
   <!-- Local libraries keep all features available offline. -->
   <script src="libs/qrcode.min.js"></script>
@@ -516,8 +516,10 @@
   <!-- ── Barcode ──────────────────────────────────────────── -->
   <section id="panel-barcode" role="tabpanel" data-panel="barcode" hidden>
     <div class="split">
-      <div class="card">
-        <h2 data-i18n="要用在哪裡？|What is the barcode for?"></h2>
+      <div class="steps">
+        <details class="step" open>
+          <summary><span class="step-no">1</span><span class="step-title" data-i18n="內容|Content"></span></summary>
+          <div class="step-body">
         <div class="field">
           <label for="bc-type" data-i18n="條碼類型|Barcode type"></label>
           <select id="bc-type"></select>
@@ -527,6 +529,11 @@
           <input type="text" id="bc-data" autocomplete="off" spellcheck="false" />
           <span class="hint" id="bc-data-hint"></span>
         </div>
+          </div>
+        </details>
+        <details class="step">
+          <summary><span class="step-no">2</span><span class="step-title" data-i18n="外觀|Appearance"></span><span class="step-summary" id="bc-style-summary"></span></summary>
+          <div class="step-body">
         <div class="field">
           <label for="bc-caption"><span data-i18n="條碼下方文字|Text below the barcode"></span> <span class="optional" data-i18n="（選填）|(optional)"></span></label>
           <input type="text" id="bc-caption" autocomplete="off" />
@@ -540,10 +547,14 @@
             <option value="kai" data-i18n="標楷體|Regular script (Kai)"></option>
           </select>
         </div>
-        <details class="more">
-          <summary data-i18n="尺寸設定|Size"></summary>
-          <p class="hint" data-i18n="預設值已符合標準尺寸，一般不需更改。|The defaults are standard sizes, so you rarely need to change them."></p>
-          <div class="more-grid">
+          <label class="check-row" id="bc-text-row"><input type="checkbox" id="bc-text" checked /><span data-i18n="顯示文字|Show text"></span></label>
+          </div>
+        </details>
+        <details class="step">
+          <summary><span class="step-no">3</span><span class="step-title" data-i18n="尺寸|Size"></span><span class="step-summary" id="bc-size-summary"></span></summary>
+          <div class="step-body">
+            <p class="hint step-lead" data-i18n="預設值已符合標準尺寸，一般不需更改。|The defaults are standard sizes, so you rarely need to change them."></p>
+            <div class="more-grid">
             <div class="field">
               <label for="bc-x" data-i18n="線條寬度 X (mm)|Bar width X (mm)"></label>
               <input type="number" id="bc-x" min="0.1" max="2" step="0.005" />
@@ -553,8 +564,8 @@
               <input type="number" id="bc-height" min="2" max="200" step="0.05" />
               <span class="hint" id="bc-height-hint"></span>
             </div>
+            </div>
           </div>
-          <label class="check-row" id="bc-text-row"><input type="checkbox" id="bc-text" checked /><span data-i18n="顯示文字|Show text"></span></label>
         </details>
       </div>
 
@@ -566,8 +577,13 @@
         <div id="bc-error" class="error-text" role="alert"></div>
         <div id="bc-scan" class="scan-badge" role="status" aria-live="polite"></div>
         <p id="bc-info" class="hint"></p>
-        <div id="bc-downloads" hidden>
-          <div class="bc-primary">
+        <div id="bc-downloads" class="output-root" hidden>
+          <div class="segmented output-tabs" role="radiogroup" data-i18n-label="輸出方式|Output">
+            <label><input type="radio" name="bc-output" value="download" checked /><span data-i18n="下載|Download"></span></label>
+            <label><input type="radio" name="bc-output" value="print" /><span data-i18n="列印標籤|Print labels"></span></label>
+          </div>
+          <div class="output-pane" data-pane="download">
+            <div class="bc-primary">
             <button id="bc-png" type="button" class="btn btn-primary btn-lg"><svg class="icon"><use href="#i-down"/></svg><span data-i18n="下載 PNG|Download PNG"></span></button>
             <select id="bc-dpi" data-i18n-label="解析度|Resolution">
               <option value="300">300 dpi</option>
@@ -575,21 +591,20 @@
               <option value="1200">1200 dpi</option>
             </select>
           </div>
-          <p id="bc-dpi-note" class="hint"></p>
-          <div class="share-row">
+            <p id="bc-dpi-note" class="hint"></p>
+            <div class="share-row">
             <button id="bc-share" type="button" class="btn btn-secondary"><svg class="icon"><use href="#i-share"/></svg><span data-i18n="分享圖片|Share image"></span></button>
             <button id="bc-copy" type="button" class="btn btn-secondary" data-i18n="複製圖片|Copy image"></button>
           </div>
-          <p id="bc-share-status" class="hint" role="status" aria-live="polite"></p>
-          <div class="bc-formats">
+            <p id="bc-share-status" class="hint" role="status" aria-live="polite"></p>
+            <div class="bc-formats">
             <span class="field-label" data-i18n="向量檔（印刷廠適用）|Vector (for print shops)"></span>
             <button id="bc-svg" type="button" class="btn btn-secondary btn-sm">SVG</button>
             <button id="bc-eps" type="button" class="btn btn-secondary btn-sm">EPS</button>
             <button id="bc-pdf" type="button" class="btn btn-secondary btn-sm">PDF</button>
           </div>
-          <details class="more">
-            <summary data-i18n="列印整張標籤|Print a label sheet"></summary>
-            <div class="sheet-form">
+          </div>
+          <div class="output-pane sheet-form" data-pane="print" hidden>
               <label for="bc-sheet" data-i18n="選擇標籤紙|Label sheet"></label>
               <select id="bc-sheet"></select>
               <p id="bc-fit" class="fit-status" role="status" aria-live="polite"></p>
@@ -600,8 +615,7 @@
               <p id="bc-fit-note" class="hint"></p>
               <button id="bc-sheet-btn" type="button" class="btn btn-secondary" data-i18n="下載標籤 PDF|Download label PDF"></button>
               <p class="hint" data-i18n="列印時請選 100% 比例，並先用一般紙張試印。|Print at 100% scale and try plain paper first."></p>
-            </div>
-          </details>
+          </div>
         </div>
       </aside>
     </div>
@@ -631,19 +645,19 @@
 </div><!-- /.page-wrap -->
 
 <!-- App logic -->
-<script src="js/i18n.js?v=34"></script>
-<script src="js/print.js?v=34"></script>
-<script src="js/share.js?v=34"></script>
-<script src="js/tabs.js?v=34"></script>
-<script src="js/qr-extras.js?v=34"></script>
-<script src="js/app.js?v=34"></script>
-<script src="js/qr-analyze.js?v=34"></script>
-<script src="js/qr-multi.js?v=34"></script>
-<script src="js/scanner.js?v=34"></script>
-<script src="js/barcode-rules.js?v=34"></script>
-<script src="js/barcode.js?v=34"></script>
+<script src="js/i18n.js?v=35"></script>
+<script src="js/print.js?v=35"></script>
+<script src="js/share.js?v=35"></script>
+<script src="js/tabs.js?v=35"></script>
+<script src="js/qr-extras.js?v=35"></script>
+<script src="js/app.js?v=35"></script>
+<script src="js/qr-analyze.js?v=35"></script>
+<script src="js/qr-multi.js?v=35"></script>
+<script src="js/scanner.js?v=35"></script>
+<script src="js/barcode-rules.js?v=35"></script>
+<script src="js/barcode.js?v=35"></script>
 <script>QRTabs.start();</script>
-<script src="js/share-target.js?v=34"></script>
-<script src="js/pwa.js?v=34"></script>
+<script src="js/share-target.js?v=35"></script>
+<script src="js/pwa.js?v=35"></script>
 </body>
 </html>
