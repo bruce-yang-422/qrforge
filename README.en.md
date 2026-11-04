@@ -129,6 +129,8 @@ Sample files: [CSV](assets/sample.csv) · [Excel](assets/sample.xlsx) · [TXT](a
 
 The first row is the header, and each following row produces one QR code. Header names must match the Traditional Chinese names below exactly. Only the first worksheet (web) or the active worksheet (CLI) of an Excel file is read.
 
+The Python CLI also supports `vcard`, `email`, `phone`, and `sms`; the CSV and Excel templates include examples. Format phone numbers and country codes as **Text** in Excel to preserve leading zeros and `+`. The CLI also accepts the corresponding English headers, including `type`, `country`, `phone`, `subject`, `body`, `family`, `given`, `fullName`, `email`, `url`, and `name`.
+
 | Column | Required | Description |
 | --- | --- | --- |
 | `類型` (type) | Yes | `url`, `text`, `line`, `wifi`, `phone`, `sms`, `email`, or `vcard` |
@@ -153,10 +155,14 @@ Rows with no content to encode are skipped. An invalid row is logged and does no
 url,https://example.com,,,,,,,,,,,,,,,,website
 wifi,,MySSID,MyPassword,WPA,,,,,,,,,,,,,office-wifi
 phone,,,,,+886,0912345678,,,,,,,,,,,support-line
+sms,,,,,+886,0912345678,,Hello I have a question,,,,,,,,,support-sms
+email,service@example.com,,,,,,Product inquiry,Hello,,,,,,,,,support-email
 vcard,,,,,+886,0912345678,,,Wang,Ming,Tom,,Example Inc,Sales Manager,ming@example.com,https://example.com,ming-card
 ```
 
 Columns can be in any order, and unused ones can be left out. Older files that keep a `phone` or `sms` number in `資料` still work.
+
+For `email`, enter a recipient, subject and body; the Python CLI also reads the `Email` column when `資料` is empty. For `vcard`, set the contact's name separately from the output filename; organization, job title, phone, email and website are optional. The CLI supports multiline message bodies: enclose the entire multiline CSV field in double quotes. The web app does not yet support multiline CSV fields.
 
 ### TXT
 
@@ -271,7 +277,7 @@ Offline support requires HTTPS or `localhost`. The app still opens from `file://
 ## Known limitations
 
 - **CLI filename collisions:** all images go directly into `output/`, regardless of input subfolders, and existing files with the same name are overwritten. Automatic numbering restarts for each source file, so unnamed rows from different files can overwrite each other. Filling in the filename column avoids this.
-- **CSV files with a BOM (CLI):** a UTF-8 file with a byte order mark, such as Excel's "CSV UTF-8" export, fails with a missing-column error. Use a file without a BOM, an `.xlsx` file, or the web app.
+- **CSV encoding (CLI):** accepts UTF-8 with or without a BOM, including Excel's "CSV UTF-8" export.
 - **WiFi security default:** the web app treats an empty security value as `WPA`. The CLI only does so when the column is missing entirely, so fill it in for CLI input.
 - **Commas in URLs:** TXT files treat commas as separators, so a URL containing one is split. Use Batch's paste box or a CSV file instead.
 - **Sharing:** images are PNG where the browser allows it, otherwise JPG. The Share image button needs a browser that can share files, over HTTPS or `localhost`. Where it isn't available, it's hidden, and you can copy or download the image instead.

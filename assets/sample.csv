@@ -8,4 +8,6 @@ text,掃描即可查看資訊,,,,,,,,,,,,,,,,名片文字
 phone,,,,,+886,0912345678,,,,,,,,,,,客服電話
 sms,,,,,+886,0912345678,,您好，我想詢問,,,,,,,,,客服簡訊
 email,service@example.com,,,,,,產品詢問,您好,,,,,,,,,客服信箱
+email,sales+qr@example.com,,,,,,報價 & 產品詢問,您好，請提供報價。,,,,,,,,,報價信箱
 vcard,,,,,+886,0912345678,,,王,小明,Tom,,範例公司,業務經理,ming@example.com,https://example.com,王小明名片
+vcard,,,,,+1,2025550123,,,Doe,Jane,JD,Jane Doe (Sales),Example Inc,Sales Manager,jane@example.com,https://example.com,Jane名片

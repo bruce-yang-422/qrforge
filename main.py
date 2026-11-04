@@ -59,13 +59,14 @@ COLUMN_MAP = {
 
 # Columns that must be present in every input file.
 # 每個輸入檔案必須包含的欄位。
-REQUIRED_COLUMNS = ["類型"]
+REQUIRED_COLUMNS = ["type"]
 
 
 def validate_columns(headers):
     """Raises ValueError if any required column is missing from the header row.
     若標題列缺少必要欄位則拋出例外。"""
-    missing = [col for col in REQUIRED_COLUMNS if col not in headers]
+    normalized = {COLUMN_MAP.get(str(col).strip(), str(col).strip()) for col in (headers or [])}
+    missing = [col for col in REQUIRED_COLUMNS if col not in normalized]
     if missing:
         raise ValueError(f"❌ 缺少必要欄位: {missing}")
 
@@ -76,7 +77,7 @@ def normalize_row(row):
     將欄位名稱透過 COLUMN_MAP 轉換，並去除字串值的前後空白；
     非字串型別（如 Excel 數值）若為空值則轉為空字串。"""
     return {
-        COLUMN_MAP.get(k, k): v.strip() if isinstance(v, str) else (v or "")
+        COLUMN_MAP.get(str(k).strip(), str(k).strip()): v.strip() if isinstance(v, str) else (v or "")
         for k, v in row.items()
     }
 
@@ -151,7 +152,7 @@ def format_contact_data(t, row):
     """Returns the payload for phone, sms, email and vcard rows, or "" if there is nothing to encode.
     回傳電話、簡訊、Email 與電子名片的內容；沒有內容時回傳空字串。"""
     if t == "email":
-        data = re.sub(r"[\r\n]", "", str(row.get("data") or "")).strip()
+        data = re.sub(r"[\r\n]", "", str(row.get("data") or row.get("email") or "")).strip()
         if not data:
             return ""
         recipient = encode_uri(data).replace("%40", "@")
@@ -352,7 +353,8 @@ def process_csv(file_path, config):
     """Iterates over all data rows in a CSV file and generates a QR code per row.
     逐列讀取 CSV 資料並為每列產生 QR code；單列錯誤不中斷整體流程。"""
     delimiter = config.get("csv", {}).get("delimiter", ",")
-    with open(file_path, newline="", encoding="utf-8") as f:
+    # Excel's CSV UTF-8 export includes a BOM; utf-8-sig accepts both variants.
+    with open(file_path, newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f, delimiter=delimiter)
 
         validate_columns(reader.fieldnames)

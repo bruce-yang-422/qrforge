@@ -129,6 +129,8 @@ QR Code 會輸出至 `output/`，記錄檔則寫入 `logs/run_YYYYMMDD_HHMMSS.lo
 
 第一列為標題列，之後每一列產生一張 QR Code。欄位名稱必須與下表完全相同。Excel 檔案只會讀取第一個工作表（網頁版）或作用中工作表（命令列工具）。
 
+Python 批次版同樣支援 `vcard`、`email`、`phone`、`sms`；新版 CSV／Excel 範本已包含範例。電話號碼與國碼請在 Excel 中設為「文字」，以保留前導 0 與 `+`。命令列工具也接受對應的英文欄位名稱，例如 `type`、`country`、`phone`、`subject`、`body`、`family`、`given`、`fullName`、`email`、`url`、`name`。
+
 | 欄位名稱 | 必填 | 說明 |
 | --- | --- | --- |
 | `類型` | 是 | `url`、`text`、`line`、`wifi`、`phone`、`sms`、`email` 或 `vcard` |
@@ -153,10 +155,14 @@ QR Code 會輸出至 `output/`，記錄檔則寫入 `logs/run_YYYYMMDD_HHMMSS.lo
 url,https://example.com,,,,,,,,,,,,,,,,官網
 wifi,,MySSID,MyPassword,WPA,,,,,,,,,,,,,辦公室WiFi
 phone,,,,,+886,0912345678,,,,,,,,,,,客服電話
+sms,,,,,+886,0912345678,,您好，我想詢問,,,,,,,,,客服簡訊
+email,service@example.com,,,,,,產品詢問,您好,,,,,,,,,客服信箱
 vcard,,,,,+886,0912345678,,,王,小明,Tom,,範例公司,業務經理,ming@example.com,https://example.com,王小明名片
 ```
 
 欄位順序不限，用不到的欄位可以省略。舊檔案把 `phone`、`sms` 的號碼放在 `資料` 欄仍然可以使用。
+
+`email` 可填收件人、主旨與內文；Python 批次版在 `資料` 留空時也會讀取 `Email` 欄。`vcard` 的聯絡人姓名與 `Qr-code檔案名稱` 分別設定；公司、職稱、電話、Email、網站均為選填。Python 批次版支援內文欄位中的換行，CSV 請用雙引號包住整個多行欄位；網頁版尚不支援此種多行 CSV。
 
 ### TXT
 
@@ -271,7 +277,7 @@ python -m http.server 8000
 ## 已知限制
 
 - **命令列工具的檔名衝突：** 不論來源檔案位於哪個子資料夾，圖片都會直接輸出到 `output/`，同名檔案會被覆蓋。每個來源檔案的自動編號都會重新起算，因此不同檔案中未命名的資料列可能互相覆蓋。填寫檔名欄位即可避免。
-- **含 BOM 的 CSV 檔（命令列工具）:** 含位元組順序標記的 UTF-8 檔案（例如 Excel 匯出的「CSV UTF-8」）會出現缺少欄位的錯誤。請改用不含 BOM 的檔案、`.xlsx` 檔或網頁版。
+- **CSV 編碼（命令列工具）:** 支援一般 UTF-8 與 Excel 匯出的含 BOM「CSV UTF-8」。
 - **WiFi 加密方式預設值：** 網頁版會將空白的加密方式視為 `WPA`;命令列工具只有在整個欄位不存在時才會如此，因此使用命令列工具時請填寫此欄位。
 - **網址中的逗號：** TXT 檔以逗號作為分隔符號，因此含逗號的網址會被拆開。請改用「批次」的貼上清單或 CSV 檔。
 - **分享：** 圖片在瀏覽器允許時為 PNG，否則為 JPG。「分享圖片」按鈕需要支援檔案分享的瀏覽器，並透過 HTTPS 或 `localhost` 開啟。不支援時按鈕會隱藏，可改用複製或下載。
