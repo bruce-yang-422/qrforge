@@ -22,7 +22,8 @@ const QRTabs = (() => {
     if (name === active) return;
     active = name;
     for (const tab of tabs) {
-      const selected = tab.dataset.tab === name;
+      /* A top tab stays lit for each of its views; a sub-tab only for its own. */
+      const selected = (tab.dataset.views || tab.dataset.tab).split(" ").includes(name);
       tab.setAttribute("aria-selected", String(selected));
       tab.tabIndex = selected ? 0 : -1;
     }
@@ -37,12 +38,13 @@ const QRTabs = (() => {
     return tabs.some((tab) => tab.dataset.tab === name) ? name : tabs[0].dataset.tab;
   };
 
-  tabs.forEach((tab, index) => {
+  tabs.forEach((tab) => {
     tab.addEventListener("click", () => select(tab.dataset.tab));
     tab.addEventListener("keydown", (e) => {
       const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
       if (!step) return;
-      const next = tabs[(index + step + tabs.length) % tabs.length];
+      const group = [...tab.closest("[role='tablist']").querySelectorAll("[role='tab']")];
+      const next = group[(group.indexOf(tab) + step + group.length) % group.length];
       next.focus();
       select(next.dataset.tab);
     });

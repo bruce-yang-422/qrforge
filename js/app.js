@@ -1170,6 +1170,7 @@ function updateColorDetails() {
 }
 
 settingsNode.addEventListener("input", updateColorDetails);
+qiCaption.addEventListener("input", updateStepSummaries);
 document.addEventListener("qrlangchange", updateColorDetails);
 updateColorDetails();
 

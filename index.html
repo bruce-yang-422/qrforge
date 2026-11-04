@@ -67,7 +67,7 @@
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="css/style.css?v=35" />
+  <link rel="stylesheet" href="css/style.css?v=36" />
 
   <!-- Local libraries keep all features available offline. -->
   <script src="libs/qrcode.min.js"></script>
@@ -112,12 +112,18 @@
 
   <!-- ── Tabs ─────────────────────────────────────────────── -->
   <nav class="tabs" role="tablist" data-i18n-label="功能|Tools">
-    <button role="tab" type="button" data-tab="generate" aria-controls="panel-generate"><svg class="icon"><use href="#i-qr"/></svg><span data-i18n="QR Code|QR Code"></span></button>
-    <button role="tab" type="button" data-tab="batch" aria-controls="panel-batch"><svg class="icon"><use href="#i-stack"/></svg><span data-i18n="批次|Batch"></span></button>
-    <button role="tab" type="button" data-tab="scan" aria-controls="panel-scan"><svg class="icon"><use href="#i-camera"/></svg><span data-i18n="掃描|Scan"></span></button>
-    <button role="tab" type="button" data-tab="detect" aria-controls="panel-detect"><svg class="icon"><use href="#i-check"/></svg><span data-i18n="檢測|Check"></span></button>
-    <button role="tab" type="button" data-tab="barcode" aria-controls="panel-barcode"><svg class="icon"><use href="#i-bars"/></svg><span data-i18n="條碼|Barcode"></span></button>
+    <button role="tab" type="button" data-tab="generate" data-views="generate batch"><svg class="icon"><use href="#i-qr"/></svg><span data-i18n="QR Code|QR Code"></span></button>
+    <button role="tab" type="button" data-tab="barcode" data-views="barcode"><svg class="icon"><use href="#i-bars"/></svg><span data-i18n="條碼|Barcode"></span></button>
+    <button role="tab" type="button" data-tab="scan" data-views="scan detect"><svg class="icon"><use href="#i-camera"/></svg><span data-i18n="掃描與檢測|Scan and check"></span></button>
   </nav>
+  <div class="subtabs" role="tablist" data-panel="generate batch" data-i18n-label="產生方式|How many">
+    <button role="tab" type="button" data-tab="generate" data-i18n="單張|One code"></button>
+    <button role="tab" type="button" data-tab="batch" data-i18n="批次|Batch"></button>
+  </div>
+  <div class="subtabs" role="tablist" data-panel="scan detect" data-i18n-label="掃描或檢測|Scan or check">
+    <button role="tab" type="button" data-tab="scan" data-i18n="掃描|Scan"></button>
+    <button role="tab" type="button" data-tab="detect" data-i18n="檢測|Check"></button>
+  </div>
 
   <main>
 
@@ -493,7 +499,7 @@
         </div>
       </div>
       <p id="scan-status" class="status-text" role="status" aria-live="polite"></p>
-      <button id="scan-to-detect" type="button" class="btn btn-secondary btn-sm" data-i18n="檢測這張圖片的問題|Check this image for problems" hidden></button>
+      <button id="scan-to-detect" type="button" class="btn btn-secondary btn-sm" data-i18n="檢測這張圖片|Check this image" hidden></button>
       <div id="scan-results"></div>
     </div>
   </section>
@@ -636,6 +642,12 @@
     </div>
   </div>
 
+  <!-- Phones: the preview and download stay in reach while the steps scroll. -->
+  <div id="dock" class="dock" hidden>
+    <button id="dock-preview" type="button" class="dock-preview" data-i18n-label="查看預覽與輸出選項|See the preview and output options"><canvas id="dock-thumb" width="88" height="88"></canvas></button>
+    <button id="dock-download" type="button" class="btn btn-primary"><svg class="icon"><use href="#i-down"/></svg><span id="dock-label"></span></button>
+  </div>
+
   <footer class="app-footer">
     <span data-i18n="安裝後，可從支援的系統分享選單傳入網址、文字或圖片。|After installing, receive links, text or images from a supported system share sheet."></span>
     <span data-i18n="所有處理都在你的裝置上完成，檔案不會上傳。|Everything runs on your device. Nothing is uploaded."></span>
@@ -645,19 +657,20 @@
 </div><!-- /.page-wrap -->
 
 <!-- App logic -->
-<script src="js/i18n.js?v=35"></script>
-<script src="js/print.js?v=35"></script>
-<script src="js/share.js?v=35"></script>
-<script src="js/tabs.js?v=35"></script>
-<script src="js/qr-extras.js?v=35"></script>
-<script src="js/app.js?v=35"></script>
-<script src="js/qr-analyze.js?v=35"></script>
-<script src="js/qr-multi.js?v=35"></script>
-<script src="js/scanner.js?v=35"></script>
-<script src="js/barcode-rules.js?v=35"></script>
-<script src="js/barcode.js?v=35"></script>
+<script src="js/i18n.js?v=36"></script>
+<script src="js/print.js?v=36"></script>
+<script src="js/share.js?v=36"></script>
+<script src="js/tabs.js?v=36"></script>
+<script src="js/qr-extras.js?v=36"></script>
+<script src="js/app.js?v=36"></script>
+<script src="js/qr-analyze.js?v=36"></script>
+<script src="js/qr-multi.js?v=36"></script>
+<script src="js/scanner.js?v=36"></script>
+<script src="js/barcode-rules.js?v=36"></script>
+<script src="js/barcode.js?v=36"></script>
+<script src="js/dock.js?v=36"></script>
 <script>QRTabs.start();</script>
-<script src="js/share-target.js?v=35"></script>
-<script src="js/pwa.js?v=35"></script>
+<script src="js/share-target.js?v=36"></script>
+<script src="js/pwa.js?v=36"></script>
 </body>
 </html>

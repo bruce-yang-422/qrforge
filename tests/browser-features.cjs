@@ -62,7 +62,7 @@ const assert = require('node:assert/strict');
     window.testBarcode=c.toDataURL();
   });
   const barcode=await page.evaluate(()=>Array.from(Uint8Array.from(atob(testBarcode.split(',')[1]),c=>c.charCodeAt(0))));
-  await page.locator('[data-tab="scan"]').click();
+  await page.locator('.tabs [data-tab="scan"]').click();
   await page.locator('#scan-file').setInputFiles({name:'barcode.png',mimeType:'image/png',buffer:Buffer.from(barcode)});
   await page.waitForFunction(()=>document.getElementById('scan-results').textContent.includes('QRForge-12345'),null,{timeout:20000});
   for (const [bcid,text,rotated] of [['ean13','5901234123457'],['code39','QRFORGE'],['datamatrix','Matrix-123'],['code39','ROTATED123',true]]) {

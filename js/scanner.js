@@ -139,7 +139,7 @@
   let timer = null;
   let cameraSession = 0;
   let cameraOpening = false;
-  let lastFailedFile = null;
+  let lastFile = null;
   let scanRun = 0;
 
   function describe(text) {
@@ -383,14 +383,14 @@
       /* Added last to first, because each new row goes on top. */
       for (const result of [...read].reverse()) addScanResult(result);
       if (run !== scanRun) return;
+      lastFile = file;
+      toDetect.hidden = false;
       if (read.length) {
         scanStatus.textContent = read.length > 1
           ? tr(`這張圖片讀到 ${read.length} 個不同的 QR Code 或條碼`, `Found ${read.length} different QR codes or barcodes in this image`)
           : "";
       } else {
-        lastFailedFile = file;
         scanStatus.textContent = tr("這張圖片讀不到 QR Code 或條碼", "No QR code or barcode could be read from this image");
-        toDetect.hidden = false;
       }
     } catch (err) {
       if (run === scanRun) scanStatus.textContent = err.message;
@@ -405,7 +405,7 @@
 
   toDetect.addEventListener("click", () => {
     QRTabs.select("detect");
-    if (lastFailedFile) detectImage(lastFailedFile);
+    if (lastFile) detectImage(lastFile);
   });
 
   /* ── Check ─────────────────────────────────────────────────────── */

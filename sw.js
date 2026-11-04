@@ -1,7 +1,7 @@
 /* Bump VERSION whenever a precached file changes, and match it in the ?v= of
    the js/ and css/ addresses in index.html, so CDNs can't serve older copies. Updates activate once all
    existing app windows close, keeping each session on a consistent version. */
-const VERSION = 'v35';
+const VERSION = 'v36';
 const CACHE_PREFIX = `qrforge-${self.registration.scope}-`;
 const CACHE_NAME = `${CACHE_PREFIX}${VERSION}`;
 // Large and rarely needed, so kept from first use and across app versions.
@@ -25,6 +25,7 @@ const ASSETS = [
   'js/scanner.js',
   'js/barcode-rules.js',
   'js/barcode.js',
+  'js/dock.js',
   'manifest.webmanifest',
   'libs/qrcode.min.js',
   'libs/xlsx.full.min.js',

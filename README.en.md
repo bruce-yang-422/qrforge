@@ -53,7 +53,7 @@ The web interface is bilingual (Traditional Chinese and English).
 
 ### Web app
 
-Open <https://qrforge.stack-base.com>, then type in the **QR Code** tab and your QR code appears as you type, ready to download. To make many at once, use the **Batch** tab, where you can also download sample templates. The interface is in Traditional Chinese or English, and the button at the top right switches between them.
+Open <https://qrforge.stack-base.com>, then type in the **QR Code** tab and your QR code appears as you type, ready to download. To make many at once, switch to **Batch**, where you can also download sample templates. The interface is in Traditional Chinese or English, and the button at the top right switches between them.
 
 To use the app offline, open it once while connected and wait for the header to show **Works offline**. To install it, use the **Install** button or your browser's install menu. On iPhone and iPad, choose **Add to Home Screen** from the Safari share menu.
 
@@ -86,19 +86,19 @@ QR codes are written to `output/`, and the log is written to `logs/run_YYYYMMDD_
 
 These tools are in the web app only. Everything runs locally, and images are never uploaded.
 
-| Tab | What it does |
+| Where | What it does |
 | --- | --- |
-| **QR Code** | Makes one code from a link, text, WiFi details, a contact, an email, a phone number, or an SMS, with a live preview. Adds `https://` to a bare domain, can print text below the code in a choice of fonts, and can share or copy the image or fill a label sheet with it |
-| **Batch** | Makes up to 500 codes from a pasted list or CSV, Excel, and TXT files, as PNG, JPG, SVG, or PDF in a ZIP file. Also prints them on label sheets |
-| **Scan** | Reads QR codes and barcodes from the camera, a photo, an SVG file, or a pasted screenshot. An image with several codes has all of them read. The camera keeps scanning and shows results live below the picture. Links, email, phone numbers, and SMS get a matching open, send email, call, or send text button, and only open when you click it |
-| **Check** | Tells you whether a code will scan and how to improve it, with a grade, contrast, margin, and a map of damaged modules. An image with several codes gets a report for each |
+| **QR Code: One code** | Makes one code from a link, text, WiFi details, a contact, an email, a phone number, or an SMS, with a live preview. Adds `https://` to a bare domain, can print text below the code in a choice of fonts, and can share or copy the image or fill a label sheet with it |
+| **QR Code: Batch** | Makes up to 500 codes from a pasted list or CSV, Excel, and TXT files, as PNG, JPG, SVG, or PDF in a ZIP file. Also prints them on label sheets |
+| **Scan and check: Scan** | Reads QR codes and barcodes from the camera, a photo, an SVG file, or a pasted screenshot. An image with several codes has all of them read. The camera keeps scanning and shows results live below the picture. Links, email, phone numbers, and SMS get a matching open, send email, call, or send text button, and only open when you click it |
+| **Scan and check: Check** | Tells you whether a code will scan and how to improve it, with a grade, contrast, margin, and a map of damaged modules. An image with several codes gets a report for each |
 | **Barcode** | Makes barcodes at true print size, and re-reads each one with a separate decoder whenever you change it. Can also share or copy the image. Label sheets show live whether it fits, with one click to resize the barcode or switch to a suitable label |
 
 **Phone, SMS, and contacts:** choose the country code from the menu or type it in. It starts as Taiwan, +886. A leading 0 in the phone number is removed (except for Italy), and the real number is shown below the field. A number that starts with `+` is used as is, without the country code.
 
 **Contact names:** enter the family and given names separately, and optionally a nickname or English name, such as Tom. An empty display name becomes `楊翔志 Tom`, or you can write your own. Some phones' contact apps show the family and given names instead, and list the nickname separately.
 
-**QR code appearance:** under **More settings**, choose the code and background colors, and add a PNG, JPG, or WebP logo under 5 MB. A logo automatically uses the highest error correction (H), and its size can be set from 10% to 28% of the code's width. A transparent PNG keeps the code close around its shape, and other images clear a full rectangle. Use dark modules on a light background, and test the downloaded code by scanning it.
+**QR code appearance:** in the **Appearance** step, choose the code and background colors, and add a PNG, JPG, or WebP logo under 5 MB. A logo automatically uses the highest error correction (H), and its size can be set from 10% to 28% of the code's width. A transparent PNG keeps the code close around its shape, and other images clear a full rectangle. Use dark modules on a light background, and test the downloaded code by scanning it.
 
 **Barcodes it can scan:** with no mode to switch, the camera and images read common types including EAN, UPC, Code 128, Code 39, ITF, and Data Matrix, alongside QR codes. Each image or camera read gives at most one barcode, and the result shows its type.
 
@@ -108,7 +108,7 @@ These tools are in the web app only. Everything runs locally, and images are nev
 
 **Barcode downloads:** PNG at 300, 600, or 1200 dpi, SVG, EPS, and PDF in millimetres, or a full label sheet as a PDF.
 
-**Label sheets:** the QR Code and Barcode tabs fill a sheet with one image, and the Batch tab places each entry in turn, optionally with each file name or shared custom text. Colors and logos carry over. The QR Code tab can fit each label or follow the Image size setting (0.25 mm per square times the setting), and labels that won't fit or are too small are marked in the menu. Print at 100% scale and test on plain paper first.
+**Label sheets:** the QR Code and Barcode tabs fill a sheet with one image, and the Batch tab places each entry in turn, optionally with each file name or shared custom text. Colors and logos carry over. One QR code can fill the label or use a set side in mm, and labels that won't fit or are too small are marked in the menu. Print at 100% scale and test on plain paper first.
 
 | Group | Models |
 | --- | --- |
@@ -190,7 +190,7 @@ In the QR Code tab, an empty filename defaults to `Qrcode_YYYYMMDD_HHMM_001`.
 
 ## Configuration
 
-The CLI reads its settings from [`config/settings.py`](config/settings.py). In the web app, the format is next to the download button, and the other QR settings are under **More settings**.
+The CLI reads its settings from [`config/settings.py`](config/settings.py). In the web app, the format and image size are under **Download** on the right, colors and logos under **Appearance**, and error correction under **Advanced**.
 
 | Key | Default | Description |
 | --- | --- | --- |
@@ -202,7 +202,7 @@ The CLI reads its settings from [`config/settings.py`](config/settings.py). In t
 | `output.format` | `SVG` | `PNG`, `JPG`, or `SVG`, in uppercase |
 | `csv.delimiter` | `,` | CSV field delimiter; use `"\t"` for TSV |
 
-The web app defaults to PNG, accepts a scale of 2 to 20, and always reads CSV files as comma-delimited.
+The web app defaults to PNG, offers small, medium, large, or custom image sizes (2 to 20 pixels per square), and always reads CSV files as comma-delimited.
 
 Higher error correction tolerates more damage but produces a denser code:
 
@@ -237,6 +237,7 @@ qrforge/
 ├── js/print.js             # PDF, EPS, and label sheet output
 ├── js/share.js             # Share and copy buttons
 ├── js/share-target.js      # Receives content shared from other apps
+├── js/dock.js              # Preview and download bar on phones
 ├── js/pwa.js               # Install prompt and offline status
 ├── tests/                  # Browser feature checks
 ├── sw.js                   # Service worker
@@ -272,10 +273,10 @@ Offline support requires HTTPS or `localhost`. The app still opens from `file://
 - **CLI filename collisions:** all images go directly into `output/`, regardless of input subfolders, and existing files with the same name are overwritten. Automatic numbering restarts for each source file, so unnamed rows from different files can overwrite each other. Filling in the filename column avoids this.
 - **CSV files with a BOM (CLI):** a UTF-8 file with a byte order mark, such as Excel's "CSV UTF-8" export, fails with a missing-column error. Use a file without a BOM, an `.xlsx` file, or the web app.
 - **WiFi security default:** the web app treats an empty security value as `WPA`. The CLI only does so when the column is missing entirely, so fill it in for CLI input.
-- **Commas in URLs:** TXT files treat commas as separators, so a URL containing one is split. Use the Batch tab's paste box or a CSV file instead.
+- **Commas in URLs:** TXT files treat commas as separators, so a URL containing one is split. Use Batch's paste box or a CSV file instead.
 - **Sharing:** images are PNG where the browser allows it, otherwise JPG. The Share image button needs a browser that can share files, over HTTPS or `localhost`. Where it isn't available, it's hidden, and you can copy or download the image instead.
 - **LINE:** a web page can't pick a chat or send an image straight into LINE. On a phone, choose LINE in the share menu. On a computer, the image is copied first, so paste it into the chat.
-- **Scan and Check:** codes with identical content are listed once. The camera reads one code at a time, so use a photo to read a whole label sheet. Small barcodes have thin lines, so hold the camera closer. The Check tab checks QR codes only, not barcodes.
+- **Scan and Check:** codes with identical content are listed once. The camera reads one code at a time, so use a photo to read a whole label sheet. Small barcodes have thin lines, so hold the camera closer. Check reads QR codes only, not barcodes.
 - **Scan result buttons:** Send email, Call, and Send text need a matching app on the device. For example, Send email may do nothing on a computer with no email program set up. Contacts, WiFi, and barcodes can only be copied.
 - **UPC-E scan test:** the Barcode tab always shows UPC-E failing its scan test, at any size, so the test can't confirm it. Try it on a real scanner first.
 - **Multi-line CSV fields (web):** the browser's CSV parser reads line by line, so quoted fields containing line breaks aren't supported.
