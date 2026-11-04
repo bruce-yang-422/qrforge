@@ -67,7 +67,7 @@
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="css/style.css?v=33" />
+  <link rel="stylesheet" href="css/style.css?v=34" />
 
   <!-- Local libraries keep all features available offline. -->
   <script src="libs/qrcode.min.js"></script>
@@ -110,11 +110,6 @@
     <p lang="en">QRForge is a free offline tool for generating, batch-creating, scanning, and checking QR codes, and for making barcodes. Turn on JavaScript to use it.</p>
   </noscript>
 
-  <!-- The banner's text is Chinese and too small on phones, so CSS limits where it shows. -->
-  <div class="site-banner" data-panel="generate">
-    <img src="assets/brand/qrforge-banner-web.webp" width="2080" height="544" loading="lazy" alt="QRForge — QR Code（二維碼）與條碼工具，支援網址、文字、WiFi、電子名片等內容，可離線使用" />
-  </div>
-
   <!-- ── Tabs ─────────────────────────────────────────────── -->
   <nav class="tabs" role="tablist" data-i18n-label="功能|Tools">
     <button role="tab" type="button" data-tab="generate" aria-controls="panel-generate"><svg class="icon"><use href="#i-qr"/></svg><span data-i18n="QR Code|QR Code"></span></button>
@@ -129,8 +124,10 @@
   <!-- ── QR Code: live preview beside the form ─────────────── -->
   <section id="panel-generate" role="tabpanel" data-panel="generate">
     <div class="split">
-      <div class="card">
-        <h2 data-i18n="QR Code 要放什麼？|What should the QR code contain?"></h2>
+      <div class="steps">
+        <details class="step" open>
+          <summary><span class="step-no">1</span><span class="step-title" data-i18n="內容|Content"></span></summary>
+          <div class="step-body">
         <div class="segmented" role="radiogroup" data-i18n-label="內容類型|Content type">
           <label><input type="radio" name="qi-type" value="url" checked /><span data-i18n="網址|Link"></span></label>
           <label><input type="radio" name="qi-type" value="text" /><span data-i18n="文字|Text"></span></label>
@@ -221,7 +218,11 @@
             </select>
           </div>
         </div>
-
+          </div>
+        </details>
+        <details class="step">
+          <summary><span class="step-no">2</span><span class="step-title" data-i18n="外觀|Appearance"></span><span class="step-summary style-summary"></span></summary>
+          <div class="step-body">
         <div class="field">
           <label for="qi-caption"><span data-i18n="QR Code 下方文字|Text below the QR code"></span> <span class="optional" data-i18n="（選填）|(optional)"></span></label>
           <input type="text" id="qi-caption" autocomplete="off" />
@@ -235,11 +236,15 @@
             <option value="kai" data-i18n="標楷體|Regular script (Kai)"></option>
           </select>
         </div>
-
-        <div class="field">
-          <label for="qi-name"><span data-i18n="檔案名稱|File name"></span> <span class="optional" data-i18n="（選填）|(optional)"></span></label>
-          <input type="text" id="qi-name" autocomplete="off" />
-        </div>
+            <div id="style-slot-generate"></div>
+          </div>
+        </details>
+        <details class="step">
+          <summary><span class="step-no">3</span><span class="step-title" data-i18n="進階|Advanced"></span><span class="step-summary advanced-summary"></span></summary>
+          <div class="step-body">
+            <div id="advanced-slot-generate"></div>
+          </div>
+        </details>
       </div>
 
       <aside class="card preview-card" aria-live="polite">
@@ -247,8 +252,15 @@
           <p id="qp-empty" class="stage-empty"></p>
         </div>
         <div id="qi-error" class="error-text" role="alert"></div>
-        <div id="settings-slot-generate"></div>
-        <button id="qp-download" type="button" class="btn btn-primary btn-lg" disabled>
+        <div id="qp-scan" class="scan-badge" role="status"></div>
+        <div class="output-root">
+          <div class="segmented output-tabs" role="radiogroup" data-i18n-label="輸出方式|Output">
+            <label><input type="radio" name="qp-output" value="download" checked /><span data-i18n="下載|Download"></span></label>
+            <label><input type="radio" name="qp-output" value="print" /><span data-i18n="列印標籤|Print labels"></span></label>
+          </div>
+          <div class="output-pane" data-pane="download">
+            <div id="format-slot-generate"></div>
+            <button id="qp-download" type="button" class="btn btn-primary btn-lg" disabled>
           <svg class="icon"><use href="#i-down"/></svg><span id="qp-download-label"></span>
         </button>
         <div id="qp-share-row" class="share-row" hidden>
@@ -256,36 +268,48 @@
           <button id="qp-copy" type="button" class="btn btn-secondary" data-i18n="複製圖片|Copy image"></button>
         </div>
         <p id="qp-share-status" class="hint" role="status" aria-live="polite"></p>
-        <details id="qp-sheet" class="more" hidden>
-          <summary data-i18n="列印整張標籤|Print a label sheet"></summary>
-          <div class="sheet-form">
+        <div class="field">
+          <label for="qi-name"><span data-i18n="檔案名稱|File name"></span> <span class="optional" data-i18n="（選填）|(optional)"></span></label>
+          <input type="text" id="qi-name" autocomplete="off" />
+        </div>
+          </div>
+          <div class="output-pane" data-pane="print" hidden>
+            <p id="qp-sheet-empty" class="hint" data-i18n="輸入內容後即可列印標籤。|Enter some content first."></p>
+            <div id="qp-sheet" class="sheet-form" hidden>
             <label for="qp-sheet-layout" data-i18n="選擇標籤紙|Label sheet"></label>
             <select id="qp-sheet-layout"></select>
-            <label for="qp-sheet-mode" data-i18n="列印大小|Print size"></label>
+            <label for="qp-sheet-mode" data-i18n="標籤上的大小|Size on the label"></label>
             <select id="qp-sheet-mode">
-              <option value="fit" data-i18n="自動符合標籤（建議）|Fit each label (recommended)"></option>
-              <option value="actual" data-i18n="依「圖片大小」設定|Follow the Image size setting"></option>
+              <option value="fit" data-i18n="填滿標籤（建議）|Fill the label (recommended)"></option>
+              <option value="actual" data-i18n="指定尺寸|Set a size"></option>
             </select>
+            <div id="qp-sheet-size-row" class="field-inline" hidden>
+              <label for="qp-sheet-size" data-i18n="邊長 (mm)|Side (mm)"></label>
+              <input id="qp-sheet-size" type="number" min="5" max="200" step="0.5" value="30" />
+            </div>
             <p id="qp-sheet-fit" class="fit-status" role="status" aria-live="polite"></p>
             <div id="qp-sheet-actions" class="fit-actions" hidden>
-              <button id="qp-sheet-adjust" type="button" class="btn btn-secondary btn-sm" data-i18n="調整圖片大小以符合這張標籤|Change Image size to fit this label"></button>
+              <button id="qp-sheet-adjust" type="button" class="btn btn-secondary btn-sm" data-i18n="調整尺寸以符合這張標籤|Resize to fit this label"></button>
               <button id="qp-sheet-switch" type="button" class="btn btn-secondary btn-sm"></button>
             </div>
             <p id="qp-sheet-note" class="hint"></p>
             <button id="qp-sheet-btn" type="button" class="btn btn-secondary" data-i18n="下載標籤 PDF|Download label PDF"></button>
             <p class="hint" data-i18n="這張 QR Code 會排滿整張標籤紙。列印時請選 100% 比例，並先用一般紙張試印。|This QR code fills the whole sheet. Print at 100% scale and try plain paper first."></p>
+            </div>
           </div>
-        </details>
+        </div>
       </aside>
     </div>
   </section>
 
-  <!-- ── Batch ────────────────────────────────────────────── -->
   <section id="panel-batch" role="tabpanel" data-panel="batch" hidden>
-    <div class="card">
-      <h2 data-i18n="一次產生多張 QR Code|Create many QR codes at once"></h2>
-      <p class="hint" data-i18n="每批最多 500 張。上傳檔案或貼上清單都可以。|Up to 500 per batch. Upload a file or paste a list."></p>
-      <div class="choice-grid">
+    <div class="split">
+      <div class="steps">
+        <details class="step" open>
+          <summary><span class="step-no">1</span><span class="step-title" data-i18n="內容|Content"></span></summary>
+          <div class="step-body">
+            <p class="hint step-lead" data-i18n="每批最多 500 張。上傳檔案或貼上清單都可以。|Up to 500 per batch. Upload a file or paste a list."></p>
+            <div class="batch-inputs">
         <div id="drop-zone" class="drop-zone" role="button" tabindex="0" data-i18n-label="上傳檔案|Upload files">
           <svg class="icon icon-lg"><use href="#i-upload"/></svg>
           <strong data-i18n="選擇或拖曳檔案|Choose or drop files"></strong>
@@ -304,20 +328,39 @@
           <div id="batch-list-error" class="error-text" role="alert"></div>
           <button id="batch-list-btn" type="button" class="btn btn-primary" data-i18n="產生|Create"></button>
         </div>
+            </div>
+          </div>
+        </details>
+        <details class="step">
+          <summary><span class="step-no">2</span><span class="step-title" data-i18n="外觀|Appearance"></span><span class="step-summary style-summary"></span></summary>
+          <div class="step-body">
+            <div id="style-slot-batch"></div>
+          </div>
+        </details>
+        <details class="step">
+          <summary><span class="step-no">3</span><span class="step-title" data-i18n="進階|Advanced"></span><span class="step-summary advanced-summary"></span></summary>
+          <div class="step-body">
+            <div id="advanced-slot-batch"></div>
+          </div>
+        </details>
       </div>
-      <div id="settings-slot-batch"></div>
-    </div>
 
-    <div id="spinner"><div class="spin-ring"></div><span id="spinner-msg"></span></div>
-
-    <div id="toolbar">
-      <span class="count-label" id="count-label"></span>
-      <div class="toolbar-actions">
-        <button id="single-dl-btn" type="button" class="btn btn-primary"><svg class="icon"><use href="#i-down"/></svg><span data-i18n="下載|Download"></span></button>
-        <button id="zip-btn" type="button" class="btn btn-primary"><svg class="icon"><use href="#i-down"/></svg><span id="zip-label"></span></button>
-        <details class="menu">
-          <summary class="btn btn-secondary" data-i18n="列印標籤|Print labels"></summary>
-          <div class="menu-body">
+      <aside class="card preview-card">
+        <div id="toolbar"><span class="count-label" id="count-label"></span></div>
+        <div class="output-root">
+          <div class="segmented output-tabs" role="radiogroup" data-i18n-label="輸出方式|Output">
+            <label><input type="radio" name="batch-output" value="download" checked /><span data-i18n="下載|Download"></span></label>
+            <label><input type="radio" name="batch-output" value="print" /><span data-i18n="列印標籤|Print labels"></span></label>
+          </div>
+          <div class="output-pane" data-pane="download">
+            <div id="format-slot-batch"></div>
+            <div class="batch-downloads">
+              <button id="single-dl-btn" type="button" class="btn btn-primary"><svg class="icon"><use href="#i-down"/></svg><span data-i18n="下載|Download"></span></button>
+              <button id="zip-btn" type="button" class="btn btn-primary"><svg class="icon"><use href="#i-down"/></svg><span id="zip-label"></span></button>
+            </div>
+            <p id="batch-empty" class="hint" data-i18n="產生後就能下載。|Create the codes, then download them here."></p>
+          </div>
+          <div class="output-pane sheet-form" data-pane="print" hidden>
             <label for="label-layout" data-i18n="選擇標籤紙|Label sheet"></label>
             <select id="label-layout"></select>
             <p id="label-fit" class="fit-status" role="status" aria-live="polite"></p>
@@ -325,23 +368,23 @@
             <select id="label-caption-mode"><option value="none" data-i18n="不加文字|No text"></option><option value="filename" data-i18n="各筆檔案名稱|Each file name"></option><option value="custom" data-i18n="自訂文字|Custom text"></option></select>
             <input id="label-caption" type="text" data-i18n-label="自訂標籤文字|Custom label text" hidden />
             <p class="hint" data-i18n="文字過長時會提示，請縮短後再下載。|If the text is too long, shorten it before downloading."></p>
-            <button id="label-btn" type="button" class="btn btn-secondary btn-sm" data-i18n="下載 PDF|Download PDF"></button>
+            <button id="label-btn" type="button" class="btn btn-secondary" data-i18n="下載標籤 PDF|Download label PDF"></button>
             <p class="hint" data-i18n="列印時請選 100% 比例，並先用一般紙張試印。|Print at 100% scale and try plain paper first."></p>
           </div>
-        </details>
-      </div>
+        </div>
+      </aside>
     </div>
 
+    <div id="spinner"><div class="spin-ring"></div><span id="spinner-msg"></span></div>
     <details id="log-wrap" hidden>
       <summary data-i18n="處理明細|Details"></summary>
       <div id="log-area" role="log" aria-live="polite"></div>
     </details>
-
     <div id="results-grid"></div>
   </section>
 
-  <!-- Format and QR options. Moves into the slot of the active tab. -->
-  <div id="qr-settings">
+  <!-- Shared QR settings. Each moves into the matching slot of the active tab. -->
+  <div id="qr-output-settings" data-slot="format">
     <div class="format-row">
       <span class="field-label" data-i18n="下載格式|Format"></span>
       <div class="segmented segmented-sm" role="radiogroup" data-i18n-label="下載格式|Format">
@@ -352,10 +395,23 @@
       </div>
     </div>
     <p id="format-hint" class="hint"></p>
-    <details class="more">
-      <summary data-i18n="更多設定|More settings"></summary>
-      <div class="settings-panel">
-        <section class="settings-group">
+    <div class="field">
+      <span class="field-label" data-i18n="圖片尺寸|Image size"></span>
+      <div class="segmented segmented-sm" role="radiogroup" data-i18n-label="圖片尺寸|Image size">
+        <label><input type="radio" name="opt-size" value="4" /><span data-i18n="小|Small"></span></label>
+        <label><input type="radio" name="opt-size" value="8" checked /><span data-i18n="中|Medium"></span></label>
+        <label><input type="radio" name="opt-size" value="12" /><span data-i18n="大|Large"></span></label>
+        <label><input type="radio" name="opt-size" value="custom" /><span data-i18n="自訂|Custom"></span></label>
+      </div>
+      <div id="opt-scale-row" class="field-inline" hidden>
+        <label for="opt-scale" data-i18n="每格像素 (2–20)|Pixels per square (2–20)"></label>
+        <input type="number" id="opt-scale" min="2" max="20" value="8" />
+      </div>
+      <span class="hint" id="opt-scale-hint" role="status"></span>
+    </div>
+  </div>
+  <div id="qr-settings" data-slot="style">
+    <section class="settings-group">
           <h3 class="settings-title" data-i18n="顏色|Colors"></h3>
           <div class="color-group">
             <div class="color-head">
@@ -381,8 +437,7 @@
           </div>
           <p id="color-warning" class="warn-text" role="status" hidden></p>
         </section>
-
-        <section class="settings-group">
+    <section class="settings-group">
           <h3 class="settings-title">Logo</h3>
           <input id="opt-logo" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp" />
           <label id="logo-pick" class="logo-pick" for="opt-logo">
@@ -404,14 +459,12 @@
             <output id="logo-size-value" for="opt-logo-size"></output>
           </div>
           <p id="logo-status" class="error-text" role="alert"></p>
-          <p id="logo-hint" class="hint settings-note" data-i18n="已自動使用最高防損傷程度。去背的 PNG 會沿著圖案留白，未去背的圖片則留出整個長方形。下載後請實際掃描確認。|This uses the highest damage protection automatically. A transparent PNG keeps the code close around its shape, and other images clear a full rectangle. Test the downloaded code by scanning it." hidden></p>
+          <p id="logo-hint" class="hint settings-note" data-i18n="已自動使用最高容錯能力。去背的 PNG 會沿著圖案留白，未去背的圖片則留出整個長方形。下載後請實際掃描確認。|This uses the highest error correction automatically. A transparent PNG keeps the code close around its shape, and other images clear a full rectangle. Test the downloaded code by scanning it." hidden></p>
         </section>
-
-        <section class="settings-group">
-          <h3 class="settings-title" data-i18n="品質與大小|Quality and size"></h3>
-          <div class="settings-fields">
-            <div class="field">
-              <label for="opt-ecl" data-i18n="防損傷程度|Damage protection"></label>
+  </div>
+  <div id="qr-advanced" data-slot="advanced">
+    <div class="field">
+              <label for="opt-ecl" data-i18n="容錯能力|Error correction"></label>
               <select id="opt-ecl">
                 <option value="L" data-i18n="低 — 圖案最簡單 (L 7%)|Low — simplest pattern (L 7%)"></option>
                 <option value="M" selected data-i18n="標準 — 建議 (M 15%)|Standard — recommended (M 15%)"></option>
@@ -419,15 +472,6 @@
                 <option value="H" data-i18n="最高 — 容易磨損時用 (H 30%)|Highest — for wear and tear (H 30%)"></option>
               </select>
             </div>
-            <div class="field">
-              <label for="opt-scale" data-i18n="圖片大小（每格像素，2–20）|Image size (pixels per square, 2–20)"></label>
-              <input type="number" id="opt-scale" min="2" max="20" value="8" />
-              <span class="hint" id="opt-scale-hint" role="status"></span>
-            </div>
-          </div>
-        </section>
-      </div>
-    </details>
   </div>
 
   <!-- ── Scan ─────────────────────────────────────────────── -->
@@ -587,19 +631,19 @@
 </div><!-- /.page-wrap -->
 
 <!-- App logic -->
-<script src="js/i18n.js?v=33"></script>
-<script src="js/print.js?v=33"></script>
-<script src="js/share.js?v=33"></script>
-<script src="js/tabs.js?v=33"></script>
-<script src="js/qr-extras.js?v=33"></script>
-<script src="js/app.js?v=33"></script>
-<script src="js/qr-analyze.js?v=33"></script>
-<script src="js/qr-multi.js?v=33"></script>
-<script src="js/scanner.js?v=33"></script>
-<script src="js/barcode-rules.js?v=33"></script>
-<script src="js/barcode.js?v=33"></script>
+<script src="js/i18n.js?v=34"></script>
+<script src="js/print.js?v=34"></script>
+<script src="js/share.js?v=34"></script>
+<script src="js/tabs.js?v=34"></script>
+<script src="js/qr-extras.js?v=34"></script>
+<script src="js/app.js?v=34"></script>
+<script src="js/qr-analyze.js?v=34"></script>
+<script src="js/qr-multi.js?v=34"></script>
+<script src="js/scanner.js?v=34"></script>
+<script src="js/barcode-rules.js?v=34"></script>
+<script src="js/barcode.js?v=34"></script>
 <script>QRTabs.start();</script>
-<script src="js/share-target.js?v=33"></script>
-<script src="js/pwa.js?v=33"></script>
+<script src="js/share-target.js?v=34"></script>
+<script src="js/pwa.js?v=34"></script>
 </body>
 </html>

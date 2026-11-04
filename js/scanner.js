@@ -516,7 +516,7 @@
     const tips = [];
     if (grades.contrast !== "A") tips.push(tr("對比偏低：加深圖案顏色，或使用較淺的背景", "Low contrast: use a darker code or a lighter background"));
     if (grades.quiet !== "A") tips.push(tr("周圍留白不足：在 QR Code 四周多留一些空白", "Tight margins: leave more blank space around the code"));
-    if (grades.damage !== "A") tips.push(tr("圖案有損傷：請更換圖片，或提高防損傷程度後重新產生", "Damage found: use a cleaner image, or recreate the code with more damage protection"));
+    if (grades.damage !== "A") tips.push(tr("圖案有損傷：請更換圖片，或提高容錯能力後重新產生", "Damage found: use a cleaner image, or recreate the code with more error correction"));
     if (sample.inverted) tips.push(tr("淺色圖案配深色背景：部分掃描器讀不到，建議改為深色圖案", "Light code on a dark background: some scanners can't read this, so a dark code is safer"));
     return tips;
   }

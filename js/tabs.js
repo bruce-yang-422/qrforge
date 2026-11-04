@@ -49,5 +49,12 @@ const QRTabs = (() => {
   });
   window.addEventListener("hashchange", () => select(fromHash(), false));
 
+  /* Download or print: each output panel shows one at a time. */
+  document.addEventListener("change", (e) => {
+    const root = e.target.closest(".output-root");
+    if (!root || !e.target.closest(".output-tabs")) return;
+    for (const pane of root.querySelectorAll(".output-pane")) pane.hidden = pane.dataset.pane !== e.target.value;
+  });
+
   return { loadScript, select, current: () => active, start: () => select(fromHash(), false) };
 })();

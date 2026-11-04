@@ -87,7 +87,7 @@ const assert = require('node:assert/strict');
     QRTabs.select('batch'); await addResult('測試標籤','https://example.com');
     document.getElementById('label-caption-mode').value='filename';
   });
-  await page.locator('details:has(#label-btn) > summary').click();
+  await page.locator('input[name="batch-output"][value="print"]').check({force:true});
   const download=page.waitForEvent('download'); await page.locator('#label-btn').click();
   const file=await download; assert(file.suggestedFilename().endsWith('.pdf'));
   assert(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth), 'Mobile label menu must fit the viewport');
