@@ -96,7 +96,7 @@ These tools are in the web app only. Everything runs locally, and images are nev
 
 **Phone, SMS, and contacts:** choose the country code from the menu or type it in. It starts as Taiwan, +886. A leading 0 in the phone number is removed (except for Italy), and the real number is shown below the field. A number that starts with `+` is used as is, without the country code.
 
-**Contact names:** enter the family and given names separately, and optionally a nickname or English name, such as Tom. An empty display name becomes `楊翔志 Tom`, or you can write your own. Some phones' contact apps show the family and given names instead, and list the nickname separately.
+**Contact names:** enter the family and given names separately, and optionally a nickname or English name, such as Tom. An empty display name becomes `王小明 Tom`, or you can write your own. Some phones' contact apps show the family and given names instead, and list the nickname separately.
 
 **QR code appearance:** in the **Appearance** step, choose the code and background colors, and add a PNG, JPG, or WebP logo under 5 MB. A logo automatically uses the highest error correction (H), and its size can be set from 10% to 28% of the code's width. A transparent PNG keeps the code close around its shape, and other images clear a full rectangle. Use dark modules on a light background, and test the downloaded code by scanning it.
 
@@ -142,7 +142,7 @@ The first row is the header, and each following row produces one QR code. Header
 | `內文` (body) | No | For `email`, `sms` |
 | `姓`, `名` (family name, given name) | At least one for `vcard` | Contact's name. Older files' `姓名` column still works |
 | `暱稱` (nickname) | No | For `vcard`, such as an English name like Tom |
-| `顯示名稱` (display name) | No | For `vcard`; if empty, it's built from the name and nickname, such as `楊翔志 Tom` |
+| `顯示名稱` (display name) | No | For `vcard`; if empty, it's built from the name and nickname, such as `王小明 Tom` |
 | `公司`, `職稱`, `Email`, `網站` (organization, job title, email, website) | No | For `vcard` |
 | `Qr-code檔案名稱` (filename) | No | Output filename without extension |
 
