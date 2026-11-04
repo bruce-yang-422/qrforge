@@ -1040,7 +1040,8 @@ function checkQuickScan(data) {
     if (run !== scanCheck || !quickQr) return;
     const { canvas } = quickQr;
     const image = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height);
-    const read = jsQR(image.data, image.width, image.height, { inversionAttempts: "attemptBoth" });
+    // No inverted attempt: this should fail the codes that some real scanners can't read.
+    const read = jsQR(image.data, image.width, image.height, { inversionAttempts: "dontInvert" });
     const ok = Boolean(read) && read.data === data;
     badge.className = `scan-badge ${ok ? "pass" : "fail"}`;
     badge.textContent = ok
@@ -1107,13 +1108,13 @@ function luminance(hex) {
   return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5);
 }
 
-// Dark codes on light backgrounds, so every pairing here scans.
+// Only dark codes on light backgrounds, since some scanners can't read inverted codes.
 const COLOR_SWATCHES = [
-  { input: foregroundInput, light: false, colors: [
+  { input: foregroundInput, colors: [
     ["#000000", "黑", "Black"], ["#1E3A8A", "深藍", "Navy"], ["#2563EB", "藍", "Blue"], ["#166534", "綠", "Green"],
     ["#B91C1C", "紅", "Red"], ["#6D28D9", "紫", "Purple"], ["#78350F", "棕", "Brown"],
   ] },
-  { input: backgroundInput, light: true, colors: [
+  { input: backgroundInput, colors: [
     ["#FFFFFF", "白", "White"], ["#FFF7E6", "米", "Cream"], ["#F1F5F9", "淺灰", "Light gray"], ["#EFF6FF", "淺藍", "Light blue"],
     ["#F0FDF4", "淺綠", "Light green"], ["#FEFCE8", "淺黃", "Light yellow"], ["#FFF1F2", "淺粉", "Light pink"],
   ] },
@@ -1125,7 +1126,7 @@ for (const group of COLOR_SWATCHES) {
   group.buttons = group.colors.map(([hex, zh, en]) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = group.light ? "swatch is-light" : "swatch";
+    button.className = luminance(hex) > 0.5 ? "swatch is-light" : "swatch";
     button.style.background = hex;
     button.dataset.color = hex;
     button.dataset.zh = zh;
