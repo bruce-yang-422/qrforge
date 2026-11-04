@@ -112,11 +112,11 @@ These tools are in the web app only. Everything runs locally, and images are nev
 
 | Group | Models |
 | --- | --- |
-| Common in Taiwan, A4 | Herwood C149210, C149105, C74105, C59105, C50105, L4567, L3867, C3770, C3070, and L2138; Longder LD-805, LD-836, and LD-806 |
+| Common in Taiwan, A4 | Herwood C149210, C149105, C74105, C59105, C50105, L4567, L3867, C3770, C3070, and L2138; Longder LD-805, LD-832, LD-836, LD-802, LD-848, LD-892, and LD-806 |
 | International, A4 | Avery L7165, L7173, L7163, L7162, L7160, and L7651 |
 | US Letter | Avery 5164, 5163, 5161, 5160, and 5167 |
 
-These follow Herwood's templates and published sheet dimensions, and QRForge isn't affiliated with these brands.
+These follow Herwood's and Longder's templates and published sheet dimensions, and QRForge isn't affiliated with these brands.
 
 > [!NOTE]
 > Check grades are estimates from the image, not an ISO/IEC 15415 or 15416 verification. Test a printed sample before a large print run.

@@ -10,20 +10,24 @@ const QRPrint = (() => {
   const LETTER = [215.9, 279.4];
 
   /* Dimensions follow the published sheet specs. Print at 100% scale.
-     Herwood's come from its Word templates, and its C sheets divide A4 with no margins.
+     Herwood's and Longder's come from their Word templates, and many sheets divide A4 with no margins.
      `model` is "中文|English", as in data-i18n. */
   const LABEL_LAYOUTS = {
     C149210: { model: "鶴屋 C149210|Herwood C149210", page: A4, label: [210, 148.5], cols: 1, rows: 2, left: 0, top: 0, pitch: [210, 148.5] },
     C149105: { model: "鶴屋 C149105|Herwood C149105", page: A4, label: [105, 148.5], cols: 2, rows: 2, left: 0, top: 0, pitch: [105, 148.5] },
     C74105: { model: "鶴屋 C74105／龍德 LD-805|Herwood C74105 / Longder LD-805", page: A4, label: [105, 74.25], cols: 2, rows: 4, left: 0, top: 0, pitch: [105, 74.25] },
     C59105: { model: "鶴屋 C59105|Herwood C59105", page: A4, label: [105, 59.4], cols: 2, rows: 5, left: 0, top: 0, pitch: [105, 59.4] },
-    C50105: { model: "鶴屋 C50105|Herwood C50105", page: A4, label: [105, 49.5], cols: 2, rows: 6, left: 0, top: 0, pitch: [105, 49.5] },
+    C50105: { model: "鶴屋 C50105／龍德 LD-832|Herwood C50105 / Longder LD-832", page: A4, label: [105, 49.5], cols: 2, rows: 6, left: 0, top: 0, pitch: [105, 49.5] },
     L4567: { model: "鶴屋 L4567|Herwood L4567", page: A4, label: [67, 45], cols: 3, rows: 6, left: 3, top: 13.5, pitch: [68.5, 45] },
     L3867: { model: "鶴屋 L3867|Herwood L3867", page: A4, label: [67, 38], cols: 3, rows: 7, left: 2.5, top: 16, pitch: [69, 38] },
-    LD836: { model: "龍德 LD-836|Longder LD-836", page: A4, label: [70, 42.4], cols: 3, rows: 7, left: 0, top: 0.1, pitch: [70, 42.4] },
+    LD836: { model: "龍德 LD-836|Longder LD-836", page: A4, label: [70, 42.4], cols: 3, rows: 7, left: 0, top: 0, pitch: [70, 42.4] },
     C3770: { model: "鶴屋 C3770|Herwood C3770", page: A4, label: [70, 37.1], cols: 3, rows: 8, left: 0, top: 0.1, pitch: [70, 37.1] },
+    LD802: { model: "龍德 LD-802|Longder LD-802", page: A4, label: [70, 37], cols: 3, rows: 8, left: 0, top: 0, pitch: [70, 37] },
     C3070: { model: "鶴屋 C3070|Herwood C3070", page: A4, label: [70, 29.7], cols: 3, rows: 10, left: 0, top: 0, pitch: [70, 29.7] },
-    L2138: { model: "鶴屋 L2138／龍德 LD-806|Herwood L2138 / Longder LD-806", page: A4, label: [38.1, 21.2], cols: 5, rows: 13, left: 4.75, top: 10.7, pitch: [40.6, 21.2] },
+    LD848: { model: "龍德 LD-848|Longder LD-848", page: A4, label: [52.5, 24.7], cols: 4, rows: 12, left: 0, top: 0.3, pitch: [52.5, 24.7] },
+    LD892: { model: "龍德 LD-892|Longder LD-892", page: A4, label: [52.5, 21.2], cols: 4, rows: 14, left: 0, top: 0, pitch: [52.5, 21.2] },
+    L2138: { model: "鶴屋 L2138|Herwood L2138", page: A4, label: [38.1, 21.2], cols: 5, rows: 13, left: 4.75, top: 10.7, pitch: [40.6, 21.2] },
+    LD806: { model: "龍德 LD-806|Longder LD-806", page: A4, label: [38.1, 21.2], cols: 5, rows: 13, left: 9.75, top: 10.7, pitch: [38.1, 21.2] },
 
     L7165: { model: "L7165|L7165", page: A4, label: [99.1, 67.7], cols: 2, rows: 4, left: 4.65, top: 13.1, pitch: [101.6, 67.7] },
     L7173: { model: "L7173|L7173", page: A4, label: [99.1, 57], cols: 2, rows: 5, left: 4.65, top: 6, pitch: [101.6, 57] },
@@ -41,7 +45,7 @@ const QRPrint = (() => {
 
   /* Written out because a plain object lists number-like keys, such as 5160, first. */
   const LABEL_GROUPS = [
-    { name: () => tr("台灣常用 A4（鶴屋、龍德）", "Common in Taiwan, A4 (Herwood, Longder)"), keys: ["C149210", "C149105", "C74105", "C59105", "C50105", "L4567", "L3867", "LD836", "C3770", "C3070", "L2138"] },
+    { name: () => tr("台灣常用 A4（鶴屋、龍德）", "Common in Taiwan, A4 (Herwood, Longder)"), keys: ["C149210", "C149105", "C74105", "C59105", "C50105", "L4567", "L3867", "LD836", "C3770", "LD802", "C3070", "LD848", "LD892", "L2138", "LD806"] },
     { name: () => tr("國際常用 A4（Avery）", "International, A4 (Avery)"), keys: ["L7165", "L7173", "L7163", "L7162", "L7160", "L7651"] },
     { name: () => tr("美規 Letter（Avery）", "US Letter (Avery)"), keys: ["5164", "5163", "5161", "5160", "5167"] },
   ];
