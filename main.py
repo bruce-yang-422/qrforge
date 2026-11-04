@@ -75,6 +75,13 @@ def normalize_row(row):
 # 將正規化後的資料列轉換為 QR code 編碼所需的字串。
 # 各類型遵循對應的 QR code 標準編碼格式。
 
+def escape_wifi(value):
+    """Escapes the characters that are structural in a WiFi QR code.
+    跳脫 WiFi QR Code 中具有結構意義的字元。
+    """
+    return re.sub(r'([\\;,:"])', r"\\\1", str(value))
+
+
 def format_qr_data(row):
     """Returns the QR code payload string based on the row type.
     回傳依資料類型產生的 QR code 內容字串。
@@ -92,7 +99,7 @@ def format_qr_data(row):
         ssid = row.get("ssid", "")
         password = row.get("password", "")
         security = row.get("security", "WPA")  # Default to WPA if not specified / 未指定時預設 WPA
-        return f"WIFI:T:{security};S:{ssid};P:{password};;"
+        return f"WIFI:T:{security};S:{escape_wifi(ssid)};P:{escape_wifi(password)};;"
 
     raise ValueError(f"❌ 不支援類型: {t}")
 

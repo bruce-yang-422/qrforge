@@ -44,6 +44,10 @@ The web interface is bilingual (Traditional Chinese and English).
 ## Features
 
 - Generates QR codes for URLs, plain text, and WiFi credentials
+- **New in the web app:** vCard contacts, email (recipient, subject and body), phone and SMS QR codes. Customize foreground/background colors and add a PNG, JPG or WebP logo under 5 MB. Logos automatically use H error correction; test scanning the result.
+- **Barcode scanning:** read common EAN, UPC, Code 128, Code 39, ITF and Data Matrix codes from the camera or an image. Reads one barcode at a time; images still support multiple QR codes.
+- **Batch label text:** choose each file name or a shared custom caption under **Print labels**. Label PDFs retain text, colors and logos.
+- **Receive shares from other apps:** install the PWA, then choose QRForge in a supported system share sheet. Text and links fill the QR preview; images open the scanner (up to 10 images, each under 20 MB). Shares are temporarily stored on the device and deleted after reading. System share integration depends on browser and OS support.
 - Reads CSV, Excel (`.xlsx`), and TXT files
 - Detects whether a TXT file holds URLs or plain text
 - Exports PNG, JPG, or SVG with adjustable error correction and scale
@@ -92,8 +96,8 @@ These tools are in the web app only. Everything runs locally, and images are nev
 | --- | --- |
 | **QR Code** | Makes one code from a link, text, or WiFi details, with a live preview. Adds `https://` to a bare domain, can print text below the code in a choice of fonts, and can share or copy the image |
 | **Batch** | Makes up to 500 codes from a pasted list or CSV, Excel, and TXT files, as PNG, JPG, SVG, or PDF in a ZIP file. Also prints them on label sheets |
-| **Scan** | Reads QR codes from the camera, a photo, an SVG file, or a pasted screenshot. The camera keeps scanning and shows results live below the picture. Links only open when you click them |
-| **Check** | Tells you whether a code will scan and how to improve it, with a grade, contrast, margin, and a map of damaged modules |
+| **Scan** | Reads QR codes from the camera, a photo, an SVG file, or a pasted screenshot. An image with several codes has all of them read. The camera keeps scanning and shows results live below the picture. Links only open when you click them |
+| **Check** | Tells you whether a code will scan and how to improve it, with a grade, contrast, margin, and a map of damaged modules. An image with several codes gets a report for each |
 | **Barcode** | Makes barcodes at true print size, and re-reads each one with a separate decoder whenever you change it. Can also share or copy the image |
 
 **Barcode types:** EAN-13, EAN-8, UPC-A, UPC-E, ISBN, Code 128, ITF-14, GS1-128, SSCC-18, and Data Matrix. Check digits are calculated if you leave them out, and verified if you include them. You can also add text below a barcode, such as a product name, and choose its font. It's printed only, and scanners won't read it.
@@ -202,6 +206,7 @@ qrforge/
 ├── js/tabs.js              # Tab navigation and on-demand library loading
 ├── js/scanner.js           # Scan and Check tabs
 ├── js/qr-analyze.js        # Module sampling, error correction, and grading
+├── js/qr-multi.js          # Reads several QR codes from one image
 ├── js/barcode.js           # Barcode generator interface
 ├── js/barcode-rules.js     # Barcode validation and check digits
 ├── js/print.js             # PDF, EPS, and label sheet output
@@ -240,11 +245,10 @@ Offline support requires HTTPS or `localhost`. The app still opens from `file://
 - **CLI filename collisions:** all images go directly into `output/`, regardless of input subfolders, and existing files with the same name are overwritten. Automatic numbering restarts for each source file, so unnamed rows from different files can overwrite each other. Filling in the filename column avoids this.
 - **CSV files with a BOM (CLI):** a UTF-8 file with a byte order mark, such as Excel's "CSV UTF-8" export, fails with a missing-column error. Use a file without a BOM, an `.xlsx` file, or the web app.
 - **WiFi security default:** the web app treats an empty security value as `WPA`. The CLI only does so when the column is missing entirely, so fill it in for CLI input.
-- **WiFi special characters:** `;`, `,`, `:`, `\`, and `"` in an SSID or password are not escaped, so the resulting code may not connect.
 - **Commas in URLs:** TXT files treat commas as separators, so a URL containing one is split. Use the Batch tab's paste box or a CSV file instead.
 - **Label sheets:** QR code labels from the Batch tab contain only the code, with no text below it.
 - **Sharing:** images are PNG where the browser allows it, otherwise JPG. The Share image button needs a browser that can share files, over HTTPS or `localhost`. Where it isn't available, it's hidden, and you can copy or download the image instead.
-- **Scan and Check:** each image is read for one QR code, so only one result is returned when an image contains several.
+- **Scan and Check:** codes with identical content are listed once. The camera reads one code at a time, so use a photo to read a whole label sheet.
 - **Multi-line CSV fields (web):** the browser's CSV parser reads line by line, so quoted fields containing line breaks aren't supported.
 
 ## Contributing

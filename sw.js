@@ -1,7 +1,7 @@
 /* Bump VERSION whenever a precached file changes, and match it in the ?v= of
    the js/ and css/ addresses in index.html, so CDNs can't serve older copies. Updates activate once all
    existing app windows close, keeping each session on a consistent version. */
-const VERSION = 'v22';
+const VERSION = 'v24';
 const CACHE_PREFIX = `qrforge-${self.registration.scope}-`;
 const CACHE_NAME = `${CACHE_PREFIX}${VERSION}`;
 // Large and rarely needed, so kept from first use and across app versions.
@@ -13,12 +13,15 @@ const ASSETS = [
   'index.html',
   'css/style.css',
   'js/app.js',
+  'js/qr-extras.js',
+  'js/share-target.js',
   'js/pwa.js',
   'js/i18n.js',
   'js/print.js',
   'js/share.js',
   'js/tabs.js',
   'js/qr-analyze.js',
+  'js/qr-multi.js',
   'js/scanner.js',
   'js/barcode-rules.js',
   'js/barcode.js',
@@ -63,6 +66,35 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  if (event.request.method === 'POST' && event.request.url === new URL('share-target', APP_URL).href) {
+    event.respondWith((async () => {
+      try {
+        const form = await event.request.formData();
+        const files = form.getAll('files').filter(file => file instanceof File && file.type.startsWith('image/'));
+        if (files.length > 10 || files.some(file => file.size > 20 * 1024 * 1024)) {
+          return Response.redirect(`${APP_URL}?share_error=size#scan`, 303);
+        }
+        const entry = { title: String(form.get('title') || ''), text: String(form.get('text') || ''), url: String(form.get('url') || ''), files };
+        const key = crypto.randomUUID();
+        const db = await new Promise((resolve, reject) => {
+          const request = indexedDB.open('qrforge-incoming', 1);
+          request.onupgradeneeded = () => request.result.createObjectStore('shares');
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+        try {
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction('shares', 'readwrite');
+            const store = tx.objectStore('shares');
+            store.clear(); store.put(entry, key);
+            tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
+          });
+        } finally { db.close(); }
+        return Response.redirect(`${APP_URL}?share_id=${key}${files.length ? '#scan' : '#generate'}`, 303);
+      } catch { return Response.redirect(`${APP_URL}?share_error=read#generate`, 303); }
+    })());
+    return;
+  }
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   // Cache only application files, never uploaded data or unrelated origin paths.

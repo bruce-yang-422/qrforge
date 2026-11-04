@@ -1,7 +1,8 @@
 // @ts-nocheck
 /* ===================================================================
    QR Code generation — browser port of main.py
-   QRCode / XLSX / JSZip are loaded from libs/ before this script.
+   QRCode is loaded from libs/ before this script. XLSX and JSZip are large
+   and only needed for some batch work, so they load on first use.
    =================================================================== */
 
 /* ── Column map (mirrors Python COLUMN_MAP) ──────────────────────── */
@@ -23,6 +24,12 @@ const _ILLEGAL_RE  = /[\\/:*?"<>|]/g;
 
 function sanitizeFilename(name) {
   return String(name).replace(_ILLEGAL_RE, "");
+}
+
+// Backslash, semicolon, comma, colon and quote are structural in a WiFi code.
+function wifiPayload(security, ssid, password) {
+  const escape = (value) => String(value).replace(/[\\;,:"]/g, "\\$&");
+  return `WIFI:T:${security};S:${escape(ssid)};P:${escape(password)};;`;
 }
 
 function isUrl(token) {
@@ -92,43 +99,7 @@ function getSettings() {
 // The library's default keeps only the low byte of each character, which corrupts CJK and emoji.
 qrcode.stringToBytes = qrcode.stringToBytesFuncs["UTF-8"];
 
-function makeQr(data) {
-  const { ecl, scale, format } = getSettings();
-
-  // typeNumber 0 = auto-detect.
-  const qr = qrcode(0, ecl);
-  qr.addData(data, "Byte");
-  qr.make();
-
-  const modules = qr.getModuleCount();
-  const matrix  = { size: modules, isDark: (r, c) => qr.isDark(r, c) };
-  const moduleMm = scale * 0.25;
-
-  if (format === "SVG") {
-    const svgStr = qr.createSvgTag(scale, 4 * scale);
-    return { format: "SVG", svg: svgStr, matrix, moduleMm };
-  }
-
-  // Render onto an off-screen canvas (PNG / JPG, and the PDF preview).
-  const margin  = 4 * scale;
-  const size    = modules * scale + margin * 2;
-  const canvas  = document.createElement("canvas");
-  canvas.width  = canvas.height = size;
-  const ctx     = canvas.getContext("2d");
-
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, size, size);
-  ctx.fillStyle = "#000000";
-  for (let r = 0; r < modules; r++) {
-    for (let c = 0; c < modules; c++) {
-      if (qr.isDark(r, c)) {
-        ctx.fillRect(c * scale + margin, r * scale + margin, scale, scale);
-      }
-    }
-  }
-
-  return { format, canvas, matrix, moduleMm };
-}
+function makeQr(data) { return QRExtras.render(data, getSettings()); }
 
 function previewNode(filename, qr) {
   if (qr.format === "SVG") {
@@ -220,7 +191,7 @@ function downloadSingle(filename, qr) {
   const ext = qr.format.toLowerCase();
 
   if (qr.format === "PDF") {
-    const blob = new Blob([QRPrint.qrPdf(qr.matrix, qr.moduleMm, qr.caption)], { type: "application/pdf" });
+    const blob = new Blob([QRExtras.pdf(qr)], { type: "application/pdf" });
     a.href     = URL.createObjectURL(blob);
     a.download = `${filename}.pdf`;
     a.click();
@@ -246,11 +217,20 @@ document.getElementById("zip-btn").addEventListener("click", async () => {
   zipBtn.disabled = true;
   label.textContent = tr("打包中…", "Packing…");
 
+  try {
+    await QRTabs.loadScript("libs/jszip.min.js");
+  } catch {
+    logErr(tr("無法載入 ZIP 工具，請確認網路連線後再試一次", "The ZIP tool couldn't be loaded. Check your connection and try again"));
+    zipBtn.disabled = false;
+    label.textContent = zipLabel();
+    return;
+  }
+
   const zip = new JSZip();
   for (const { filename, qr } of results) {
     const ext = qr.format.toLowerCase();
     if (qr.format === "PDF") {
-      zip.file(`${filename}.pdf`, QRPrint.qrPdf(qr.matrix, qr.moduleMm));
+      zip.file(`${filename}.pdf`, QRExtras.pdf(qr));
     } else if (qr.format === "SVG") {
       zip.file(`${filename}.svg`, qr.svg);
     } else {
@@ -282,28 +262,26 @@ for (const [key, layout] of Object.entries(QRPrint.LABEL_LAYOUTS)) {
 const MIN_LABEL_MODULE_MM = 0.33;
 
 document.getElementById("label-btn").addEventListener("click", () => {
-  if (results.length === 0) return;
-  const key    = labelSelect.value;
-  const layout = QRPrint.LABEL_LAYOUTS[key];
-  const tooSmall = results.filter(({ qr }) =>
-    QRPrint.qrLabelModule(qr.matrix, layout.label[0], layout.label[1]) < MIN_LABEL_MODULE_MM).length;
-  if (tooSmall) {
-    logWarn(tr(
-      `${tooSmall} 張 QR Code 在這種標籤上會太小，可能難以掃描，建議改用較大的標籤`,
-      `${tooSmall} QR code(s) would be too small on this label and may be hard to scan. Try a larger label`,
-    ));
-  }
-
-  const bytes = QRPrint.labelSheet(key, results.length, (cell, pageHeight) =>
-    QRPrint.qrLabelOps(results[cell.index].qr.matrix, cell, pageHeight));
-  const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
-  const a   = document.createElement("a");
-  a.href     = url;
-  a.download = `qrcode-labels-${key}.pdf`;
-  a.click();
-  URL.revokeObjectURL(url);
-  const sheets = Math.ceil(results.length / (layout.cols * layout.rows));
-  logOk(tr(`標籤 PDF：${results.length} 張，共 ${sheets} 頁`, `Label PDF: ${results.length} labels on ${sheets} page(s)`));
+  if (!results.length) return;
+  try {
+    const key = labelSelect.value;
+    const mode = document.getElementById("label-caption-mode").value;
+    const bytes = QRPrint.labelSheet(key, results.length, (cell, pageHeight) => {
+      const { qr, filename } = results[cell.index];
+      const text = mode === "filename" ? filename : mode === "custom" ? document.getElementById("label-caption").value : "";
+      const widthMm = Math.min(cell.width - 4, cell.height - (text ? 9 : 4));
+      const caption = QRPrint.layoutCaption(text, widthMm, captionLimits(widthMm), "sans");
+      if (caption?.tooLong) throw new Error(tr("標籤文字太長，請縮短文字", "Label text is too long. Please shorten it"));
+      const moduleMm = widthMm / (qr.matrix.size + 8);
+      if (moduleMm < MIN_LABEL_MODULE_MM) logWarn(tr("標籤上的 QR Code 較小，請確認能正常掃描", "The QR code is small on this label. Please test scanning it"));
+      const canvas = QRPrint.paintWithCaption(document.createElement("canvas"), qr.canvas, caption, qr.canvas.width / widthMm);
+      const heightMm = canvas.height * widthMm / canvas.width;
+      return QRPrint.vectorOps(QRExtras.vector(canvas), cell.x + (cell.width-widthMm)/2, cell.y + (cell.height-heightMm)/2, widthMm/canvas.width, pageHeight);
+    });
+    const url = URL.createObjectURL(new Blob([bytes], {type:"application/pdf"}));
+    const a = document.createElement("a"); a.href = url; a.download = `qrcode-labels-${key}.pdf`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (err) { logErr(err.message); }
 });
 
 /* ── Business logic ──────────────────────────────────────────────── */
@@ -319,10 +297,11 @@ function normalizeRow(rawRow) {
 
 function formatQrData(row) {
   const t = (row.type || "").toLowerCase();
+  if (["vcard", "email", "phone", "sms"].includes(t)) return QRExtras.payload(t, row);
   if (["url", "text", "line"].includes(t)) return row.data || "";
   if (t === "wifi") {
     const security = row.security || "WPA";
-    return `WIFI:T:${security};S:${row.ssid || ""};P:${row.password || ""};;`;
+    return wifiPayload(security, row.ssid || "", row.password || "");
   }
   throw new Error(tr(`不支援的類型「${row.type}」`, `Unsupported type: "${row.type}"`));
 }
@@ -419,6 +398,13 @@ function parseCsvLine(line) {
 
 /* ── Excel processing ────────────────────────────────────────────── */
 async function processExcel(arrayBuffer, stem) {
+  try {
+    await QRTabs.loadScript("libs/xlsx.full.min.js");
+  } catch {
+    logErr(tr(`${stem}.xlsx：無法載入 Excel 工具，請確認網路連線後再試一次`, `${stem}.xlsx: the Excel tool couldn't be loaded. Check your connection and try again`));
+    return;
+  }
+
   const wb    = XLSX.read(arrayBuffer, { type: "array" });
   const sheet = wb.Sheets[wb.SheetNames[0]];
   if (!sheet) { logErr(tr(`${stem}.xlsx：無法讀取工作表`, `${stem}.xlsx: can't read the sheet`)); return; }
@@ -570,13 +556,18 @@ function completeUrl(value) {
 }
 
 function quickPayload() {
+  if (["vcard", "email", "phone", "sms"].includes(qiType())) {
+    const row = { data: qiData.value, subject: document.getElementById("qi-subject").value, body: document.getElementById("qi-body").value };
+    for (const key of ["name", "org", "title", "phone", "email", "url"]) row[key] = document.getElementById(`qi-contact-${key}`).value.trim();
+    return QRExtras.payload(qiType(), row);
+  }
   if (qiType() === "url") return completeUrl(qiData.value.trim());
   if (qiType() === "text") return qiData.value.trim();
   const ssid = document.getElementById("qi-ssid").value.trim();
   if (!ssid) return "";
   const password = document.getElementById("qi-password").value.trim();
   const security = document.getElementById("qi-security").value;
-  return `WIFI:T:${security};S:${ssid};P:${security === "nopass" ? "" : password};;`;
+  return wifiPayload(security, ssid, security === "nopass" ? "" : password);
 }
 
 function emptyMessage() {
@@ -608,7 +599,7 @@ function withCaption(qr) {
     .replace(/ width="[^"]*" height="[^"]*"/, ` width="${width}px" height="${height}px"`)
     .replace(/viewBox="[^"]*"/, `viewBox="0 0 ${width} ${height}"`)
     .replace("</svg>", `${paths}</svg>`);
-  return { ...qr, caption, svg };
+  return { ...qr, caption, svg, canvas: QRPrint.paintWithCaption(document.createElement("canvas"), qr.canvas, caption, qr.canvas.width / widthMm) };
 }
 
 function renderQuick() {
@@ -647,9 +638,14 @@ function renderQuick() {
 function updateTypeFields() {
   const type = qiType();
   const isWifi = type === "wifi";
-  document.getElementById("qi-data-row").hidden = isWifi;
+  document.getElementById("qi-data-row").hidden = isWifi || type === "vcard";
   document.getElementById("qi-wifi-rows").hidden = !isWifi;
   document.getElementById("qi-data-label").textContent = type === "url" ? tr("網址", "Link") : tr("文字內容", "Text");
+  document.getElementById("qi-contact-rows").hidden = type !== "vcard";
+  document.getElementById("qi-subject-row").hidden = type !== "email";
+  document.getElementById("qi-body-row").hidden = !["email", "sms"].includes(type);
+  if (type === "email") document.getElementById("qi-data-label").textContent = tr("收件人 Email", "Recipient email");
+  if (["phone", "sms"].includes(type)) document.getElementById("qi-data-label").textContent = tr("電話號碼（含國碼）", "Phone number (with country code)");
   qiData.placeholder = type === "url" ? "https://example.com" : tr("在這裡輸入文字…", "Type your text here…");
   document.getElementById("qi-password-row").hidden = document.getElementById("qi-security").value === "nopass";
 }
@@ -663,11 +659,12 @@ function scheduleQuick() {
 document.querySelectorAll("input[name='qi-type']").forEach(input => input.addEventListener("change", () => {
   updateTypeFields();
   renderQuick();
-  if (qiType() !== "wifi") qiData.focus();
+  if (qiType() === "vcard") document.getElementById("qi-contact-name").focus();
+  else if (qiType() !== "wifi") qiData.focus();
 }));
 document.getElementById("qi-security").addEventListener("change", () => { updateTypeFields(); renderQuick(); });
 qiFont.addEventListener("change", renderQuick);
-for (const id of ["qi-data", "qi-ssid", "qi-password", "qi-caption"]) {
+for (const id of ["qi-data", "qi-ssid", "qi-password", "qi-caption", "qi-subject", "qi-body", ...["name", "org", "title", "phone", "email", "url"].map(key => `qi-contact-${key}`)]) {
   document.getElementById(id).addEventListener("input", scheduleQuick);
 }
 
@@ -678,24 +675,9 @@ qiDownload.addEventListener("click", () => {
 });
 
 /* ── Sharing the current QR code ─────────────────────────────────── */
-const SHARE_PX_PER_MODULE = 12;
-
-// Drawn fresh at a size that looks sharp in a chat, whatever the download format.
+// Share the same styled image shown in the preview.
 function quickShareCanvas() {
-  const { matrix, moduleMm, caption } = quickQr;
-  const size   = (matrix.size + 8) * SHARE_PX_PER_MODULE;
-  const canvas = document.createElement("canvas");
-  canvas.width = canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0, 0, size, size);
-  ctx.fillStyle = "#000";
-  for (let r = 0; r < matrix.size; r++) {
-    for (let c = 0; c < matrix.size; c++) {
-      if (matrix.isDark(r, c)) ctx.fillRect((c + 4) * SHARE_PX_PER_MODULE, (r + 4) * SHARE_PX_PER_MODULE, SHARE_PX_PER_MODULE, SHARE_PX_PER_MODULE);
-    }
-  }
-  return QRPrint.paintWithCaption(document.createElement("canvas"), canvas, caption, SHARE_PX_PER_MODULE / moduleMm);
+  return quickQr.canvas;
 }
 
 const quickFilename = () => {
@@ -791,3 +773,21 @@ dropZone.addEventListener("drop", e => {
 updateTypeFields();
 updateFormatHint();
 renderQuick();
+
+let logoRun = 0;
+document.getElementById("opt-logo").addEventListener("change", async (event) => {
+  const run = ++logoRun;
+  const status = document.getElementById("logo-status");
+  try {
+    await QRExtras.setLogo(event.target.files[0]);
+    if (run !== logoRun) return;
+    status.textContent = ""; renderQuick();
+    if (results.length && lastBatchRun) lastBatchRun();
+  } catch (err) { status.textContent = err.message; }
+});
+document.getElementById("logo-clear").addEventListener("click", async () => {
+  ++logoRun; await QRExtras.setLogo(null);
+  document.getElementById("opt-logo").value = "";
+  document.getElementById("logo-status").textContent = "";
+  renderQuick(); if (results.length && lastBatchRun) lastBatchRun();
+});

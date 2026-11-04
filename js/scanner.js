@@ -8,6 +8,25 @@
   const $ = (id) => document.getElementById(id);
 
   const JSQR = () => QRTabs.loadScript("libs/jsQR.js");
+  const ZXING = () => QRTabs.loadScript("libs/zxing.min.js");
+
+  function readBarcode(image) {
+    if (!window.ZXing) return null;
+    const { width, height, data } = image;
+    const gray = new Uint8ClampedArray(width * height);
+    for (let i = 0; i < gray.length; i++) gray[i] = (data[i*4] * 306 + data[i*4+1] * 601 + data[i*4+2] * 117) >> 10;
+    const hints = new Map([[ZXing.DecodeHintType.TRY_HARDER, true]]);
+    const reader = new ZXing.MultiFormatReader();
+    try {
+      const bitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.RGBLuminanceSource(gray, width, height)));
+      const result = reader.decode(bitmap, hints);
+      const format = ZXing.BarcodeFormat[result.getBarcodeFormat()];
+      return { text: result.getText(), info: { kind: format === "QR_CODE" ? "QR Code" : tr("條碼", "Barcode"), detail: format } };
+    } catch {
+      // No readable barcode in this frame is normal.
+      return null;
+    } finally { reader.reset(); }
+  }
 
   /* Draws any image source to a canvas, optionally scaled. */
   function toImageData(source, width, height, scale) {
@@ -35,6 +54,12 @@
       if (code) return { code, image };
     }
     return { code: null, image: toImageData(bitmap, bitmap.width, bitmap.height, base) };
+  }
+
+  /* Every code in the image, on the same image a single-code pass settled on. */
+  async function decodeAll(bitmap) {
+    const { code, image } = await decodeBitmap(bitmap);
+    return { codes: await QRMulti.findCodes(image, code), image };
   }
 
   /* createImageBitmap can't open SVG, so draw it large enough to keep modules sharp.
@@ -105,16 +130,18 @@
   let cameraSession = 0;
   let cameraOpening = false;
   let lastFailedFile = null;
+  let scanRun = 0;
 
   function describe(text) {
     if (/^WIFI:/i.test(text)) {
       const ssid = /[:;]S:((?:\\.|[^;])*)/i.exec(text);
-      return { kind: "WiFi", detail: ssid ? `${tr("網路名稱", "Network")}: ${ssid[1]}` : "" };
+      return { kind: "WiFi", detail: ssid ? `${tr("網路名稱", "Network")}: ${ssid[1].replace(/\\(.)/g, "$1")}` : "" };
     }
     if (/^https?:\/\//i.test(text)) return { kind: tr("網址", "Link"), href: text };
     if (/^BEGIN:VCARD/i.test(text)) return { kind: tr("聯絡人", "Contact") };
     if (/^mailto:/i.test(text)) return { kind: "Email" };
     if (/^tel:/i.test(text)) return { kind: tr("電話", "Phone") };
+    if (/^sms:/i.test(text)) return { kind: tr("簡訊", "SMS") };
     return { kind: tr("文字", "Text") };
   }
 
@@ -231,7 +258,7 @@
     if (video.videoWidth) {
       const scale = Math.min(1, 800 / Math.max(video.videoWidth, video.videoHeight));
       const image = toImageData(video, video.videoWidth, video.videoHeight, scale);
-      const result = readCode(jsQR(image.data, image.width, image.height, { inversionAttempts: "attemptBoth" }));
+      const result = readCode(jsQR(image.data, image.width, image.height, { inversionAttempts: "attemptBoth" })) || readBarcode(image);
       if (result) showCameraRead(result);
     }
     timer = setTimeout(scanFrame, 200);
@@ -254,7 +281,7 @@
     $("scan-close").focus();
     try {
       /* Ask right away, while the tap still counts as the reason for the prompt. */
-      const library = JSQR();
+      const library = Promise.all([JSQR(), ZXING()]);
       cameraOpening = true;
       const opened = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
       cameraOpening = false;
@@ -266,7 +293,7 @@
       video.srcObject = stream;
       await library;
       if (session !== cameraSession) return;
-      overlayHint.textContent = tr("將 QR Code 對準框內", "Point the camera at a QR code");
+      overlayHint.textContent = tr("將 QR Code 或條碼對準框內", "Point the camera at a QR code or barcode");
       /* Some browsers only start the picture after a tap on it. */
       video.play().catch(() => {
         overlayHint.textContent = tr("輕觸畫面開始", "Tap the screen to start");
@@ -285,32 +312,50 @@
   $("scan-camera-btn").addEventListener("click", startCamera);
   $("scan-close").addEventListener("click", stopCamera);
   video.addEventListener("click", () => {
-    video.play().then(() => { overlayHint.textContent = tr("將 QR Code 對準框內", "Point the camera at a QR code"); }).catch(() => {});
+    video.play().then(() => { overlayHint.textContent = tr("將 QR Code 或條碼對準框內", "Point the camera at a QR code or barcode"); }).catch(() => {});
   });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") stopCamera(); });
   /* On phones, Back should close the camera rather than leave the site. */
   window.addEventListener("popstate", stopCamera);
 
   async function scanImage(file) {
+    const run = ++scanRun;
     scanStatus.textContent = tr("讀取中…", "Reading…");
     toDetect.hidden = true;
     try {
-      const { code } = await decodeBitmap(await readFile(file));
-      const result = readCode(code);
-      if (result) {
-        addScanResult(result);
-        scanStatus.textContent = "";
+      await ZXING();
+      const bitmap = await readFile(file);
+      let codes, barcode;
+      try {
+        const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+        barcode = readBarcode(toImageData(bitmap, bitmap.width, bitmap.height, scale));
+        ({ codes } = await decodeAll(bitmap));
+      } finally { bitmap.close(); }
+      if (run !== scanRun) return;
+      const read = codes.map(readCode).filter(Boolean);
+      if (barcode && !read.some(result => result.text === barcode.text)) read.push(barcode);
+      /* Added last to first, because each new row goes on top. */
+      for (const result of [...read].reverse()) addScanResult(result);
+      if (run !== scanRun) return;
+      if (read.length) {
+        scanStatus.textContent = read.length > 1
+          ? tr(`這張圖片讀到 ${read.length} 個不同的 QR Code 或條碼`, `Found ${read.length} different QR codes or barcodes in this image`)
+          : "";
       } else {
         lastFailedFile = file;
-        scanStatus.textContent = tr("這張圖片讀不到 QR Code", "No QR code could be read from this image");
+        scanStatus.textContent = tr("這張圖片讀不到 QR Code 或條碼", "No QR code or barcode could be read from this image");
         toDetect.hidden = false;
       }
     } catch (err) {
-      scanStatus.textContent = err.message;
+      if (run === scanRun) scanStatus.textContent = err.message;
     }
   }
 
   wireDropZone($("scan-drop"), $("scan-file"), scanImage);
+  document.addEventListener("qrsharedfiles", async (event) => {
+    QRTabs.select("scan");
+    for (const file of event.detail) await scanImage(file);
+  });
 
   toDetect.addEventListener("click", () => {
     QRTabs.select("detect");
@@ -319,6 +364,7 @@
 
   /* ── Check ─────────────────────────────────────────────────────── */
   const report = $("detect-report");
+  let detectRun = 0;
 
   const verdictText = (grade) => ({
     A: tr("可以順利掃描", "Scans reliably"),
@@ -429,7 +475,7 @@
     return tips;
   }
 
-  function showReport(code, image) {
+  function reportNodes(code, image) {
     const sample = QRAnalyze.sampleSymbol(image, code.location, code.version);
     const analysis = QRAnalyze.analyzeMatrix(sample.modules);
     const grades = QRAnalyze.grade({ ...sample, ...analysis });
@@ -493,17 +539,34 @@
     const nodes = [verdict(grades.overall, verdictText(grades.overall), tips.length ? tr("可以這樣改善：", "How to improve it:") : tr("沒有發現問題。", "No problems found."))];
     if (tips.length) nodes.push(tipList(tips));
     nodes.push(layout, note);
-    report.replaceChildren(...nodes);
+    return nodes;
+  }
+
+  function showReports(codes, image) {
+    if (codes.length === 1) {
+      report.replaceChildren(...reportNodes(codes[0], image));
+      return;
+    }
+    report.replaceChildren(...codes.map((code, index) => {
+      const section = document.createElement("section");
+      section.className = "detect-item";
+      const heading = document.createElement("h3");
+      heading.textContent = tr(`第 ${index + 1} 個 QR Code，共 ${codes.length} 個`, `QR code ${index + 1} of ${codes.length}`);
+      section.append(heading, ...reportNodes(code, image));
+      return section;
+    }));
   }
 
   async function detectImage(file) {
+    const run = ++detectRun;
     report.textContent = tr("檢測中…", "Checking…");
     try {
-      const { code, image } = await decodeBitmap(await readFile(file));
-      if (code) showReport(code, image);
+      const { codes, image } = await decodeAll(await readFile(file));
+      if (run !== detectRun) return;
+      if (codes.length) showReports(codes, image);
       else showFailure(image);
     } catch (err) {
-      report.textContent = err.message;
+      if (run === detectRun) report.textContent = err.message;
     }
   }
 
