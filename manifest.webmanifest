@@ -29,6 +29,22 @@
       "purpose": "maskable"
     }
   ],
+  "screenshots": [
+    {
+      "src": "assets/brand/qrforge-promo-3x2-1536x1024.webp",
+      "sizes": "1536x1024",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "QRForge：QR Code（二維碼）與條碼工具"
+    },
+    {
+      "src": "assets/brand/qrforge-promo-1x1-1254x1254.webp",
+      "sizes": "1254x1254",
+      "type": "image/webp",
+      "form_factor": "narrow",
+      "label": "QRForge：QR Code（二維碼）與條碼工具"
+    }
+  ],
   "share_target": {
     "action": "./share-target",
     "method": "POST",

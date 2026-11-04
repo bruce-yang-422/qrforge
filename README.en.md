@@ -1,7 +1,4 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/brand/qrforge-mark-dark.png" />
-  <img src="assets/brand/qrforge-mark-on-white.png" alt="QRForge logo" width="180" />
-</picture>
+![QRForge: QR code and barcode tools](assets/brand/qrforge-banner-github.png)
 
 # QRForge
 
@@ -40,13 +37,12 @@ The web interface is bilingual (Traditional Chinese and English).
 
 ## Features
 
-- Generates QR codes for URLs, plain text, and WiFi credentials
+- Generates QR codes for URLs, plain text, WiFi credentials, vCard contacts, email, phone numbers, and SMS
 - Reads CSV, Excel (`.xlsx`), and TXT files
 - Detects whether a TXT file holds URLs or plain text
 - Exports PNG, JPG, or SVG with adjustable error correction and scale
 - **Web app:** live preview as you type, batches of up to 500 codes, ZIP and PDF download, label sheets with optional text, and offline use
 - **Web app only:**
-  - vCard contact, email, phone, and SMS QR codes
   - Custom QR code colors and logos
   - QR code and barcode scanning, with several QR codes read from one image
   - QR quality check and barcode generator
@@ -98,7 +94,7 @@ These tools are in the web app only. Everything runs locally, and images are nev
 | **Check** | Tells you whether a code will scan and how to improve it, with a grade, contrast, margin, and a map of damaged modules. An image with several codes gets a report for each |
 | **Barcode** | Makes barcodes at true print size, and re-reads each one with a separate decoder whenever you change it. Can also share or copy the image |
 
-**Phone and SMS:** choose the country code from the menu or type it in. It starts as Taiwan, +886. A leading 0 in the phone number is removed (except for Italy), and the number the code will really dial is shown below the field. A number that starts with `+` is used as is, without the country code.
+**Phone, SMS, and contacts:** choose the country code from the menu or type it in. It starts as Taiwan, +886. A leading 0 in the phone number is removed (except for Italy), and the real number is shown below the field. A number that starts with `+` is used as is, without the country code.
 
 **QR code appearance:** under **More settings**, choose the code and background colors, and add a PNG, JPG, or WebP logo under 5 MB. A logo automatically uses the highest error correction (H). Use dark modules on a light background, and test the downloaded code by scanning it.
 
@@ -133,30 +129,30 @@ The first row is the header, and each following row produces one QR code. Header
 
 | Column | Required | Description |
 | --- | --- | --- |
-| `類型` (type) | Yes | `url`, `text`, `line`, or `wifi` |
-| `資料` (data) | For `url`, `text`, `line` | Content to encode, used as is |
+| `類型` (type) | Yes | `url`, `text`, `line`, `wifi`, `phone`, `sms`, `email`, or `vcard` |
+| `資料` (data) | For `url`, `text`, `line`, `email` | Content to encode, used as is; the recipient for `email` |
 | `WiFi名稱` (SSID) | For `wifi` | Network name |
 | `WiFi密碼` (password) | For `wifi` | Network password; leave empty for open networks |
 | `加密方式` (security) | For `wifi` | `WPA`, `WEP`, or `nopass` |
+| `國碼` (country code) | No | For `phone`, `sms`, `vcard`, such as `+886`; if empty, no code is added |
+| `電話號碼` (phone number) | For `phone`, `sms` | A leading 0 is removed, except for Italy |
+| `主旨` (subject) | No | For `email` |
+| `內文` (body) | No | For `email`, `sms` |
+| `姓名` (name) | For `vcard` | Contact's name |
+| `公司`, `職稱`, `Email`, `網站` (organization, job title, email, website) | No | For `vcard` |
 | `Qr-code檔案名稱` (filename) | No | Output filename without extension |
 
-Rows with no content to encode are skipped. An invalid row is logged and does not stop the run.
+Rows with no content to encode are skipped. An invalid row is logged and does not stop the run. The sample files include an example of each type.
 
 ```csv
-類型,資料,WiFi名稱,WiFi密碼,加密方式,Qr-code檔案名稱
-url,https://example.com,,,,website
-wifi,,MySSID,MyPassword,WPA,office-wifi
-text,Hello World,,,,
+類型,資料,WiFi名稱,WiFi密碼,加密方式,國碼,電話號碼,主旨,內文,姓名,公司,職稱,Email,網站,Qr-code檔案名稱
+url,https://example.com,,,,,,,,,,,,,website
+wifi,,MySSID,MyPassword,WPA,,,,,,,,,,office-wifi
+phone,,,,,+886,0912345678,,,,,,,,support-line
+vcard,,,,,+886,0912345678,,,Ming Wang,Example Inc,Sales Manager,ming@example.com,https://example.com,ming-card
 ```
 
-The web app also accepts these `類型` values, while the CLI logs them as unsupported types. The added column names are lowercase English:
-
-| Type | Columns used |
-| --- | --- |
-| `email` | `資料` (recipient), `subject`, `body` |
-| `phone` | `資料` (phone number) |
-| `sms` | `資料` (phone number), `body` |
-| `vcard` | `name` (required), `org`, `title`, `phone`, `email`, `url` |
+Columns can be in any order, and unused ones can be left out. Older files that keep a `phone` or `sms` number in `資料` still work.
 
 ### TXT
 
@@ -180,8 +176,9 @@ https://github.com
 For CSV and Excel rows, the filename is the first of these that applies:
 
 1. The `Qr-code檔案名稱` value
-2. The WiFi SSID
-3. `{type}_{number}`, such as `url_00001`
+2. The `姓名` value
+3. The WiFi SSID
+4. `{type}_{number}`, such as `url_00001`
 
 Characters that are illegal in filenames (`\ / : * ? " < > |`) are removed.
 
@@ -244,7 +241,7 @@ qrforge/
 ├── sitemap.xml             # Site address list for search engines
 ├── libs/                   # Vendored browser libraries
 ├── fonts/                  # Serif and regular-script fonts for text below codes
-└── assets/                 # Sample templates, app icons, and logo
+└── assets/                 # Sample templates, app icons, logo, and banners
 ```
 
 ## Deploying the web app
@@ -272,7 +269,6 @@ Offline support requires HTTPS or `localhost`. The app still opens from `file://
 - **CSV files with a BOM (CLI):** a UTF-8 file with a byte order mark, such as Excel's "CSV UTF-8" export, fails with a missing-column error. Use a file without a BOM, an `.xlsx` file, or the web app.
 - **WiFi security default:** the web app treats an empty security value as `WPA`. The CLI only does so when the column is missing entirely, so fill it in for CLI input.
 - **Commas in URLs:** TXT files treat commas as separators, so a URL containing one is split. Use the Batch tab's paste box or a CSV file instead.
-- **vCard filenames (web):** a `vcard` row's `name` column is also its filename, and shares one value with `Qr-code檔案名稱`, so leave `Qr-code檔案名稱` empty on these rows.
 - **Sharing:** images are PNG where the browser allows it, otherwise JPG. The Share image button needs a browser that can share files, over HTTPS or `localhost`. Where it isn't available, it's hidden, and you can copy or download the image instead.
 - **Scan and Check:** codes with identical content are listed once. The camera reads one code at a time, so use a photo to read a whole label sheet. The Check tab checks QR codes only, not barcodes.
 - **Multi-line CSV fields (web):** the browser's CSV parser reads line by line, so quoted fields containing line breaks aren't supported.

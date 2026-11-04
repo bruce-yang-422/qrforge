@@ -1,7 +1,11 @@
-類型,資料,WiFi名稱,WiFi密碼,加密方式,Qr-code檔案名稱
-url,https://example.com,,,, 官網
-url,https://github.com,,,,GitHub
-wifi,,MySSID,MyPassword,WPA,辦公室WiFi
-wifi,,GuestNet,guest1234,WPA,來賓WiFi
-text,Hello World,,,,
-text,掃描即可查看資訊,,,,名片文字
+類型,資料,WiFi名稱,WiFi密碼,加密方式,國碼,電話號碼,主旨,內文,姓名,公司,職稱,Email,網站,Qr-code檔案名稱
+url,https://example.com,,,,,,,,,,,,,官網
+url,https://github.com,,,,,,,,,,,,,GitHub
+wifi,,MySSID,MyPassword,WPA,,,,,,,,,,辦公室WiFi
+wifi,,GuestNet,guest1234,WPA,,,,,,,,,,來賓WiFi
+text,Hello World,,,,,,,,,,,,,
+text,掃描即可查看資訊,,,,,,,,,,,,,名片文字
+phone,,,,,+886,0912345678,,,,,,,,客服電話
+sms,,,,,+886,0912345678,,您好，我想詢問,,,,,,客服簡訊
+email,service@example.com,,,,,,產品詢問,您好,,,,,,客服信箱
+vcard,,,,,+886,0912345678,,,王小明,範例公司,業務經理,ming@example.com,https://example.com,王小明名片

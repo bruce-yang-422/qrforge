@@ -13,6 +13,15 @@ const COLUMN_MAP = {
   "WiFi密碼":      "password",
   "加密方式":      "security",
   "Qr-code檔案名稱": "name",
+  "國碼":          "country",
+  "電話號碼":       "phone",
+  "主旨":          "subject",
+  "內文":          "body",
+  "姓名":          "fullName",
+  "公司":          "org",
+  "職稱":          "title",
+  "Email":         "email",
+  "網站":          "url",
 };
 
 const BATCH_LIMIT = 500;
@@ -305,7 +314,15 @@ function normalizeRow(rawRow) {
 
 function formatQrData(row) {
   const t = (row.type || "").toLowerCase();
-  if (["vcard", "email", "phone", "sms"].includes(t)) return QRExtras.payload(t, row);
+  if (["phone", "sms", "vcard"].includes(t)) {
+    // Earlier files kept the number in 資料, and a contact's name in `name`.
+    const number = t === "vcard" ? row.phone : row.phone || row.data;
+    const full = QRExtras.phoneNumber(row.country, number);
+    if (full === null) throw new Error(tr(`國碼「${row.country}」不正確，請輸入 1 到 4 位數字`, `Country code "${row.country}" isn't valid. Use 1 to 4 digits`));
+    if (t === "vcard") return QRExtras.payload(t, { ...row, name: row.fullName || row.name });
+    return QRExtras.payload(t, { ...row, data: full });
+  }
+  if (t === "email") return QRExtras.payload(t, row);
   if (["url", "text", "line"].includes(t)) return row.data || "";
   if (t === "wifi") {
     const security = row.security || "WPA";
@@ -315,7 +332,7 @@ function formatQrData(row) {
 }
 
 function generateFilename(row, index) {
-  const name = row.name || row.ssid;
+  const name = row.name || row.fullName || row.ssid;
   if (name) return sanitizeFilename(name);
   const t = (row.type || "data").toLowerCase();
   return `${t}_${String(index).padStart(5, "0")}`;
@@ -543,6 +560,8 @@ const qiError     = document.getElementById("qi-error");
 const qiData      = document.getElementById("qi-data");
 const qiCountrySelect = document.getElementById("qi-country-select");
 const qiCountryCode   = document.getElementById("qi-country-code");
+const qiContactCountry = document.getElementById("qi-contact-country");
+const qiContactCode    = document.getElementById("qi-contact-code");
 const qiDownload  = document.getElementById("qp-download");
 const qiCaption   = document.getElementById("qi-caption");
 const qiFont      = document.getElementById("qi-font");
@@ -569,6 +588,7 @@ function quickPayload() {
   if (["vcard", "email", "phone", "sms"].includes(qiType())) {
     const row = { data: qiData.value, subject: document.getElementById("qi-subject").value, body: document.getElementById("qi-body").value };
     for (const key of ["name", "org", "title", "phone", "email", "url"]) row[key] = document.getElementById(`qi-contact-${key}`).value.trim();
+    row.country = qiContactCode.value;
     if (["phone", "sms"].includes(qiType())) row.data = QRExtras.phoneNumber(qiCountryCode.value, document.getElementById("qi-phone").value) ?? "";
     return QRExtras.payload(qiType(), row);
   }
@@ -643,23 +663,28 @@ function renderQuick() {
   document.getElementById("qi-data-hint").textContent = qiType() === "url" && data && data !== typed
     ? tr(`會自動加上 https://，掃描後開啟 ${data}`, `https:// was added, so it opens ${data}`)
     : "";
-  updatePhoneHint(data);
+  updatePhoneHints();
   document.getElementById("qp-download-label").textContent = tr(`下載 ${getSettings().format}`, `Download ${getSettings().format}`);
 }
 
 // Shows the number the code will really dial, since a leading 0 may have been dropped.
-function updatePhoneHint(data) {
-  const hint = document.getElementById("qi-phone-hint");
-  if (!["phone", "sms"].includes(qiType())) { hint.textContent = ""; return; }
-  const number = document.getElementById("qi-phone").value;
-  if (number.trim() && QRExtras.phoneNumber(qiCountryCode.value, number) === null) {
-    hint.textContent = tr("國碼請輸入 1 到 4 位數字，例如 +886", "Enter a country code of 1 to 4 digits, such as +886");
-    return;
-  }
-  const dialled = /^(?:tel|sms):([^?]*)/.exec(data || "");
-  hint.textContent = !dialled ? ""
-    : qiType() === "phone" ? tr(`掃描後會撥打 ${dialled[1]}`, `Scanning it calls ${dialled[1]}`)
-    : tr(`掃描後會傳簡訊給 ${dialled[1]}`, `Scanning it texts ${dialled[1]}`);
+function phoneHint(code, number, describe) {
+  const full = QRExtras.phoneNumber(code, number);
+  if (full === null) return number.trim() ? tr("國碼請輸入 1 到 4 位數字，例如 +886", "Enter a country code of 1 to 4 digits, such as +886") : "";
+  const shown = full.replace(/[^+\d*#,;]/g, "");
+  return /\d/.test(shown) ? describe(shown) : "";
+}
+
+function updatePhoneHints() {
+  const type = qiType();
+  document.getElementById("qi-phone-hint").textContent = ["phone", "sms"].includes(type)
+    ? phoneHint(qiCountryCode.value, document.getElementById("qi-phone").value, number => type === "phone"
+      ? tr(`掃描後會撥打 ${number}`, `Scanning it calls ${number}`)
+      : tr(`掃描後會傳簡訊給 ${number}`, `Scanning it texts ${number}`))
+    : "";
+  document.getElementById("qi-contact-hint").textContent = type === "vcard"
+    ? phoneHint(qiContactCode.value, document.getElementById("qi-contact-phone").value, number => tr(`聯絡人的電話會存成 ${number}`, `The contact's number is saved as ${number}`))
+    : "";
 }
 
 function updateTypeFields() {
@@ -693,22 +718,23 @@ document.querySelectorAll("input[name='qi-type']").forEach(input => input.addEve
 }));
 
 /* The menu and the code field stay in step, so either can be used. */
-qiCountrySelect.addEventListener("change", () => {
-  if (qiCountrySelect.value) {
-    qiCountryCode.value = qiCountrySelect.value;
+function wireCountryCode(select, input) {
+  select.addEventListener("change", () => {
+    input.value = select.value;
     renderQuick();
-    return;
-  }
-  qiCountryCode.value = "";
-  renderQuick();
-  qiCountryCode.focus();
-});
-qiCountryCode.addEventListener("input", () => {
-  const code = `+${qiCountryCode.value.replace(/^(\+|00)/, "").trim()}`;
-  const known = Array.from(qiCountrySelect.options).some(option => option.value === code);
-  qiCountrySelect.value = known ? code : "";
-  scheduleQuick();
-});
+    if (!select.value) input.focus();
+  });
+  input.addEventListener("input", () => {
+    const code = `+${input.value.trim().replace(/^(\+|00)/, "")}`;
+    select.value = Array.from(select.options).some(option => option.value === code) ? code : "";
+    scheduleQuick();
+  });
+}
+
+// Copies keep their data-i18n wording, so they follow the language too.
+qiContactCountry.append(...Array.from(qiCountrySelect.options, option => option.cloneNode(true)));
+wireCountryCode(qiCountrySelect, qiCountryCode);
+wireCountryCode(qiContactCountry, qiContactCode);
 document.getElementById("qi-security").addEventListener("change", () => { updateTypeFields(); renderQuick(); });
 qiFont.addEventListener("change", renderQuick);
 for (const id of ["qi-data", "qi-phone", "qi-ssid", "qi-password", "qi-caption", "qi-subject", "qi-body", ...["name", "org", "title", "phone", "email", "url"].map(key => `qi-contact-${key}`)]) {

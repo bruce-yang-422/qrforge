@@ -20,8 +20,10 @@ const QRExtras = (() => {
   function payload(type, row) {
     if (type === "vcard") {
       if (!row.name) return "";
+      const tel = phoneNumber(row.country, row.phone);
+      if (tel === null) return "";
       return ["BEGIN:VCARD", "VERSION:3.0", `N:;${escape(row.name)};;;`, `FN:${escape(row.name)}`,
-        `ORG:${escape(row.org)}`, `TITLE:${escape(row.title)}`, `TEL:${clean(row.phone)}`,
+        `ORG:${escape(row.org)}`, `TITLE:${escape(row.title)}`, `TEL:${tel.replace(/[^+\d*#,;]/g, "")}`,
         `EMAIL:${clean(row.email)}`, `URL:${clean(row.url)}`, "END:VCARD"].join("\r\n");
     }
     const data = clean(row.data).trim();

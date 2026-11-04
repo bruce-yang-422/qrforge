@@ -1,7 +1,4 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/brand/qrforge-mark-dark.png" />
-  <img src="assets/brand/qrforge-mark-on-white.png" alt="QRForge logo" width="180" />
-</picture>
+![QRForge — QR Code（二維碼）與條碼工具](assets/brand/qrforge-banner-github.png)
 
 # QRForge
 
@@ -40,13 +37,12 @@ QRForge 提供兩種使用方式，兩者讀取相同的輸入格式：
 
 ## 功能特色
 
-- 可為網址、純文字與 WiFi 連線資訊產生 QR Code
+- 可為網址、純文字、WiFi、電子名片（vCard）、Email、電話與簡訊產生 QR Code
 - 支援讀取 CSV、Excel(`.xlsx`)與 TXT 檔案
 - 自動判斷 TXT 檔的內容是網址或純文字
 - 可輸出 PNG、JPG 或 SVG，並可調整容錯等級與縮放比例
 - **網頁版：** 提供輸入時即時預覽、每批最多 500 張的批次產生、ZIP 與 PDF 下載、可加文字的標籤紙與離線使用
 - **僅限網頁版：**
-  - 電子名片（vCard）、Email、電話與簡訊 QR Code
   - 自訂 QR Code 顏色與加入 Logo
   - QR Code 與條碼掃描，一張圖片可讀取多個 QR Code
   - QR Code 品質檢測與條碼產生器
@@ -98,7 +94,7 @@ QR Code 會輸出至 `output/`，記錄檔則寫入 `logs/run_YYYYMMDD_HHMMSS.lo
 | **檢測** | 告訴你 QR Code 能否掃描及如何改善，並提供評等、對比、周圍留白與損傷模組圖。一張圖片有多個 QR Code 時，會逐一列出報告 |
 | **條碼** | 以實際列印尺寸製作條碼，每次變更都會用另一套解碼器重新讀取驗證 |
 
-**電話與簡訊：** 國碼可從選單選擇或手動輸入，預設為台灣 +886。電話號碼開頭的 0 會自動移除（義大利除外），並在欄位下方顯示掃描後實際撥打的號碼。號碼以 `+` 開頭時會直接使用，不再加上國碼。
+**電話、簡訊與電子名片：** 國碼可從選單選擇或手動輸入，預設為台灣 +886。電話號碼開頭的 0 會自動移除（義大利除外），並在欄位下方顯示實際的號碼。號碼以 `+` 開頭時會直接使用，不再加上國碼。
 
 **QR Code 外觀：** 在「更多設定」可自訂圖案與背景顏色，並加入 PNG、JPG 或 WebP 的 Logo（5 MB 以內）。加入 Logo 時會自動使用最高容錯等級（H）。請選擇深色圖案配淺色背景，並在下載後實際掃描確認。
 
@@ -133,30 +129,30 @@ QR Code 會輸出至 `output/`，記錄檔則寫入 `logs/run_YYYYMMDD_HHMMSS.lo
 
 | 欄位名稱 | 必填 | 說明 |
 | --- | --- | --- |
-| `類型` | 是 | `url`、`text`、`line` 或 `wifi` |
-| `資料` | `url`、`text`、`line` 類型必填 | 要編碼的內容，會原樣寫入 |
+| `類型` | 是 | `url`、`text`、`line`、`wifi`、`phone`、`sms`、`email` 或 `vcard` |
+| `資料` | `url`、`text`、`line`、`email` 類型必填 | 要編碼的內容，會原樣寫入;`email` 類型為收件人 |
 | `WiFi名稱` | `wifi` 類型必填 | 網路名稱(SSID) |
 | `WiFi密碼` | `wifi` 類型必填 | 網路密碼;開放網路請留空 |
 | `加密方式` | `wifi` 類型必填 | `WPA`、`WEP` 或 `nopass` |
+| `國碼` | 否 | `phone`、`sms`、`vcard` 使用，例如 `+886`;留空時不加國碼 |
+| `電話號碼` | `phone`、`sms` 類型必填 | 開頭的 0 會自動移除（義大利除外） |
+| `主旨` | 否 | `email` 使用 |
+| `內文` | 否 | `email`、`sms` 使用 |
+| `姓名` | `vcard` 類型必填 | 聯絡人姓名 |
+| `公司`、`職稱`、`Email`、`網站` | 否 | `vcard` 使用 |
 | `Qr-code檔案名稱` | 否 | 輸出檔名，不含副檔名 |
 
-沒有可編碼內容的資料列會被略過。無效的資料列會記錄錯誤，但不會中斷執行。
+沒有可編碼內容的資料列會被略過。無效的資料列會記錄錯誤，但不會中斷執行。範本檔案包含每種類型的範例。
 
 ```csv
-類型,資料,WiFi名稱,WiFi密碼,加密方式,Qr-code檔案名稱
-url,https://example.com,,,,官網
-wifi,,MySSID,MyPassword,WPA,辦公室WiFi
-text,Hello World,,,,
+類型,資料,WiFi名稱,WiFi密碼,加密方式,國碼,電話號碼,主旨,內文,姓名,公司,職稱,Email,網站,Qr-code檔案名稱
+url,https://example.com,,,,,,,,,,,,,官網
+wifi,,MySSID,MyPassword,WPA,,,,,,,,,,辦公室WiFi
+phone,,,,,+886,0912345678,,,,,,,,客服電話
+vcard,,,,,+886,0912345678,,,王小明,範例公司,業務經理,ming@example.com,https://example.com,王小明名片
 ```
 
-網頁版的 `類型` 另外接受下列值，命令列工具則會記錄為不支援的類型。新增的欄位名稱為英文小寫：
-
-| 類型 | 使用的欄位 |
-| --- | --- |
-| `email` | `資料`(收件人)、`subject`、`body` |
-| `phone` | `資料`(電話號碼) |
-| `sms` | `資料`(電話號碼)、`body` |
-| `vcard` | `name`(必填)、`org`、`title`、`phone`、`email`、`url` |
+欄位順序不限，用不到的欄位可以省略。舊檔案把 `phone`、`sms` 的號碼放在 `資料` 欄仍然可以使用。
 
 ### TXT
 
@@ -180,8 +176,9 @@ https://github.com
 CSV 與 Excel 的資料列依下列順序決定檔名，採用第一個符合的項目：
 
 1. `Qr-code檔案名稱` 欄位的值
-2. WiFi 名稱(SSID)
-3. `{類型}_{序號}`，例如 `url_00001`
+2. `姓名`
+3. WiFi 名稱(SSID)
+4. `{類型}_{序號}`，例如 `url_00001`
 
 檔名中的不合法字元(`\ / : * ? " < > |`)會被移除。
 
@@ -244,7 +241,7 @@ qrforge/
 ├── sitemap.xml             # 提供給搜尋引擎的網址清單
 ├── libs/                   # 內附的瀏覽器函式庫
 ├── fonts/                  # 下方文字用的明體與楷體
-└── assets/                 # 範本檔案、應用程式圖示與標誌
+└── assets/                 # 範本檔案、應用程式圖示、標誌與橫幅
 ```
 
 ## 部署網頁版
@@ -272,7 +269,6 @@ python -m http.server 8000
 - **含 BOM 的 CSV 檔（命令列工具）:** 含位元組順序標記的 UTF-8 檔案（例如 Excel 匯出的「CSV UTF-8」）會出現缺少欄位的錯誤。請改用不含 BOM 的檔案、`.xlsx` 檔或網頁版。
 - **WiFi 加密方式預設值：** 網頁版會將空白的加密方式視為 `WPA`;命令列工具只有在整個欄位不存在時才會如此，因此使用命令列工具時請填寫此欄位。
 - **網址中的逗號：** TXT 檔以逗號作為分隔符號，因此含逗號的網址會被拆開。請改用「批次」分頁的貼上清單或 CSV 檔。
-- **電子名片的檔名（網頁版）:** `vcard` 資料列的 `name` 欄位也會作為檔名，與 `Qr-code檔案名稱` 共用同一個值，因此這類資料列請勿填寫 `Qr-code檔案名稱`。
 - **分享：** 「分享圖片」按鈕需要支援檔案分享的瀏覽器，並透過 HTTPS 或 `localhost` 開啟。不支援時按鈕會隱藏，可改用複製或下載。
 - **LINE：** 網頁無法直接選擇對話或將圖片傳進 LINE。手機上請在分享選單選 LINE，電腦上圖片會先複製，再到對話中貼上。
 - **掃描與檢測：** 內容相同的 QR Code 只會列出一次。相機每次只讀取一個 QR Code，要讀整張標籤紙請改用照片。「檢測」分頁只檢測 QR Code，不檢測條碼。

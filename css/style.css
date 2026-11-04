@@ -79,6 +79,10 @@ h2 { font-size: 1.15rem; font-weight: 700; color: var(--ink); margin-bottom: 1re
   gap: .75rem;
   margin-bottom: 1.25rem;
 }
+.site-banner { margin-bottom: 1rem; }
+.site-banner img { display: block; width: 100%; height: auto; border-radius: 16px; }
+html[lang="en"] .site-banner { display: none; }
+@media (max-width: 820px) { .site-banner { display: none; } }
 .brand { display: flex; align-items: center; gap: .75rem; }
 .brand img { border-radius: 12px; }
 .brand h1 { font-size: 1.35rem; font-weight: 800; line-height: 1.2; color: var(--ink); letter-spacing: -.3px; }

@@ -6,6 +6,7 @@ import logging
 import shutil
 import importlib.util
 from datetime import datetime
+from urllib.parse import quote
 import segno
 from PIL import Image
 from openpyxl import load_workbook
@@ -40,7 +41,16 @@ COLUMN_MAP = {
     "WiFi名稱": "ssid",
     "WiFi密碼": "password",
     "加密方式": "security",
-    "Qr-code檔案名稱": "name"
+    "Qr-code檔案名稱": "name",
+    "國碼": "country",
+    "電話號碼": "phone",
+    "主旨": "subject",
+    "內文": "body",
+    "姓名": "fullName",
+    "公司": "org",
+    "職稱": "title",
+    "Email": "email",
+    "網站": "url"
 }
 
 # Columns that must be present in every input file.
@@ -82,6 +92,72 @@ def escape_wifi(value):
     return re.sub(r'([\\;,:"])', r"\\\1", str(value))
 
 
+def phone_number(code, number):
+    """Returns the full number, or None if the country code is not valid.
+    A number that starts with + is already complete. The leading 0 of a local
+    number is dropped, except in Italy, where it is part of the number.
+    回傳完整號碼；國碼不正確時回傳 None。以 + 開頭的號碼視為完整號碼。
+    本地號碼開頭的 0 會移除，但義大利的 0 屬於號碼的一部分，因此保留。
+    """
+    typed = re.sub(r"[\r\n]", "", str(number or "")).strip()
+    if typed.startswith("+"):
+        return typed
+    digits = re.sub(r"^(\+|00)", "", str(code or "").strip())
+    if not digits:
+        return typed
+    if not re.fullmatch(r"\d{1,4}", digits):
+        return None
+    local = typed if digits == "39" else re.sub(r"^[\s()-]*0", "", typed)
+    return f"+{digits}{local}" if re.search(r"\d", local) else ""
+
+
+def encode_uri(value):
+    """Matches JavaScript's encodeURIComponent, so both tools write the same codes.
+    與 JavaScript 的 encodeURIComponent 相同，讓兩種工具產生相同的內容。"""
+    return quote(str(value or ""), safe="-_.!~*'()")
+
+
+def escape_vcard(value):
+    """Escapes a vCard text value. / 跳脫電子名片的文字內容。"""
+    text = str(value or "").replace("\\", "\\\\")
+    text = re.sub(r"\r\n|\r|\n", r"\\n", text)
+    return re.sub(r"([;,])", r"\\\1", text)
+
+
+def format_contact_data(t, row):
+    """Returns the payload for phone, sms, email and vcard rows, or "" if there is nothing to encode.
+    回傳電話、簡訊、Email 與電子名片的內容；沒有內容時回傳空字串。"""
+    if t == "email":
+        data = re.sub(r"[\r\n]", "", str(row.get("data") or "")).strip()
+        if not data:
+            return ""
+        recipient = encode_uri(data).replace("%40", "@")
+        return f"mailto:{recipient}?subject={encode_uri(row.get('subject'))}&body={encode_uri(row.get('body'))}"
+
+    number = row.get("phone") if t == "vcard" else (row.get("phone") or row.get("data"))
+    full = phone_number(row.get("country"), number)
+    if full is None:
+        raise ValueError(f"❌ 國碼不正確: {row.get('country')}")
+
+    if t == "vcard":
+        name = row.get("fullName") or row.get("name")
+        if not name:
+            return ""
+        tel = re.sub(r"[^+\d*#,;]", "", full)
+        plain = lambda key: re.sub(r"[\r\n]", "", str(row.get(key) or ""))
+        return "\r\n".join([
+            "BEGIN:VCARD", "VERSION:3.0", f"N:;{escape_vcard(name)};;;", f"FN:{escape_vcard(name)}",
+            f"ORG:{escape_vcard(row.get('org'))}", f"TITLE:{escape_vcard(row.get('title'))}", f"TEL:{tel}",
+            f"EMAIL:{plain('email')}", f"URL:{plain('url')}", "END:VCARD",
+        ])
+
+    if t == "phone":
+        phone = re.sub(r"[^+\d*#,;]", "", full)
+        return f"tel:{phone}" if re.search(r"\d", phone) else ""
+    phone = re.sub(r"[^+\d]", "", full)
+    return f"sms:{phone}?body={encode_uri(row.get('body'))}" if re.search(r"\d", phone) else ""
+
+
 def format_qr_data(row):
     """Returns the QR code payload string based on the row type.
     回傳依資料類型產生的 QR code 內容字串。
@@ -89,6 +165,7 @@ def format_qr_data(row):
     Supported types / 支援類型:
       url, text, line — uses the 'data' field directly / 直接使用 data 欄位
       wifi           — encodes as WIFI:T:...;S:...;P:;; format / 編碼為 WiFi 連線字串
+      phone, sms, email, vcard — see format_contact_data / 請見 format_contact_data
     """
     t = row.get("type", "").lower()
 
@@ -100,6 +177,9 @@ def format_qr_data(row):
         password = row.get("password", "")
         security = row.get("security", "WPA")  # Default to WPA if not specified / 未指定時預設 WPA
         return f"WIFI:T:{security};S:{escape_wifi(ssid)};P:{escape_wifi(password)};;"
+
+    if t in ["phone", "sms", "email", "vcard"]:
+        return format_contact_data(t, row)
 
     raise ValueError(f"❌ 不支援類型: {t}")
 
@@ -114,7 +194,7 @@ def generate_filename(row, index):
     """Returns a safe filename for the QR code image.
     If no name is provided, falls back to '{type}_{index:05d}'.
     回傳 QR code 圖片的合法檔名；未指定名稱時自動產生 '{類型}_{序號}' 格式。"""
-    name = row.get("name") or row.get("ssid")
+    name = row.get("name") or row.get("fullName") or row.get("ssid")
     if name:
         return sanitize_filename(name)
     row_type = row.get("type", "data").lower()
