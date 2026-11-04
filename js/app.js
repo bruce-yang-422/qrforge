@@ -178,6 +178,7 @@ function updateToolbar() {
   document.getElementById("zip-label").textContent = zipLabel();
   zipBtn.hidden = n < 2;
   dlBtn.hidden  = n !== 1;
+  updateBatchLabelFit();
 }
 
 /* ── Add a single generated QR to the UI ─────────────────────────── */
@@ -269,6 +270,23 @@ document.getElementById("zip-btn").addEventListener("click", async () => {
 /* ── Label sheet PDF ─────────────────────────────────────────────── */
 const labelSelect = document.getElementById("label-layout");
 QRPrint.wireLabelSelect(labelSelect);
+
+// Batch labels always fill the label, so the question is whether the densest code stays readable.
+function updateBatchLabelFit() {
+  const box = document.getElementById("label-fit");
+  if (!results.length) { box.textContent = ""; return; }
+  const densest = Math.max(...results.map(({ qr }) => qr.matrix.size));
+  const sideOf = (layout) => Math.min(layout.label[0], layout.label[1]) - 4;
+  const tooSmall = (layout) => sideOf(layout) / (densest + 8) < MIN_LABEL_MODULE_MM;
+  for (const option of labelSelect.options) markSheet(option, tooSmall(QRPrint.LABEL_LAYOUTS[option.value]) ? tr("太小", "too small") : "");
+  const layout = QRPrint.LABEL_LAYOUTS[labelSelect.value];
+  const side = sideOf(layout).toFixed(1);
+  box.className = `fit-status ${tooSmall(layout) ? "small" : "ok"}`;
+  box.textContent = tooSmall(layout)
+    ? tr(`⚠ 太小：最多約 ${side} mm，內容最多的 QR Code 可能難以掃描`, `⚠ Too small: about ${side} mm at most, so the densest QR code may be hard to scan`)
+    : tr(`✓ 每張自動符合標籤，最多約 ${side} mm`, `✓ Each fits its label, at about ${side} mm at most`);
+}
+labelSelect.addEventListener("change", updateBatchLabelFit);
 
 // Below this size many phone cameras struggle to resolve the modules.
 const MIN_LABEL_MODULE_MM = 0.33;
@@ -520,6 +538,7 @@ async function runBatch(work) {
   await work();
   hideSpinner();
   updateToolbar();
+  updateScaleHint();
   if (results.length === 0) {
     logWarn(tr("沒有產生任何 QR Code，請確認內容或檔案格式", "No QR codes were created. Check the content or file format"));
   }
@@ -669,10 +688,35 @@ function renderQuick() {
     ? tr(`會自動加上 https://，掃描後開啟 ${data}`, `https:// was added, so it opens ${data}`)
     : "";
   updatePhoneHints();
+  updateScaleHint();
   document.getElementById("qp-download-label").textContent = tr(`下載 ${getSettings().format}`, `Download ${getSettings().format}`);
 }
 
 // Shows the number the code will really dial, since a leading 0 may have been dropped.
+// Names the exact size, and says so when the preview had to shrink to fit.
+function updateScaleHint() {
+  const hint = document.getElementById("opt-scale-hint");
+  const qr = quickQr || results[0]?.qr;
+  const { scale, format } = getSettings();
+  const typed = document.getElementById("opt-scale").value.trim();
+  const notes = [];
+  if (qr) {
+    const { width, height } = qr.canvas;
+    if (format === "PDF") {
+      const toMm = qr.moduleMm / scale;
+      notes.push(tr(`列印尺寸 ${(width * toMm).toFixed(1)} × ${(height * toMm).toFixed(1)} mm`, `Print size ${(width * toMm).toFixed(1)} × ${(height * toMm).toFixed(1)} mm`));
+    } else if (format === "SVG") {
+      notes.push(tr(`基準尺寸 ${width} × ${height} px，SVG 可任意放大`, `Base size ${width} × ${height} px. SVG scales to any size`));
+    } else {
+      notes.push(tr(`下載尺寸 ${width} × ${height} px`, `Download size ${width} × ${height} px`));
+    }
+    const shown = stage.querySelector("canvas, img")?.getBoundingClientRect().width;
+    if (shown && shown < width - 1) notes.push(tr("超過預覽區，畫面已縮小顯示", "It's larger than the preview area, so it's shown smaller here"));
+  }
+  if (typed !== String(scale)) notes.unshift(tr(`已改用 ${scale}，範圍是 2 到 20`, `Using ${scale}, since the range is 2 to 20`));
+  hint.textContent = notes.join(tr("。", ". "));
+}
+
 function phoneHint(code, number, describe) {
   const full = QRExtras.phoneNumber(code, number);
   if (full === null) return number.trim() ? tr("國碼請輸入 1 到 4 位數字，例如 +886", "Enter a country code of 1 to 4 digits, such as +886") : "";
@@ -774,22 +818,130 @@ const updateShareButtons = QRShare.wire({
 function updateShareRow() {
   document.getElementById("qp-share-row").hidden = !quickQr;
   document.getElementById("qp-sheet").hidden = !quickQr;
-  document.getElementById("qp-sheet-status").textContent = "";
+  document.getElementById("qp-sheet-note").textContent = "";
   updateShareButtons();
+  updateQuickSheet();
 }
 
 /* ── A full label sheet of the current QR code ───────────────────── */
 const quickSheetSelect = document.getElementById("qp-sheet-layout");
+const quickSheetMode = document.getElementById("qp-sheet-mode");
 QRPrint.wireLabelSelect(quickSheetSelect);
+
+// Room to leave on each side when following Image size, so a printer shift doesn't clip it.
+const LABEL_MARGIN_MM = 1;
+const SHEET_MARK = / · (放不下|太小|won't fit|too small)$/;
+
+function markSheet(option, mark) {
+  const name = option.textContent.replace(SHEET_MARK, "");
+  option.textContent = mark ? `${name} · ${mark}` : name;
+}
+
+// Either fills the label, or uses the same true size as a single PDF download.
+function quickSheetSize(layout) {
+  const { canvas, matrix, moduleMm } = quickQr;
+  const mmPerPixel = moduleMm / getSettings().scale;
+  // The whole image, with any text below the code, keeps its shape inside each label.
+  const widthMm = quickSheetMode.value === "actual"
+    ? canvas.width * mmPerPixel
+    : Math.min(layout.label[0] - 4, (layout.label[1] - 4) * canvas.width / canvas.height);
+  const heightMm = widthMm * canvas.height / canvas.width;
+  const spareWidth = layout.label[0] - widthMm;
+  const spareHeight = layout.label[1] - heightMm;
+  const small = widthMm / (matrix.size + 8) < MIN_LABEL_MODULE_MM;
+  const state = spareWidth < 0 || spareHeight < 0 ? "over"
+    : small ? "small"
+    : quickSheetMode.value === "actual" && Math.min(spareWidth, spareHeight) < LABEL_MARGIN_MM * 2 ? "tight"
+    : "ok";
+  return { widthMm, heightMm, spareWidth, spareHeight, state };
+}
+
+function updateQuickSheet() {
+  if (!quickQr) return;
+  let best = null;
+  for (const option of quickSheetSelect.options) {
+    const layout = QRPrint.LABEL_LAYOUTS[option.value];
+    const { state } = quickSheetSize(layout);
+    markSheet(option, state === "over" ? tr("放不下", "won't fit") : state === "small" ? tr("太小", "too small") : "");
+    const area = layout.label[0] * layout.label[1];
+    if (state === "ok" && (!best || area < best.area)) best = { key: option.value, area, name: option.textContent };
+  }
+  const layout = QRPrint.LABEL_LAYOUTS[quickSheetSelect.value];
+  const fit = quickSheetSize(layout);
+  const size = `${fit.widthMm.toFixed(1)} × ${fit.heightMm.toFixed(1)}`;
+  const label = `${layout.label[0]} × ${layout.label[1]}`;
+  const box = document.getElementById("qp-sheet-fit");
+  box.className = `fit-status ${fit.state}`;
+  if (fit.state === "over") {
+    const parts = [];
+    if (fit.spareWidth < 0) parts.push(tr(`寬了 ${(-fit.spareWidth).toFixed(1)} mm`, `${(-fit.spareWidth).toFixed(1)} mm too wide`));
+    if (fit.spareHeight < 0) parts.push(tr(`高了 ${(-fit.spareHeight).toFixed(1)} mm`, `${(-fit.spareHeight).toFixed(1)} mm too tall`));
+    box.textContent = tr(`✗ 放不下：QR Code ${size} mm，標籤 ${label} mm，${parts.join("、")}`, `✗ Won't fit: the QR code is ${size} mm and the label ${label} mm, so it's ${parts.join(" and ")}`);
+  } else if (fit.state === "small") {
+    box.textContent = tr(`⚠ 太小：每張 ${size} mm，可能難以掃描。請改用較大的標籤或縮短內容`, `⚠ Too small: ${size} mm each, which may be hard to scan. Use a larger label or shorter content`);
+  } else if (fit.state === "tight") {
+    box.textContent = tr(`⚠ 放得下但幾乎貼邊：QR Code ${size} mm，標籤 ${label} mm`, `⚠ Fits, but only just: the QR code is ${size} mm and the label ${label} mm`);
+  } else {
+    box.textContent = tr(`✓ 每張印出 ${size} mm，標籤 ${label} mm`, `✓ Prints at ${size} mm on a ${label} mm label`);
+  }
+  const actual = quickSheetMode.value === "actual";
+  document.getElementById("qp-sheet-btn").disabled = fit.state === "over";
+  document.getElementById("qp-sheet-actions").hidden = fit.state === "ok";
+  document.getElementById("qp-sheet-adjust").hidden = !actual;
+  const switchButton = document.getElementById("qp-sheet-switch");
+  switchButton.hidden = !best;
+  if (best) {
+    switchButton.textContent = tr(`改用 ${best.name}`, `Use ${best.name}`);
+    switchButton.dataset.key = best.key;
+  }
+}
+
+quickSheetSelect.addEventListener("change", () => {
+  document.getElementById("qp-sheet-note").textContent = "";
+  updateQuickSheet();
+});
+quickSheetMode.addEventListener("change", () => {
+  document.getElementById("qp-sheet-note").textContent = "";
+  updateQuickSheet();
+});
+document.getElementById("qp-sheet-switch").addEventListener("click", (event) => {
+  quickSheetSelect.value = event.currentTarget.dataset.key;
+  updateQuickSheet();
+  quickSheetSelect.focus();
+});
+document.getElementById("qp-sheet-adjust").addEventListener("click", () => {
+  const layout = QRPrint.LABEL_LAYOUTS[quickSheetSelect.value];
+  const { canvas, moduleMm } = quickQr;
+  const { scale } = getSettings();
+  // Width and height in mm both grow in step with Image size.
+  const mmPerStep = (pixels) => pixels * (moduleMm / scale) / scale;
+  const room = LABEL_MARGIN_MM * 2;
+  const largest = Math.floor(Math.min((layout.label[0] - room) / mmPerStep(canvas.width), (layout.label[1] - room) / mmPerStep(canvas.height)));
+  if (largest < 2) {
+    document.getElementById("qp-sheet-note").textContent = tr(
+      "這張標籤太小，圖片大小設為最小的 2 仍放不下。請改用「自動符合標籤」或較大的標籤。",
+      "This label is too small, even at the smallest Image size of 2. Use Fit each label or a larger label.",
+    );
+    return;
+  }
+  const scaleInput = document.getElementById("opt-scale");
+  const before = scaleInput.value;
+  scaleInput.value = Math.min(20, largest);
+  renderQuick();
+  if (results.length && lastBatchRun) lastBatchRun();
+  document.getElementById("qp-sheet-note").textContent = tr(
+    `已將圖片大小從 ${before} 改為 ${scaleInput.value}，下載的圖片也會跟著改變。`,
+    `Image size changed from ${before} to ${scaleInput.value}, which also changes downloaded images.`,
+  );
+});
 
 document.getElementById("qp-sheet-btn").addEventListener("click", () => {
   if (!quickQr) return;
   const key = quickSheetSelect.value;
   const layout = QRPrint.LABEL_LAYOUTS[key];
-  const { canvas, matrix } = quickQr;
-  // The whole image, with any text below the code, keeps its shape inside each label.
-  const widthMm = Math.min(layout.label[0] - 4, (layout.label[1] - 4) * canvas.width / canvas.height);
-  const heightMm = widthMm * canvas.height / canvas.width;
+  const { canvas } = quickQr;
+  const { widthMm, heightMm, state } = quickSheetSize(layout);
+  if (state === "over") return;
   const vector = QRExtras.vector(canvas);
   const bytes = QRPrint.labelSheet(key, layout.cols * layout.rows, (cell, pageHeight) => QRPrint.vectorOps(
     vector,
@@ -798,9 +950,6 @@ document.getElementById("qp-sheet-btn").addEventListener("click", () => {
     widthMm / canvas.width,
     pageHeight,
   ));
-  document.getElementById("qp-sheet-status").textContent = widthMm / (matrix.size + 8) < MIN_LABEL_MODULE_MM
-    ? tr("QR Code 在這種標籤上會太小，可能難以掃描，建議改用較大的標籤", "The QR code would be too small on this label and may be hard to scan. Try a larger label")
-    : "";
   const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
   const a = document.createElement("a");
   a.href = url;

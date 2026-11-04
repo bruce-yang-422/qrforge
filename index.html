@@ -67,7 +67,7 @@
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="css/style.css?v=32" />
+  <link rel="stylesheet" href="css/style.css?v=33" />
 
   <!-- Local libraries keep all features available offline. -->
   <script src="libs/qrcode.min.js"></script>
@@ -261,8 +261,18 @@
           <div class="sheet-form">
             <label for="qp-sheet-layout" data-i18n="選擇標籤紙|Label sheet"></label>
             <select id="qp-sheet-layout"></select>
+            <label for="qp-sheet-mode" data-i18n="列印大小|Print size"></label>
+            <select id="qp-sheet-mode">
+              <option value="fit" data-i18n="自動符合標籤（建議）|Fit each label (recommended)"></option>
+              <option value="actual" data-i18n="依「圖片大小」設定|Follow the Image size setting"></option>
+            </select>
+            <p id="qp-sheet-fit" class="fit-status" role="status" aria-live="polite"></p>
+            <div id="qp-sheet-actions" class="fit-actions" hidden>
+              <button id="qp-sheet-adjust" type="button" class="btn btn-secondary btn-sm" data-i18n="調整圖片大小以符合這張標籤|Change Image size to fit this label"></button>
+              <button id="qp-sheet-switch" type="button" class="btn btn-secondary btn-sm"></button>
+            </div>
+            <p id="qp-sheet-note" class="hint"></p>
             <button id="qp-sheet-btn" type="button" class="btn btn-secondary" data-i18n="下載標籤 PDF|Download label PDF"></button>
-            <p id="qp-sheet-status" class="warn-text" role="status"></p>
             <p class="hint" data-i18n="這張 QR Code 會排滿整張標籤紙。列印時請選 100% 比例，並先用一般紙張試印。|This QR code fills the whole sheet. Print at 100% scale and try plain paper first."></p>
           </div>
         </details>
@@ -310,6 +320,7 @@
           <div class="menu-body">
             <label for="label-layout" data-i18n="選擇標籤紙|Label sheet"></label>
             <select id="label-layout"></select>
+            <p id="label-fit" class="fit-status" role="status" aria-live="polite"></p>
             <label for="label-caption-mode" data-i18n="標籤文字|Label text"></label>
             <select id="label-caption-mode"><option value="none" data-i18n="不加文字|No text"></option><option value="filename" data-i18n="各筆檔案名稱|Each file name"></option><option value="custom" data-i18n="自訂文字|Custom text"></option></select>
             <input id="label-caption" type="text" data-i18n-label="自訂標籤文字|Custom label text" hidden />
@@ -411,6 +422,7 @@
             <div class="field">
               <label for="opt-scale" data-i18n="圖片大小（每格像素，2–20）|Image size (pixels per square, 2–20)"></label>
               <input type="number" id="opt-scale" min="2" max="20" value="8" />
+              <span class="hint" id="opt-scale-hint" role="status"></span>
             </div>
           </div>
         </section>
@@ -575,19 +587,19 @@
 </div><!-- /.page-wrap -->
 
 <!-- App logic -->
-<script src="js/i18n.js?v=32"></script>
-<script src="js/print.js?v=32"></script>
-<script src="js/share.js?v=32"></script>
-<script src="js/tabs.js?v=32"></script>
-<script src="js/qr-extras.js?v=32"></script>
-<script src="js/app.js?v=32"></script>
-<script src="js/qr-analyze.js?v=32"></script>
-<script src="js/qr-multi.js?v=32"></script>
-<script src="js/scanner.js?v=32"></script>
-<script src="js/barcode-rules.js?v=32"></script>
-<script src="js/barcode.js?v=32"></script>
+<script src="js/i18n.js?v=33"></script>
+<script src="js/print.js?v=33"></script>
+<script src="js/share.js?v=33"></script>
+<script src="js/tabs.js?v=33"></script>
+<script src="js/qr-extras.js?v=33"></script>
+<script src="js/app.js?v=33"></script>
+<script src="js/qr-analyze.js?v=33"></script>
+<script src="js/qr-multi.js?v=33"></script>
+<script src="js/scanner.js?v=33"></script>
+<script src="js/barcode-rules.js?v=33"></script>
+<script src="js/barcode.js?v=33"></script>
 <script>QRTabs.start();</script>
-<script src="js/share-target.js?v=32"></script>
-<script src="js/pwa.js?v=32"></script>
+<script src="js/share-target.js?v=33"></script>
+<script src="js/pwa.js?v=33"></script>
 </body>
 </html>

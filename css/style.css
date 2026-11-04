@@ -234,16 +234,15 @@ textarea { resize: vertical; }
 
 .sheet-form { display: flex; flex-direction: column; gap: .5rem; margin-top: .6rem; }
 .sheet-form label { font-size: .85rem; font-weight: 600; color: var(--text); }
-#qp-sheet-status { margin-top: 0; }
 .fit-status { padding: .5rem .7rem; border-radius: 8px; font-size: .84rem; font-weight: 600; line-height: 1.45; }
 .fit-status:empty, #bc-fit-note:empty, #bc-height-hint:empty { display: none; }
 .fit-status.ok { background: var(--ok-soft); color: var(--ok); }
-.fit-status.tight { background: #fef3c7; color: var(--warn); }
+.fit-status.tight, .fit-status.small { background: #fef3c7; color: var(--warn); }
 .fit-status.over { background: var(--bad-soft); color: var(--bad); }
 .fit-actions { display: flex; flex-wrap: wrap; gap: .4rem; }
 .fit-actions .btn { flex: 1 1 auto; height: auto; white-space: normal; }
 #bc-height-hint.over { color: var(--bad); font-weight: 600; }
-#qp-sheet-status:empty { display: none; }
+#qp-sheet-note:empty { display: none; }
 
 /* ── More settings ─────────────────────────────────────── */
 .visually-hidden {
@@ -357,8 +356,7 @@ textarea { resize: vertical; }
   overflow: hidden;
 }
 .qr-stage canvas, .qr-stage img {
-  width: 100%;
-  max-width: 280px;
+  max-width: 100%;
   height: auto;
   border-radius: 6px;
   image-rendering: pixelated;

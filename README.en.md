@@ -108,7 +108,7 @@ These tools are in the web app only. Everything runs locally, and images are nev
 
 **Barcode downloads:** PNG at 300, 600, or 1200 dpi, SVG, EPS, and PDF in millimetres, or a full label sheet as a PDF.
 
-**Label sheets:** the QR Code and Barcode tabs fill a sheet with one image, and the Batch tab places each entry in turn, optionally with each file name or shared custom text. Colors and logos carry over. Print at 100% scale and test on plain paper first.
+**Label sheets:** the QR Code and Barcode tabs fill a sheet with one image, and the Batch tab places each entry in turn, optionally with each file name or shared custom text. Colors and logos carry over. The QR Code tab can fit each label or follow the Image size setting (0.25 mm per square times the setting), and labels that won't fit or are too small are marked in the menu. Print at 100% scale and test on plain paper first.
 
 | Group | Models |
 | --- | --- |
