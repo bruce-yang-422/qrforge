@@ -3,8 +3,56 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>QRForge — QR Code（二維碼）與條碼工具</title>
-  <meta name="description" content="免安裝、可離線的 QR Code（二維碼）與條碼工具。檔案只在你的裝置上處理。" />
+  <title>QRForge — 免費 QR Code（二維碼）產生器、掃描與條碼工具</title>
+  <meta name="description" content="免安裝、可離線的 QR Code（二維碼）與條碼工具：免費產生、批次製作、掃描與檢測 QR Code，並可製作 EAN-13、Code 128 等條碼。檔案只在你的裝置上處理，不會上傳。" />
+  <link rel="canonical" href="https://qrforge.stack-base.com/" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="application-name" content="QRForge" />
+
+  <!-- Link previews need absolute addresses, so these name the production site. -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="QRForge" />
+  <meta property="og:url" content="https://qrforge.stack-base.com/" />
+  <meta property="og:title" content="QRForge — 免費 QR Code（二維碼）產生器、掃描與條碼工具" />
+  <meta property="og:description" content="免安裝、可離線，免費產生、批次製作、掃描與檢測 QR Code，並可製作條碼。檔案只在你的裝置上處理，不會上傳。" />
+  <meta property="og:image" content="https://qrforge.stack-base.com/assets/icons/icon-512.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="512" />
+  <meta property="og:image:height" content="512" />
+  <meta property="og:image:alt" content="QRForge 標誌" />
+  <meta property="og:locale" content="zh_TW" />
+  <meta property="og:locale:alternate" content="en_US" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="QRForge — 免費 QR Code（二維碼）產生器、掃描與條碼工具" />
+  <meta name="twitter:description" content="免安裝、可離線，免費產生、批次製作、掃描與檢測 QR Code，並可製作條碼。檔案只在你的裝置上處理，不會上傳。" />
+  <meta name="twitter:image" content="https://qrforge.stack-base.com/assets/icons/icon-512.png" />
+  <meta name="twitter:image:alt" content="QRForge 標誌" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "QRForge",
+    "url": "https://qrforge.stack-base.com/",
+    "description": "免安裝、可離線的 QR Code（二維碼）與條碼工具。檔案只在你的裝置上處理，不會上傳。",
+    "image": "https://qrforge.stack-base.com/assets/icons/icon-512.png",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Any",
+    "browserRequirements": "Requires JavaScript",
+    "inLanguage": ["zh-TW", "en"],
+    "isAccessibleForFree": true,
+    "license": "https://github.com/bruce-yang-422/qrforge/blob/main/LICENSE",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "featureList": [
+      "產生網址、文字與 WiFi 的 QR Code",
+      "從 CSV、Excel、TXT 批次產生 QR Code",
+      "掃描與檢測 QR Code",
+      "製作 EAN-13、EAN-8、UPC-A、UPC-E、ISBN、Code 128、ITF-14、GS1-128、SSCC-18 與 Data Matrix 條碼",
+      "可安裝並離線使用"
+    ]
+  }
+  </script>
+
   <meta name="theme-color" content="#2563eb" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -15,7 +63,7 @@
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="css/style.css?v=21" />
+  <link rel="stylesheet" href="css/style.css?v=22" />
 
   <!-- Local libraries keep all features available offline. -->
   <script src="libs/qrcode.min.js"></script>
@@ -54,6 +102,11 @@
       <button id="lang-btn" class="btn btn-ghost btn-sm" type="button" data-i18n="English|中文"></button>
     </div>
   </header>
+
+  <noscript>
+    <p>QRForge 是免安裝、可離線的 QR Code（二維碼）與條碼工具，可產生、批次製作、掃描與檢測 QR Code，並製作條碼。請開啟 JavaScript 以使用這些功能。</p>
+    <p lang="en">QRForge is a free offline tool for generating, batch-creating, scanning, and checking QR codes, and for making barcodes. Turn on JavaScript to use it.</p>
+  </noscript>
 
   <!-- ── Tabs ─────────────────────────────────────────────── -->
   <nav class="tabs" role="tablist" data-i18n-label="功能|Tools">
@@ -373,16 +426,16 @@
 </div><!-- /.page-wrap -->
 
 <!-- App logic -->
-<script src="js/i18n.js?v=21"></script>
-<script src="js/print.js?v=21"></script>
-<script src="js/share.js?v=21"></script>
-<script src="js/tabs.js?v=21"></script>
-<script src="js/app.js?v=21"></script>
-<script src="js/qr-analyze.js?v=21"></script>
-<script src="js/scanner.js?v=21"></script>
-<script src="js/barcode-rules.js?v=21"></script>
-<script src="js/barcode.js?v=21"></script>
+<script src="js/i18n.js?v=22"></script>
+<script src="js/print.js?v=22"></script>
+<script src="js/share.js?v=22"></script>
+<script src="js/tabs.js?v=22"></script>
+<script src="js/app.js?v=22"></script>
+<script src="js/qr-analyze.js?v=22"></script>
+<script src="js/scanner.js?v=22"></script>
+<script src="js/barcode-rules.js?v=22"></script>
+<script src="js/barcode.js?v=22"></script>
 <script>QRTabs.start();</script>
-<script src="js/pwa.js?v=21"></script>
+<script src="js/pwa.js?v=22"></script>
 </body>
 </html>
