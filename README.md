@@ -205,6 +205,8 @@ qrforge/
 ├── js/pwa.js               # 安裝提示與離線狀態
 ├── sw.js                   # Service Worker
 ├── manifest.webmanifest    # PWA manifest
+├── robots.txt              # 搜尋引擎爬取規則
+├── sitemap.xml             # 提供給搜尋引擎的網址清單
 ├── libs/                   # 內附的瀏覽器函式庫
 ├── fonts/                  # 下方文字用的明體與楷體
 └── assets/                 # 範本檔案、應用程式圖示與標誌
@@ -220,7 +222,9 @@ python -m http.server 8000
 
 然後開啟 <http://localhost:8000>。
 
-部署時，請將 `index.html`、`manifest.webmanifest`、`sw.js`、`css/`、`js/`、`libs/` 與 `assets/` 發布到任一靜態主機。所有路徑皆為相對路徑，因此也支援 GitHub Pages 的 `/qrforge/` 這類子目錄。
+部署時，請將 `index.html`、`manifest.webmanifest`、`sw.js`、`robots.txt`、`sitemap.xml`、`css/`、`js/`、`libs/` 與 `assets/` 發布到任一靜態主機。應用程式的路徑皆為相對路徑，因此也支援 GitHub Pages 的 `/qrforge/` 這類子目錄。
+
+`robots.txt`、`sitemap.xml` 與 `index.html` 的 SEO 標籤都寫死了 `https://qrforge.stack-base.com/`，部署到其他網域時請一併修改。搜尋引擎只會在網域根目錄讀取 `robots.txt`，放在子目錄不會生效。
 
 離線功能需要 HTTPS 或 `localhost`。直接以 `file://` 開啟仍可使用網頁，但無法離線使用或安裝。詳情請參閱 MDN 的 [Service Worker API](https://developer.mozilla.org/zh-TW/docs/Web/API/Service_Worker_API)。
 

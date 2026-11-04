@@ -209,6 +209,8 @@ qrforge/
 ├── js/pwa.js               # Install prompt and offline status
 ├── sw.js                   # Service worker
 ├── manifest.webmanifest    # PWA manifest
+├── robots.txt              # Crawling rules for search engines
+├── sitemap.xml             # Site address list for search engines
 ├── libs/                   # Vendored browser libraries
 ├── fonts/                  # Serif and regular-script fonts for text below codes
 └── assets/                 # Sample templates, app icons, and logo
@@ -224,7 +226,9 @@ python -m http.server 8000
 
 Then open <http://localhost:8000>.
 
-To deploy, publish `index.html`, `manifest.webmanifest`, `sw.js`, `css/`, `js/`, `libs/`, and `assets/` to any static host. All paths are relative, so subdirectories such as GitHub Pages' `/qrforge/` work.
+To deploy, publish `index.html`, `manifest.webmanifest`, `sw.js`, `robots.txt`, `sitemap.xml`, `css/`, `js/`, `libs/`, and `assets/` to any static host. The app's paths are all relative, so subdirectories such as GitHub Pages' `/qrforge/` work.
+
+`robots.txt`, `sitemap.xml`, and the SEO tags in `index.html` name `https://qrforge.stack-base.com/` directly, so change them if you deploy to another domain. Search engines only read `robots.txt` from the root of a domain, so it has no effect in a subdirectory.
 
 Offline support requires HTTPS or `localhost`. The app still opens from `file://`, but without offline support or installation. See [Service Worker API](https://developer.mozilla.org/en-US/docs/Web/API/Service_Worker_API) on MDN for details.
 
