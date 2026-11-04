@@ -100,7 +100,7 @@ These tools are in the web app only. Everything runs locally, and images are nev
 
 **QR code appearance:** under **More settings**, choose the code and background colors, and add a PNG, JPG, or WebP logo under 5 MB. A logo automatically uses the highest error correction (H). Use dark modules on a light background, and test the downloaded code by scanning it.
 
-**Barcodes it can scan:** common types including EAN, UPC, Code 128, Code 39, ITF, and Data Matrix. Each image or camera read gives at most one barcode.
+**Barcodes it can scan:** with no mode to switch, the camera and images read common types including EAN, UPC, Code 128, Code 39, ITF, and Data Matrix, alongside QR codes. Each image or camera read gives at most one barcode, and the result shows its type.
 
 **Receiving shares:** after installing the PWA, choose QRForge in a supported system share sheet. Text and links fill in the QR Code tab, and images open the Scan tab (up to 10 images, each under 20 MB). Shares are stored only on the device and deleted once read. Whether QRForge appears in the share sheet depends on the browser and operating system.
 
@@ -168,7 +168,7 @@ Content is split on commas and line breaks, then handled according to what it co
 | Multiple URLs | One code per URL | `{stem}_00001.png`, `{stem}_00002.png`, … |
 | Anything else, including a mix of URLs and text | Plain text | `{stem}.png`, encoding the whole file |
 
-`{stem}` is the source filename without its extension. A URL must start with `http://` or `https://` and contain no whitespace, CJK, or full-width characters.
+`{stem}` is the source filename without its extension, and the output's extension follows the output format. A URL must start with `http://` or `https://` and contain no whitespace, CJK, or full-width characters.
 
 ```text
 https://example.com
@@ -226,7 +226,7 @@ qrforge/
 ├── index.html              # Web app entry point
 ├── css/style.css           # Web app styles
 ├── js/app.js               # QR generation, a browser port of main.py
-├── js/qr-extras.js         # Added content types, colors, logos, and drawing
+├── js/qr-extras.js         # vCard, email, phone, and SMS content, plus colors, logos, and drawing
 ├── js/i18n.js              # Interface language
 ├── js/tabs.js              # Tab navigation and on-demand library loading
 ├── js/scanner.js           # Scan and Check tabs
@@ -258,7 +258,7 @@ python -m http.server 8000
 
 Then open <http://localhost:8000>.
 
-To deploy, publish `index.html`, `manifest.webmanifest`, `sw.js`, `robots.txt`, `sitemap.xml`, `css/`, `js/`, `libs/`, and `assets/` to any static host. The app's paths are all relative, so subdirectories such as GitHub Pages' `/qrforge/` work.
+To deploy, publish `index.html`, `manifest.webmanifest`, `sw.js`, `robots.txt`, `sitemap.xml`, `css/`, `js/`, `libs/`, `fonts/`, and `assets/` to any static host. The app's paths are all relative, so subdirectories such as GitHub Pages' `/qrforge/` work.
 
 `robots.txt`, `sitemap.xml`, and the SEO tags in `index.html` name `https://qrforge.stack-base.com/` directly, so change them if you deploy to another domain. Search engines only read `robots.txt` from the root of a domain, so it has no effect in a subdirectory.
 
@@ -274,14 +274,16 @@ Offline support requires HTTPS or `localhost`. The app still opens from `file://
 - **WiFi security default:** the web app treats an empty security value as `WPA`. The CLI only does so when the column is missing entirely, so fill it in for CLI input.
 - **Commas in URLs:** TXT files treat commas as separators, so a URL containing one is split. Use the Batch tab's paste box or a CSV file instead.
 - **Sharing:** images are PNG where the browser allows it, otherwise JPG. The Share image button needs a browser that can share files, over HTTPS or `localhost`. Where it isn't available, it's hidden, and you can copy or download the image instead.
-- **Scan and Check:** codes with identical content are listed once. The camera reads one code at a time, so use a photo to read a whole label sheet. The Check tab checks QR codes only, not barcodes.
+- **LINE:** a web page can't pick a chat or send an image straight into LINE. On a phone, choose LINE in the share menu. On a computer, the image is copied first, so paste it into the chat.
+- **Scan and Check:** codes with identical content are listed once. The camera reads one code at a time, so use a photo to read a whole label sheet. Small barcodes have thin lines, so hold the camera closer. The Check tab checks QR codes only, not barcodes.
+- **Scan result buttons:** Send email, Call, and Send text need a matching app on the device. For example, Send email may do nothing on a computer with no email program set up. Contacts, WiFi, and barcodes can only be copied.
 - **Multi-line CSV fields (web):** the browser's CSV parser reads line by line, so quoted fields containing line breaks aren't supported.
 
 ## Contributing
 
 Issues and pull requests are welcome. Before submitting a change, keep in mind:
 
-- `js/app.js` mirrors the logic in `main.py`, so apply input and filename changes to both.
+- `js/app.js` and `js/qr-extras.js` mirror the logic in `main.py`, so apply input, content format, and filename changes to all of them.
 - Browser feature checks for the web app are in [`tests/`](tests/README.md), which explains how to run them. The CLI has no automated tests yet, so test its changes manually using the [sample files](assets/).
 - To update a browser library, follow the steps in [`libs/README.md`](libs/README.md).
 
