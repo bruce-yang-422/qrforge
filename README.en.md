@@ -55,7 +55,7 @@ The web interface is bilingual (Traditional Chinese and English).
 
 Open <https://qrforge.stack-base.com>, then type in the **QR Code** tab and your QR code appears as you type, ready to download. To make many at once, switch to **Batch**, where you can also download sample templates. The interface is in Traditional Chinese or English, and the button at the top right switches between them.
 
-To use the app offline, open it once while connected and wait for the header to show **Works offline**. To install it, use the **Install** button or your browser's install menu. On iPhone and iPad, choose **Add to Home Screen** from the Safari share menu.
+To use the app offline, open it once while connected, and it opens offline after that. To install it, use the **Install** button or your browser's install menu. On iPhone and iPad, choose **Add to Home Screen** from the Safari share menu.
 
 ### Command line
 

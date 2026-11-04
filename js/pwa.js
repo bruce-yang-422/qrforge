@@ -8,8 +8,7 @@
 
   function updateStatus() {
     if (failed) status.textContent = tr('離線功能尚未就緒', 'Offline mode not ready');
-    else if (!offlineReady) status.textContent = '';
-    else status.textContent = navigator.onLine ? tr('✓ 可離線使用', '✓ Works offline') : tr('離線模式', 'Offline');
+    else status.textContent = offlineReady && !navigator.onLine ? tr('離線模式', 'Offline') : '';
   }
 
   window.addEventListener('beforeinstallprompt', (event) => {
