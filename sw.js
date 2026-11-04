@@ -1,7 +1,7 @@
 /* Bump VERSION whenever a precached file changes, and match it in the ?v= of
    the js/ and css/ addresses in index.html, so CDNs can't serve older copies. Updates activate once all
    existing app windows close, keeping each session on a consistent version. */
-const VERSION = 'v31';
+const VERSION = 'v32';
 const CACHE_PREFIX = `qrforge-${self.registration.scope}-`;
 const CACHE_NAME = `${CACHE_PREFIX}${VERSION}`;
 // Large and rarely needed, so kept from first use and across app versions.

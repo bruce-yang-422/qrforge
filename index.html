@@ -67,7 +67,7 @@
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="css/style.css?v=31" />
+  <link rel="stylesheet" href="css/style.css?v=32" />
 
   <!-- Local libraries keep all features available offline. -->
   <script src="libs/qrcode.min.js"></script>
@@ -256,6 +256,16 @@
           <button id="qp-copy" type="button" class="btn btn-secondary" data-i18n="複製圖片|Copy image"></button>
         </div>
         <p id="qp-share-status" class="hint" role="status" aria-live="polite"></p>
+        <details id="qp-sheet" class="more" hidden>
+          <summary data-i18n="列印整張標籤|Print a label sheet"></summary>
+          <div class="sheet-form">
+            <label for="qp-sheet-layout" data-i18n="選擇標籤紙|Label sheet"></label>
+            <select id="qp-sheet-layout"></select>
+            <button id="qp-sheet-btn" type="button" class="btn btn-secondary" data-i18n="下載標籤 PDF|Download label PDF"></button>
+            <p id="qp-sheet-status" class="warn-text" role="status"></p>
+            <p class="hint" data-i18n="這張 QR Code 會排滿整張標籤紙。列印時請選 100% 比例，並先用一般紙張試印。|This QR code fills the whole sheet. Print at 100% scale and try plain paper first."></p>
+          </div>
+        </details>
       </aside>
     </div>
   </section>
@@ -485,6 +495,7 @@
             <div class="field" id="bc-height-row">
               <label for="bc-height" data-i18n="條碼高度 (mm)|Bar height (mm)"></label>
               <input type="number" id="bc-height" min="2" max="200" step="0.05" />
+              <span class="hint" id="bc-height-hint"></span>
             </div>
           </div>
           <label class="check-row" id="bc-text-row"><input type="checkbox" id="bc-text" checked /><span data-i18n="顯示文字|Show text"></span></label>
@@ -522,9 +533,17 @@
           </div>
           <details class="more">
             <summary data-i18n="列印整張標籤|Print a label sheet"></summary>
-            <div class="bc-formats">
-              <select id="bc-sheet" data-i18n-label="標籤紙|Label sheet"></select>
-              <button id="bc-sheet-btn" type="button" class="btn btn-secondary btn-sm" data-i18n="下載 PDF|Download PDF"></button>
+            <div class="sheet-form">
+              <label for="bc-sheet" data-i18n="選擇標籤紙|Label sheet"></label>
+              <select id="bc-sheet"></select>
+              <p id="bc-fit" class="fit-status" role="status" aria-live="polite"></p>
+              <div id="bc-fit-actions" class="fit-actions" hidden>
+                <button id="bc-fit-adjust" type="button" class="btn btn-secondary btn-sm" data-i18n="調整條碼以符合這張標籤|Resize the barcode for this label"></button>
+                <button id="bc-fit-switch" type="button" class="btn btn-secondary btn-sm"></button>
+              </div>
+              <p id="bc-fit-note" class="hint"></p>
+              <button id="bc-sheet-btn" type="button" class="btn btn-secondary" data-i18n="下載標籤 PDF|Download label PDF"></button>
+              <p class="hint" data-i18n="列印時請選 100% 比例，並先用一般紙張試印。|Print at 100% scale and try plain paper first."></p>
             </div>
           </details>
         </div>
@@ -556,19 +575,19 @@
 </div><!-- /.page-wrap -->
 
 <!-- App logic -->
-<script src="js/i18n.js?v=31"></script>
-<script src="js/print.js?v=31"></script>
-<script src="js/share.js?v=31"></script>
-<script src="js/tabs.js?v=31"></script>
-<script src="js/qr-extras.js?v=31"></script>
-<script src="js/app.js?v=31"></script>
-<script src="js/qr-analyze.js?v=31"></script>
-<script src="js/qr-multi.js?v=31"></script>
-<script src="js/scanner.js?v=31"></script>
-<script src="js/barcode-rules.js?v=31"></script>
-<script src="js/barcode.js?v=31"></script>
+<script src="js/i18n.js?v=32"></script>
+<script src="js/print.js?v=32"></script>
+<script src="js/share.js?v=32"></script>
+<script src="js/tabs.js?v=32"></script>
+<script src="js/qr-extras.js?v=32"></script>
+<script src="js/app.js?v=32"></script>
+<script src="js/qr-analyze.js?v=32"></script>
+<script src="js/qr-multi.js?v=32"></script>
+<script src="js/scanner.js?v=32"></script>
+<script src="js/barcode-rules.js?v=32"></script>
+<script src="js/barcode.js?v=32"></script>
 <script>QRTabs.start();</script>
-<script src="js/share-target.js?v=31"></script>
-<script src="js/pwa.js?v=31"></script>
+<script src="js/share-target.js?v=32"></script>
+<script src="js/pwa.js?v=32"></script>
 </body>
 </html>

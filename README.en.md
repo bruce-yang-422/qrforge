@@ -88,11 +88,11 @@ These tools are in the web app only. Everything runs locally, and images are nev
 
 | Tab | What it does |
 | --- | --- |
-| **QR Code** | Makes one code from a link, text, WiFi details, a contact, an email, a phone number, or an SMS, with a live preview. Adds `https://` to a bare domain, can print text below the code in a choice of fonts, and can share or copy the image |
+| **QR Code** | Makes one code from a link, text, WiFi details, a contact, an email, a phone number, or an SMS, with a live preview. Adds `https://` to a bare domain, can print text below the code in a choice of fonts, and can share or copy the image or fill a label sheet with it |
 | **Batch** | Makes up to 500 codes from a pasted list or CSV, Excel, and TXT files, as PNG, JPG, SVG, or PDF in a ZIP file. Also prints them on label sheets |
 | **Scan** | Reads QR codes and barcodes from the camera, a photo, an SVG file, or a pasted screenshot. An image with several codes has all of them read. The camera keeps scanning and shows results live below the picture. Links, email, phone numbers, and SMS get a matching open, send email, call, or send text button, and only open when you click it |
 | **Check** | Tells you whether a code will scan and how to improve it, with a grade, contrast, margin, and a map of damaged modules. An image with several codes gets a report for each |
-| **Barcode** | Makes barcodes at true print size, and re-reads each one with a separate decoder whenever you change it. Can also share or copy the image |
+| **Barcode** | Makes barcodes at true print size, and re-reads each one with a separate decoder whenever you change it. Can also share or copy the image. Label sheets show live whether it fits, with one click to resize the barcode or switch to a suitable label |
 
 **Phone, SMS, and contacts:** choose the country code from the menu or type it in. It starts as Taiwan, +886. A leading 0 in the phone number is removed (except for Italy), and the real number is shown below the field. A number that starts with `+` is used as is, without the country code.
 
@@ -108,7 +108,7 @@ These tools are in the web app only. Everything runs locally, and images are nev
 
 **Barcode downloads:** PNG at 300, 600, or 1200 dpi, SVG, EPS, and PDF in millimetres, or a full label sheet as a PDF.
 
-**Label sheets:** labels from the Batch tab can show each file name or shared custom text, and keep the colors and logo. Print at 100% scale and test on plain paper first.
+**Label sheets:** the QR Code and Barcode tabs fill a sheet with one image, and the Batch tab places each entry in turn, optionally with each file name or shared custom text. Colors and logos carry over. Print at 100% scale and test on plain paper first.
 
 | Group | Models |
 | --- | --- |
@@ -277,6 +277,7 @@ Offline support requires HTTPS or `localhost`. The app still opens from `file://
 - **LINE:** a web page can't pick a chat or send an image straight into LINE. On a phone, choose LINE in the share menu. On a computer, the image is copied first, so paste it into the chat.
 - **Scan and Check:** codes with identical content are listed once. The camera reads one code at a time, so use a photo to read a whole label sheet. Small barcodes have thin lines, so hold the camera closer. The Check tab checks QR codes only, not barcodes.
 - **Scan result buttons:** Send email, Call, and Send text need a matching app on the device. For example, Send email may do nothing on a computer with no email program set up. Contacts, WiFi, and barcodes can only be copied.
+- **UPC-E scan test:** the Barcode tab always shows UPC-E failing its scan test, at any size, so the test can't confirm it. Try it on a real scanner first.
 - **Multi-line CSV fields (web):** the browser's CSV parser reads line by line, so quoted fields containing line breaks aren't supported.
 
 ## Contributing

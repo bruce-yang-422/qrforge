@@ -773,8 +773,41 @@ const updateShareButtons = QRShare.wire({
 
 function updateShareRow() {
   document.getElementById("qp-share-row").hidden = !quickQr;
+  document.getElementById("qp-sheet").hidden = !quickQr;
+  document.getElementById("qp-sheet-status").textContent = "";
   updateShareButtons();
 }
+
+/* ── A full label sheet of the current QR code ───────────────────── */
+const quickSheetSelect = document.getElementById("qp-sheet-layout");
+QRPrint.wireLabelSelect(quickSheetSelect);
+
+document.getElementById("qp-sheet-btn").addEventListener("click", () => {
+  if (!quickQr) return;
+  const key = quickSheetSelect.value;
+  const layout = QRPrint.LABEL_LAYOUTS[key];
+  const { canvas, matrix } = quickQr;
+  // The whole image, with any text below the code, keeps its shape inside each label.
+  const widthMm = Math.min(layout.label[0] - 4, (layout.label[1] - 4) * canvas.width / canvas.height);
+  const heightMm = widthMm * canvas.height / canvas.width;
+  const vector = QRExtras.vector(canvas);
+  const bytes = QRPrint.labelSheet(key, layout.cols * layout.rows, (cell, pageHeight) => QRPrint.vectorOps(
+    vector,
+    cell.x + (cell.width - widthMm) / 2,
+    cell.y + (cell.height - heightMm) / 2,
+    widthMm / canvas.width,
+    pageHeight,
+  ));
+  document.getElementById("qp-sheet-status").textContent = widthMm / (matrix.size + 8) < MIN_LABEL_MODULE_MM
+    ? tr("QR Code 在這種標籤上會太小，可能難以掃描，建議改用較大的標籤", "The QR code would be too small on this label and may be hard to scan. Try a larger label")
+    : "";
+  const url = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${quickFilename()}-${key}.pdf`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
 
 /* ── Shared settings ─────────────────────────────────────────────── */
 const settingsNode = document.getElementById("qr-settings");
