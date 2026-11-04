@@ -149,10 +149,43 @@
     }
     if (/^https?:\/\//i.test(text)) return { kind: tr("網址", "Link"), href: text };
     if (/^BEGIN:VCARD/i.test(text)) return { kind: tr("聯絡人", "Contact") };
-    if (/^mailto:/i.test(text)) return { kind: "Email" };
-    if (/^tel:/i.test(text)) return { kind: tr("電話", "Phone") };
-    if (/^sms:/i.test(text)) return { kind: tr("簡訊", "SMS") };
+    if (/^mailto:/i.test(text)) return describeEmail(text);
+    if (/^tel:/i.test(text)) return describePhone(text);
+    if (/^sms(?:to)?:/i.test(text)) return describeSms(text);
     return { kind: tr("文字", "Text") };
+  }
+
+  const readable = (value) => {
+    try { return decodeURIComponent(value); } catch { return value; }
+  };
+  const namedParts = (parts) => parts.filter(([, value]) => value).map(([name, value]) => `${name}: ${value}`).join("\n");
+
+  function describeEmail(text) {
+    const [recipient, query = ""] = text.slice(7).split(/\?(.*)/s);
+    const fields = new URLSearchParams(query.replace(/\+/g, "%2B"));
+    const detail = namedParts([
+      [tr("收件人", "To"), readable(recipient)],
+      [tr("主旨", "Subject"), fields.get("subject")],
+      [tr("內文", "Body"), fields.get("body")],
+    ]);
+    return { kind: "Email", detail, ...(detail && { href: text, action: tr("寄信", "Send email") }) };
+  }
+
+  function describePhone(text) {
+    const number = readable(text.slice(4)).trim();
+    return { kind: tr("電話", "Phone"), ...(/\d/.test(number) && { href: text, action: tr("撥打", "Call") }) };
+  }
+
+  /* SMSTO:number:message is an older form many generators still write. */
+  function describeSms(text) {
+    const old = /^smsto:([^:]*):?(.*)$/is.exec(text);
+    const [number, body] = old ? [old[1], old[2]] : (() => {
+      const [to, query = ""] = text.slice(4).split(/[?&](.*)/s);
+      return [readable(to), new URLSearchParams(query.replace(/\+/g, "%2B")).get("body") || ""];
+    })();
+    const href = old ? `sms:${encodeURI(number)}?body=${encodeURIComponent(body)}` : text;
+    const detail = namedParts([[tr("內文", "Body"), body]]);
+    return { kind: tr("簡訊", "SMS"), detail, ...(/\d/.test(number) && { href, action: tr("傳簡訊", "Send text") }) };
   }
 
   /* jsQR only understands UTF-8 and returns "" for anything else, so try older
@@ -209,9 +242,12 @@
       const open = document.createElement("a");
       open.className = "btn btn-primary btn-sm";
       open.href = info.href;
-      open.target = "_blank";
-      open.rel = "noopener noreferrer";
-      open.textContent = tr("開啟連結", "Open link");
+      /* Email, phone and SMS addresses hand over to another app, so no blank tab is left behind. */
+      if (!info.action) {
+        open.target = "_blank";
+        open.rel = "noopener noreferrer";
+      }
+      open.textContent = info.action || tr("開啟連結", "Open link");
       actions.append(open);
     }
     const copy = document.createElement("button");
