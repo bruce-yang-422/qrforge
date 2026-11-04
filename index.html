@@ -63,7 +63,7 @@
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="css/style.css?v=24" />
+  <link rel="stylesheet" href="css/style.css?v=25" />
 
   <!-- Local libraries keep all features available offline. -->
   <script src="libs/qrcode.min.js"></script>
@@ -246,7 +246,7 @@
             <select id="label-layout"></select>
             <label for="label-caption-mode" data-i18n="標籤文字|Label text"></label>
             <select id="label-caption-mode"><option value="none" data-i18n="不加文字|No text"></option><option value="filename" data-i18n="各筆檔案名稱|Each file name"></option><option value="custom" data-i18n="自訂文字|Custom text"></option></select>
-            <input id="label-caption" type="text" data-i18n-label="自訂標籤文字|Custom label text" />
+            <input id="label-caption" type="text" data-i18n-label="自訂標籤文字|Custom label text" hidden />
             <p class="hint" data-i18n="文字過長時會提示，請縮短後再下載。|If the text is too long, shorten it before downloading."></p>
             <button id="label-btn" type="button" class="btn btn-secondary btn-sm" data-i18n="下載 PDF|Download PDF"></button>
             <p class="hint" data-i18n="列印時請選 100% 比例，並先用一般紙張試印。|Print at 100% scale and try plain paper first."></p>
@@ -441,6 +441,7 @@
   </div>
 
   <footer class="app-footer">
+    <span data-i18n="安裝後，可從支援的系統分享選單傳入網址、文字或圖片。|After installing, receive links, text or images from a supported system share sheet."></span>
     <span data-i18n="所有處理都在你的裝置上完成，檔案不會上傳。|Everything runs on your device. Nothing is uploaded."></span>
     <a href="https://github.com/bruce-yang-422/qrforge" rel="noopener">GitHub</a>
   </footer>
@@ -448,19 +449,19 @@
 </div><!-- /.page-wrap -->
 
 <!-- App logic -->
-<script src="js/i18n.js?v=24"></script>
-<script src="js/print.js?v=24"></script>
-<script src="js/share.js?v=24"></script>
-<script src="js/tabs.js?v=24"></script>
-<script src="js/qr-extras.js?v=24"></script>
-<script src="js/app.js?v=24"></script>
-<script src="js/qr-analyze.js?v=24"></script>
-<script src="js/qr-multi.js?v=24"></script>
-<script src="js/scanner.js?v=24"></script>
-<script src="js/barcode-rules.js?v=24"></script>
-<script src="js/barcode.js?v=24"></script>
+<script src="js/i18n.js?v=25"></script>
+<script src="js/print.js?v=25"></script>
+<script src="js/share.js?v=25"></script>
+<script src="js/tabs.js?v=25"></script>
+<script src="js/qr-extras.js?v=25"></script>
+<script src="js/app.js?v=25"></script>
+<script src="js/qr-analyze.js?v=25"></script>
+<script src="js/qr-multi.js?v=25"></script>
+<script src="js/scanner.js?v=25"></script>
+<script src="js/barcode-rules.js?v=25"></script>
+<script src="js/barcode.js?v=25"></script>
 <script>QRTabs.start();</script>
-<script src="js/share-target.js?v=24"></script>
-<script src="js/pwa.js?v=24"></script>
+<script src="js/share-target.js?v=25"></script>
+<script src="js/pwa.js?v=25"></script>
 </body>
 </html>

@@ -33,6 +33,7 @@
       params.set("share_title", entry.title); params.set("share_text", entry.text); params.set("share_url", entry.url);
       files = entry.files || [];
     } catch {
+      QRTabs.select("generate");
       document.getElementById("qi-error").textContent = tr("分享內容已失效，請重新分享", "This share has expired. Please share it again");
     }
     params.delete("share_id");

@@ -4,7 +4,7 @@ const QRExtras = (() => {
   let logoUrl = "";
   let logoRevision = 0;
   const clean = (v) => String(v || "").replace(/[\r\n]/g, "");
-  const escape = (v) => String(v || "").replace(/\\/g, "\\\\").replace(/\r?\n/g, "\\n").replace(/[;,]/g, "\\$&");
+  const escape = (v) => String(v || "").replace(/\\/g, "\\\\").replace(/\r\n|\r|\n/g, "\\n").replace(/[;,]/g, "\\$&");
   function payload(type, row) {
     if (type === "vcard") {
       if (!row.name) return "";

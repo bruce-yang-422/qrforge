@@ -260,6 +260,9 @@ for (const [key, layout] of Object.entries(QRPrint.LABEL_LAYOUTS)) {
 
 // Below this size many phone cameras struggle to resolve the modules.
 const MIN_LABEL_MODULE_MM = 0.33;
+document.getElementById("label-caption-mode").addEventListener("change", (event) => {
+  document.getElementById("label-caption").hidden = event.target.value !== "custom";
+});
 
 document.getElementById("label-btn").addEventListener("click", () => {
   if (!results.length) return;

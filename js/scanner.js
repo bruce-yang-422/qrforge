@@ -12,20 +12,30 @@
 
   function readBarcode(image) {
     if (!window.ZXing) return null;
-    const { width, height, data } = image;
-    const gray = new Uint8ClampedArray(width * height);
-    for (let i = 0; i < gray.length; i++) gray[i] = (data[i*4] * 306 + data[i*4+1] * 601 + data[i*4+2] * 117) >> 10;
+    const width = image.width + 40, height = image.height + 40;
+    const gray = new Uint8ClampedArray(width * height).fill(255);
+    for (let y = 0; y < image.height; y++) for (let x = 0; x < image.width; x++) {
+      const i = (y * image.width + x) * 4;
+      gray[(y + 20) * width + x + 20] = (image.data[i] * 306 + image.data[i+1] * 601 + image.data[i+2] * 117) >> 10;
+    }
     const hints = new Map([[ZXing.DecodeHintType.TRY_HARDER, true]]);
     const reader = new ZXing.MultiFormatReader();
-    try {
-      const bitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.RGBLuminanceSource(gray, width, height)));
-      const result = reader.decode(bitmap, hints);
-      const format = ZXing.BarcodeFormat[result.getBarcodeFormat()];
-      return { text: result.getText(), info: { kind: format === "QR_CODE" ? "QR Code" : tr("條碼", "Barcode"), detail: format } };
-    } catch {
-      // No readable barcode in this frame is normal.
-      return null;
-    } finally { reader.reset(); }
+    for (let turn = 0; turn < 2; turn++) {
+      let pixels = gray;
+      if (turn) {
+        pixels = new Uint8ClampedArray(gray.length);
+        for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) pixels[x * height + height - 1 - y] = gray[y * width + x];
+      }
+      try {
+        const source = new ZXing.RGBLuminanceSource(pixels, turn ? height : width, turn ? width : height);
+        const bitmap = new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(source));
+        const result = reader.decode(bitmap, hints);
+        const format = ZXing.BarcodeFormat[result.getBarcodeFormat()];
+        return { text: result.getText(), info: { kind: format === "QR_CODE" ? "QR Code" : tr("條碼", "Barcode"), detail: format } };
+      } catch { /* No readable barcode in this frame is normal. */ }
+      finally { reader.reset(); }
+    }
+    return null;
   }
 
   /* Draws any image source to a canvas, optionally scaled. */
