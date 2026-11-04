@@ -719,7 +719,7 @@ function updateScaleHint() {
       notes.push(tr(`下載尺寸 ${width} × ${height} px`, `Download size ${width} × ${height} px`));
     }
     const shown = stage.querySelector("canvas, img")?.getBoundingClientRect().width;
-    if (shown && shown < width - 1) notes.push(tr("超過預覽區，畫面已縮小顯示", "It's larger than the preview area, so it's shown smaller here"));
+    if (shown && shown < width - 1) notes.push(tr("預覽已縮小顯示", "Shown smaller here"));
   }
   if (typed !== String(scale)) notes.unshift(tr(`已改用 ${scale}，範圍是 2 到 20`, `Using ${scale}, since the range is 2 to 20`));
   hint.textContent = notes.join(tr("。", ". "));

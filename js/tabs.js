@@ -51,6 +51,11 @@ const QRTabs = (() => {
   });
   window.addEventListener("hashchange", () => select(fromHash(), false));
 
+  /* Computers have room to show every step. Phones start with only the first open. */
+  if (matchMedia("(min-width: 821px)").matches) {
+    for (const step of document.querySelectorAll(".step")) step.open = true;
+  }
+
   /* Download or print: each output panel shows one at a time. */
   document.addEventListener("change", (e) => {
     const root = e.target.closest(".output-root");
