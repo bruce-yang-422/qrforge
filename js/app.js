@@ -17,7 +17,11 @@ const COLUMN_MAP = {
   "電話號碼":       "phone",
   "主旨":          "subject",
   "內文":          "body",
+  "姓":            "family",
+  "名":            "given",
   "姓名":          "fullName",
+  "暱稱":          "nickname",
+  "顯示名稱":       "displayName",
   "公司":          "org",
   "職稱":          "title",
   "Email":         "email",
@@ -332,7 +336,7 @@ function formatQrData(row) {
 }
 
 function generateFilename(row, index) {
-  const name = row.name || row.fullName || row.ssid;
+  const name = row.name || QRExtras.contactName({ ...row, name: row.fullName }).full || row.ssid;
   if (name) return sanitizeFilename(name);
   const t = (row.type || "data").toLowerCase();
   return `${t}_${String(index).padStart(5, "0")}`;
@@ -587,7 +591,7 @@ function completeUrl(value) {
 function quickPayload() {
   if (["vcard", "email", "phone", "sms"].includes(qiType())) {
     const row = { data: qiData.value, subject: document.getElementById("qi-subject").value, body: document.getElementById("qi-body").value };
-    for (const key of ["name", "org", "title", "phone", "email", "url"]) row[key] = document.getElementById(`qi-contact-${key}`).value.trim();
+    for (const key of ["family", "given", "nickname", "displayName", "org", "title", "phone", "email", "url"]) row[key] = document.getElementById(`qi-contact-${key}`).value.trim();
     row.country = qiContactCode.value;
     if (["phone", "sms"].includes(qiType())) row.data = QRExtras.phoneNumber(qiCountryCode.value, document.getElementById("qi-phone").value) ?? "";
     return QRExtras.payload(qiType(), row);
@@ -712,7 +716,7 @@ function scheduleQuick() {
 document.querySelectorAll("input[name='qi-type']").forEach(input => input.addEventListener("change", () => {
   updateTypeFields();
   renderQuick();
-  if (qiType() === "vcard") document.getElementById("qi-contact-name").focus();
+  if (qiType() === "vcard") document.getElementById("qi-contact-family").focus();
   else if (["phone", "sms"].includes(qiType())) document.getElementById("qi-phone").focus();
   else if (qiType() !== "wifi") qiData.focus();
 }));
@@ -737,7 +741,7 @@ wireCountryCode(qiCountrySelect, qiCountryCode);
 wireCountryCode(qiContactCountry, qiContactCode);
 document.getElementById("qi-security").addEventListener("change", () => { updateTypeFields(); renderQuick(); });
 qiFont.addEventListener("change", renderQuick);
-for (const id of ["qi-data", "qi-phone", "qi-ssid", "qi-password", "qi-caption", "qi-subject", "qi-body", ...["name", "org", "title", "phone", "email", "url"].map(key => `qi-contact-${key}`)]) {
+for (const id of ["qi-data", "qi-phone", "qi-ssid", "qi-password", "qi-caption", "qi-subject", "qi-body", ...["family", "given", "nickname", "displayName", "org", "title", "phone", "email", "url"].map(key => `qi-contact-${key}`)]) {
   document.getElementById(id).addEventListener("input", scheduleQuick);
 }
 

@@ -23,13 +23,14 @@ const assert = require('node:assert/strict');
   }
   const vcard=await page.evaluate(()=>{
     document.querySelector('[name="qi-type"][value="vcard"]').checked=true;
-    document.getElementById('qi-contact-name').value='王小明;測試';
+    document.getElementById('qi-contact-family').value='王';
+    document.getElementById('qi-contact-given').value='小明;測試';
     document.getElementById('qi-contact-org').value='公司,研發';
     updateTypeFields(); renderQuick();
     const c=quickQr.canvas, image=c.getContext('2d').getImageData(0,0,c.width,c.height);
     return jsQR(image.data,image.width,image.height).data;
   });
-  assert(vcard.includes('FN:王小明\\;測試\r\nORG:公司\\,研發'));
+  assert(vcard.includes('N:王;小明\\;測試;;;\r\nFN:王小明\\;測試\r\nORG:公司\\,研發'));
   console.log('Decoded vcard');
   const styled=await page.evaluate(async()=>{
     document.querySelector('[name="qi-type"][value="url"]').checked=true;

@@ -178,6 +178,7 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 0 0 0 3px rgba(37, 99, 235, .18);
 }
 textarea { resize: vertical; }
+.name-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: .5rem; }
 .country-code-row { display: flex; gap: .5rem; }
 .country-code-row select { flex: 1 1 auto; min-width: 0; }
 .country-code-row input { flex: 0 0 6rem; width: 6rem; }

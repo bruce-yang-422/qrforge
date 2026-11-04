@@ -67,7 +67,7 @@
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="css/style.css?v=27" />
+  <link rel="stylesheet" href="css/style.css?v=28" />
 
   <!-- Local libraries keep all features available offline. -->
   <script src="libs/qrcode.min.js"></script>
@@ -191,7 +191,9 @@
           </div>
         </div>
 
-        <div id="qi-contact-rows" hidden><div class="field"><label for="qi-contact-name" data-i18n="姓名|Name"></label><input id="qi-contact-name" type="text" /></div>
+        <div id="qi-contact-rows" hidden><div class="name-row"><div class="field"><label for="qi-contact-family" data-i18n="姓|Family name"></label><input id="qi-contact-family" type="text" autocomplete="off" /></div><div class="field"><label for="qi-contact-given" data-i18n="名|Given name"></label><input id="qi-contact-given" type="text" autocomplete="off" /></div></div>
+<div class="field"><label for="qi-contact-nickname"><span data-i18n="暱稱或英文名|Nickname or English name"></span> <span class="optional" data-i18n="（選填）|(optional)"></span></label><input id="qi-contact-nickname" type="text" autocomplete="off" data-i18n-placeholder="例如 Tom、Amy|Such as Tom or Amy" /></div>
+<div class="field"><label for="qi-contact-displayName"><span data-i18n="顯示名稱|Display name"></span> <span class="optional" data-i18n="（選填）|(optional)"></span></label><input id="qi-contact-displayName" type="text" autocomplete="off" data-i18n-placeholder="留空時自動組成，例如 楊翔志 Tom|Left empty, it's built for you, such as Ming Wang Tom" /><span class="hint" data-i18n="部分手機的通訊錄會改用姓與名顯示，不一定採用這個名稱。|Some phones' contact apps show the family and given names instead of this."></span></div>
 <div class="field"><label for="qi-contact-org" data-i18n="公司|Organization"></label><input id="qi-contact-org" type="text" /></div>
 <div class="field"><label for="qi-contact-title" data-i18n="職稱|Job title"></label><input id="qi-contact-title" type="text" /></div>
 <div class="field"><label for="qi-contact-code" data-i18n="國碼|Country code"></label><div class="country-code-row"><select id="qi-contact-country" data-i18n-label="選擇國家或地區|Choose a country or region"></select><input id="qi-contact-code" type="text" inputmode="tel" autocomplete="off" value="+886" /></div></div>
@@ -503,19 +505,19 @@
 </div><!-- /.page-wrap -->
 
 <!-- App logic -->
-<script src="js/i18n.js?v=27"></script>
-<script src="js/print.js?v=27"></script>
-<script src="js/share.js?v=27"></script>
-<script src="js/tabs.js?v=27"></script>
-<script src="js/qr-extras.js?v=27"></script>
-<script src="js/app.js?v=27"></script>
-<script src="js/qr-analyze.js?v=27"></script>
-<script src="js/qr-multi.js?v=27"></script>
-<script src="js/scanner.js?v=27"></script>
-<script src="js/barcode-rules.js?v=27"></script>
-<script src="js/barcode.js?v=27"></script>
+<script src="js/i18n.js?v=28"></script>
+<script src="js/print.js?v=28"></script>
+<script src="js/share.js?v=28"></script>
+<script src="js/tabs.js?v=28"></script>
+<script src="js/qr-extras.js?v=28"></script>
+<script src="js/app.js?v=28"></script>
+<script src="js/qr-analyze.js?v=28"></script>
+<script src="js/qr-multi.js?v=28"></script>
+<script src="js/scanner.js?v=28"></script>
+<script src="js/barcode-rules.js?v=28"></script>
+<script src="js/barcode.js?v=28"></script>
 <script>QRTabs.start();</script>
-<script src="js/share-target.js?v=27"></script>
-<script src="js/pwa.js?v=27"></script>
+<script src="js/share-target.js?v=28"></script>
+<script src="js/pwa.js?v=28"></script>
 </body>
 </html>

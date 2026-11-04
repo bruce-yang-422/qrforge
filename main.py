@@ -46,7 +46,11 @@ COLUMN_MAP = {
     "電話號碼": "phone",
     "主旨": "subject",
     "內文": "body",
+    "姓": "family",
+    "名": "given",
     "姓名": "fullName",
+    "暱稱": "nickname",
+    "顯示名稱": "displayName",
     "公司": "org",
     "職稱": "title",
     "Email": "email",
@@ -124,6 +128,25 @@ def escape_vcard(value):
     return re.sub(r"([;,])", r"\\\1", text)
 
 
+def contact_name(row):
+    """Returns (family, given, nickname, display name). Chinese, Japanese and Korean
+    names read family name first, with no space. Older files give one whole name.
+    An empty display name is built from the name and nickname.
+    回傳（姓、名、暱稱、顯示名稱）。中日韓姓名姓在前且不加空格；舊檔案只提供完整姓名。
+    顯示名稱留空時，會以姓名與暱稱組成。"""
+    plain = lambda key: re.sub(r"[\r\n]", "", str(row.get(key) or "")).strip()
+    family, given, nickname = plain("family"), plain("given"), plain("nickname")
+    whole = re.sub(r"[\r\n]", "", str(row.get("fullName") or row.get("name") or "")).strip()
+    if not family and not given:
+        legal, given = whole, whole
+    elif re.search(r"[\u2E80-\u9FFF\uAC00-\uD7AF\uF900-\uFAFF]", family + given):
+        legal = family + given
+    else:
+        legal = " ".join(part for part in [given, family] if part)
+    built = f"{legal} {nickname}" if legal and nickname and nickname not in legal else (legal or nickname)
+    return family, given, nickname, plain("displayName") or built
+
+
 def format_contact_data(t, row):
     """Returns the payload for phone, sms, email and vcard rows, or "" if there is nothing to encode.
     回傳電話、簡訊、Email 與電子名片的內容；沒有內容時回傳空字串。"""
@@ -140,13 +163,14 @@ def format_contact_data(t, row):
         raise ValueError(f"❌ 國碼不正確: {row.get('country')}")
 
     if t == "vcard":
-        name = row.get("fullName") or row.get("name")
-        if not name:
+        family, given, nickname, full_name = contact_name(row)
+        if not full_name:
             return ""
         tel = re.sub(r"[^+\d*#,;]", "", full)
         plain = lambda key: re.sub(r"[\r\n]", "", str(row.get(key) or ""))
         return "\r\n".join([
-            "BEGIN:VCARD", "VERSION:3.0", f"N:;{escape_vcard(name)};;;", f"FN:{escape_vcard(name)}",
+            "BEGIN:VCARD", "VERSION:3.0", f"N:{escape_vcard(family)};{escape_vcard(given)};;;", f"FN:{escape_vcard(full_name)}",
+            *([f"NICKNAME:{escape_vcard(nickname)}"] if nickname else []),
             f"ORG:{escape_vcard(row.get('org'))}", f"TITLE:{escape_vcard(row.get('title'))}", f"TEL:{tel}",
             f"EMAIL:{plain('email')}", f"URL:{plain('url')}", "END:VCARD",
         ])
@@ -194,7 +218,7 @@ def generate_filename(row, index):
     """Returns a safe filename for the QR code image.
     If no name is provided, falls back to '{type}_{index:05d}'.
     回傳 QR code 圖片的合法檔名；未指定名稱時自動產生 '{類型}_{序號}' 格式。"""
-    name = row.get("name") or row.get("fullName") or row.get("ssid")
+    name = row.get("name") or contact_name(row)[3] or row.get("ssid")
     if name:
         return sanitize_filename(name)
     row_type = row.get("type", "data").lower()

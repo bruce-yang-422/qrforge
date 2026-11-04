@@ -8,6 +8,20 @@ const QRExtras = (() => {
   /* The full number for a code and a local number, or null if the code isn't valid.
      A number that starts with + is already complete. Dropping the leading 0 makes a
      local number work from abroad, except in Italy, where the 0 is part of the number. */
+  /* Chinese, Japanese and Korean names read family name first, with no space.
+     Older files give one whole name, which stays in the given name's place. */
+  function contactName(row) {
+    const family = clean(row.family).trim();
+    const given = clean(row.given).trim();
+    const nickname = clean(row.nickname).trim();
+    const whole = clean(row.name).trim();
+    const eastAsian = /[\u2E80-\u9FFF\uAC00-\uD7AF\uF900-\uFAFF]/.test(family + given);
+    const legal = family || given
+      ? (eastAsian ? family + given : [given, family].filter(Boolean).join(" "))
+      : whole;
+    const built = legal && nickname && !legal.includes(nickname) ? `${legal} ${nickname}` : legal || nickname;
+    return { family, given: family || given ? given : whole, nickname, full: clean(row.displayName).trim() || built };
+  }
   function phoneNumber(code, number) {
     const typed = clean(number).trim();
     if (typed.startsWith("+")) return typed;
@@ -19,10 +33,12 @@ const QRExtras = (() => {
   }
   function payload(type, row) {
     if (type === "vcard") {
-      if (!row.name) return "";
+      const name = contactName(row);
+      if (!name.full) return "";
       const tel = phoneNumber(row.country, row.phone);
       if (tel === null) return "";
-      return ["BEGIN:VCARD", "VERSION:3.0", `N:;${escape(row.name)};;;`, `FN:${escape(row.name)}`,
+      return ["BEGIN:VCARD", "VERSION:3.0", `N:${escape(name.family)};${escape(name.given)};;;`, `FN:${escape(name.full)}`,
+        ...(name.nickname ? [`NICKNAME:${escape(name.nickname)}`] : []),
         `ORG:${escape(row.org)}`, `TITLE:${escape(row.title)}`, `TEL:${tel.replace(/[^+\d*#,;]/g, "")}`,
         `EMAIL:${clean(row.email)}`, `URL:${clean(row.url)}`, "END:VCARD"].join("\r\n");
     }
@@ -107,5 +123,5 @@ const QRExtras = (() => {
     return { width, height, shapes: Array.from(paths, ([fill, segments]) => ({ fill, stroke:0, segments })) };
   }
   function pdf(qr) { return QRPrint.vectorPdf(vector(qr.canvas), (qr.matrix.size + 8) * qr.moduleMm / qr.canvas.width); }
-  return { payload, phoneNumber, render, setLogo, vector, pdf };
+  return { payload, contactName, phoneNumber, render, setLogo, vector, pdf };
 })();

@@ -96,6 +96,8 @@ These tools are in the web app only. Everything runs locally, and images are nev
 
 **Phone, SMS, and contacts:** choose the country code from the menu or type it in. It starts as Taiwan, +886. A leading 0 in the phone number is removed (except for Italy), and the real number is shown below the field. A number that starts with `+` is used as is, without the country code.
 
+**Contact names:** enter the family and given names separately, and optionally a nickname or English name, such as Tom. An empty display name becomes `楊翔志 Tom`, or you can write your own. Some phones' contact apps show the family and given names instead, and list the nickname separately.
+
 **QR code appearance:** under **More settings**, choose the code and background colors, and add a PNG, JPG, or WebP logo under 5 MB. A logo automatically uses the highest error correction (H). Use dark modules on a light background, and test the downloaded code by scanning it.
 
 **Barcodes it can scan:** common types including EAN, UPC, Code 128, Code 39, ITF, and Data Matrix. Each image or camera read gives at most one barcode.
@@ -138,18 +140,20 @@ The first row is the header, and each following row produces one QR code. Header
 | `電話號碼` (phone number) | For `phone`, `sms` | A leading 0 is removed, except for Italy |
 | `主旨` (subject) | No | For `email` |
 | `內文` (body) | No | For `email`, `sms` |
-| `姓名` (name) | For `vcard` | Contact's name |
+| `姓`, `名` (family name, given name) | At least one for `vcard` | Contact's name. Older files' `姓名` column still works |
+| `暱稱` (nickname) | No | For `vcard`, such as an English name like Tom |
+| `顯示名稱` (display name) | No | For `vcard`; if empty, it's built from the name and nickname, such as `楊翔志 Tom` |
 | `公司`, `職稱`, `Email`, `網站` (organization, job title, email, website) | No | For `vcard` |
 | `Qr-code檔案名稱` (filename) | No | Output filename without extension |
 
 Rows with no content to encode are skipped. An invalid row is logged and does not stop the run. The sample files include an example of each type.
 
 ```csv
-類型,資料,WiFi名稱,WiFi密碼,加密方式,國碼,電話號碼,主旨,內文,姓名,公司,職稱,Email,網站,Qr-code檔案名稱
-url,https://example.com,,,,,,,,,,,,,website
-wifi,,MySSID,MyPassword,WPA,,,,,,,,,,office-wifi
-phone,,,,,+886,0912345678,,,,,,,,support-line
-vcard,,,,,+886,0912345678,,,Ming Wang,Example Inc,Sales Manager,ming@example.com,https://example.com,ming-card
+類型,資料,WiFi名稱,WiFi密碼,加密方式,國碼,電話號碼,主旨,內文,姓,名,暱稱,顯示名稱,公司,職稱,Email,網站,Qr-code檔案名稱
+url,https://example.com,,,,,,,,,,,,,,,,website
+wifi,,MySSID,MyPassword,WPA,,,,,,,,,,,,,office-wifi
+phone,,,,,+886,0912345678,,,,,,,,,,,support-line
+vcard,,,,,+886,0912345678,,,Wang,Ming,Tom,,Example Inc,Sales Manager,ming@example.com,https://example.com,ming-card
 ```
 
 Columns can be in any order, and unused ones can be left out. Older files that keep a `phone` or `sms` number in `資料` still work.
@@ -176,7 +180,7 @@ https://github.com
 For CSV and Excel rows, the filename is the first of these that applies:
 
 1. The `Qr-code檔案名稱` value
-2. The `姓名` value
+2. A contact's display name
 3. The WiFi SSID
 4. `{type}_{number}`, such as `url_00001`
 
