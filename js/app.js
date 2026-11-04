@@ -254,9 +254,7 @@ document.getElementById("zip-btn").addEventListener("click", async () => {
 
 /* ── Label sheet PDF ─────────────────────────────────────────────── */
 const labelSelect = document.getElementById("label-layout");
-for (const [key, layout] of Object.entries(QRPrint.LABEL_LAYOUTS)) {
-  labelSelect.add(new Option(layout.name, key));
-}
+QRPrint.wireLabelSelect(labelSelect);
 
 // Below this size many phone cameras struggle to resolve the modules.
 const MIN_LABEL_MODULE_MM = 0.33;
@@ -269,6 +267,7 @@ document.getElementById("label-btn").addEventListener("click", () => {
   try {
     const key = labelSelect.value;
     const mode = document.getElementById("label-caption-mode").value;
+    let tooSmall = 0;
     const bytes = QRPrint.labelSheet(key, results.length, (cell, pageHeight) => {
       const { qr, filename } = results[cell.index];
       const text = mode === "filename" ? filename : mode === "custom" ? document.getElementById("label-caption").value : "";
@@ -276,11 +275,17 @@ document.getElementById("label-btn").addEventListener("click", () => {
       const caption = QRPrint.layoutCaption(text, widthMm, captionLimits(widthMm), "sans");
       if (caption?.tooLong) throw new Error(tr("標籤文字太長，請縮短文字", "Label text is too long. Please shorten it"));
       const moduleMm = widthMm / (qr.matrix.size + 8);
-      if (moduleMm < MIN_LABEL_MODULE_MM) logWarn(tr("標籤上的 QR Code 較小，請確認能正常掃描", "The QR code is small on this label. Please test scanning it"));
+      if (moduleMm < MIN_LABEL_MODULE_MM) tooSmall++;
       const canvas = QRPrint.paintWithCaption(document.createElement("canvas"), qr.canvas, caption, qr.canvas.width / widthMm);
       const heightMm = canvas.height * widthMm / canvas.width;
       return QRPrint.vectorOps(QRExtras.vector(canvas), cell.x + (cell.width-widthMm)/2, cell.y + (cell.height-heightMm)/2, widthMm/canvas.width, pageHeight);
     });
+    if (tooSmall) {
+      logWarn(tr(
+        `${tooSmall} 張 QR Code 在這種標籤上會太小，可能難以掃描，建議改用較大的標籤`,
+        `${tooSmall} QR code(s) would be too small on this label and may be hard to scan. Try a larger label`,
+      ));
+    }
     const url = URL.createObjectURL(new Blob([bytes], {type:"application/pdf"}));
     const a = document.createElement("a"); a.href = url; a.download = `qrcode-labels-${key}.pdf`; a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
@@ -536,6 +541,8 @@ const stage       = document.getElementById("qp-stage");
 const stageEmpty  = document.getElementById("qp-empty");
 const qiError     = document.getElementById("qi-error");
 const qiData      = document.getElementById("qi-data");
+const qiCountrySelect = document.getElementById("qi-country-select");
+const qiCountryCode   = document.getElementById("qi-country-code");
 const qiDownload  = document.getElementById("qp-download");
 const qiCaption   = document.getElementById("qi-caption");
 const qiFont      = document.getElementById("qi-font");
@@ -562,6 +569,7 @@ function quickPayload() {
   if (["vcard", "email", "phone", "sms"].includes(qiType())) {
     const row = { data: qiData.value, subject: document.getElementById("qi-subject").value, body: document.getElementById("qi-body").value };
     for (const key of ["name", "org", "title", "phone", "email", "url"]) row[key] = document.getElementById(`qi-contact-${key}`).value.trim();
+    if (["phone", "sms"].includes(qiType())) row.data = QRExtras.phoneNumber(qiCountryCode.value, document.getElementById("qi-phone").value) ?? "";
     return QRExtras.payload(qiType(), row);
   }
   if (qiType() === "url") return completeUrl(qiData.value.trim());
@@ -635,20 +643,37 @@ function renderQuick() {
   document.getElementById("qi-data-hint").textContent = qiType() === "url" && data && data !== typed
     ? tr(`會自動加上 https://，掃描後開啟 ${data}`, `https:// was added, so it opens ${data}`)
     : "";
+  updatePhoneHint(data);
   document.getElementById("qp-download-label").textContent = tr(`下載 ${getSettings().format}`, `Download ${getSettings().format}`);
+}
+
+// Shows the number the code will really dial, since a leading 0 may have been dropped.
+function updatePhoneHint(data) {
+  const hint = document.getElementById("qi-phone-hint");
+  if (!["phone", "sms"].includes(qiType())) { hint.textContent = ""; return; }
+  const number = document.getElementById("qi-phone").value;
+  if (number.trim() && QRExtras.phoneNumber(qiCountryCode.value, number) === null) {
+    hint.textContent = tr("國碼請輸入 1 到 4 位數字，例如 +886", "Enter a country code of 1 to 4 digits, such as +886");
+    return;
+  }
+  const dialled = /^(?:tel|sms):([^?]*)/.exec(data || "");
+  hint.textContent = !dialled ? ""
+    : qiType() === "phone" ? tr(`掃描後會撥打 ${dialled[1]}`, `Scanning it calls ${dialled[1]}`)
+    : tr(`掃描後會傳簡訊給 ${dialled[1]}`, `Scanning it texts ${dialled[1]}`);
 }
 
 function updateTypeFields() {
   const type = qiType();
   const isWifi = type === "wifi";
-  document.getElementById("qi-data-row").hidden = isWifi || type === "vcard";
+  const isPhone = ["phone", "sms"].includes(type);
+  document.getElementById("qi-data-row").hidden = isWifi || type === "vcard" || isPhone;
+  document.getElementById("qi-phone-rows").hidden = !isPhone;
   document.getElementById("qi-wifi-rows").hidden = !isWifi;
   document.getElementById("qi-data-label").textContent = type === "url" ? tr("網址", "Link") : tr("文字內容", "Text");
   document.getElementById("qi-contact-rows").hidden = type !== "vcard";
   document.getElementById("qi-subject-row").hidden = type !== "email";
   document.getElementById("qi-body-row").hidden = !["email", "sms"].includes(type);
   if (type === "email") document.getElementById("qi-data-label").textContent = tr("收件人 Email", "Recipient email");
-  if (["phone", "sms"].includes(type)) document.getElementById("qi-data-label").textContent = tr("電話號碼（含國碼）", "Phone number (with country code)");
   qiData.placeholder = type === "url" ? "https://example.com" : tr("在這裡輸入文字…", "Type your text here…");
   document.getElementById("qi-password-row").hidden = document.getElementById("qi-security").value === "nopass";
 }
@@ -663,11 +688,30 @@ document.querySelectorAll("input[name='qi-type']").forEach(input => input.addEve
   updateTypeFields();
   renderQuick();
   if (qiType() === "vcard") document.getElementById("qi-contact-name").focus();
+  else if (["phone", "sms"].includes(qiType())) document.getElementById("qi-phone").focus();
   else if (qiType() !== "wifi") qiData.focus();
 }));
+
+/* The menu and the code field stay in step, so either can be used. */
+qiCountrySelect.addEventListener("change", () => {
+  if (qiCountrySelect.value) {
+    qiCountryCode.value = qiCountrySelect.value;
+    renderQuick();
+    return;
+  }
+  qiCountryCode.value = "";
+  renderQuick();
+  qiCountryCode.focus();
+});
+qiCountryCode.addEventListener("input", () => {
+  const code = `+${qiCountryCode.value.replace(/^(\+|00)/, "").trim()}`;
+  const known = Array.from(qiCountrySelect.options).some(option => option.value === code);
+  qiCountrySelect.value = known ? code : "";
+  scheduleQuick();
+});
 document.getElementById("qi-security").addEventListener("change", () => { updateTypeFields(); renderQuick(); });
 qiFont.addEventListener("change", renderQuick);
-for (const id of ["qi-data", "qi-ssid", "qi-password", "qi-caption", "qi-subject", "qi-body", ...["name", "org", "title", "phone", "email", "url"].map(key => `qi-contact-${key}`)]) {
+for (const id of ["qi-data", "qi-phone", "qi-ssid", "qi-password", "qi-caption", "qi-subject", "qi-body", ...["name", "org", "title", "phone", "email", "url"].map(key => `qi-contact-${key}`)]) {
   document.getElementById(id).addEventListener("input", scheduleQuick);
 }
 

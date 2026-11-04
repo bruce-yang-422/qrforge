@@ -63,7 +63,7 @@
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="css/style.css?v=25" />
+  <link rel="stylesheet" href="css/style.css?v=26" />
 
   <!-- Local libraries keep all features available offline. -->
   <script src="libs/qrcode.min.js"></script>
@@ -136,6 +136,50 @@
           <label for="qi-data" id="qi-data-label"></label>
           <textarea id="qi-data" rows="3" autofocus></textarea>
           <span class="hint" id="qi-data-hint"></span>
+        </div>
+
+        <div id="qi-phone-rows" hidden>
+          <div class="field">
+            <label for="qi-country-code" data-i18n="國碼|Country code"></label>
+            <div class="country-code-row">
+              <select id="qi-country-select" data-i18n-label="選擇國家或地區|Choose a country or region">
+                <option value="+886" data-i18n="台灣 +886|Taiwan +886"></option>
+                <option value="+86" data-i18n="中國 +86|China +86"></option>
+                <option value="+852" data-i18n="香港 +852|Hong Kong +852"></option>
+                <option value="+853" data-i18n="澳門 +853|Macau +853"></option>
+                <option value="+81" data-i18n="日本 +81|Japan +81"></option>
+                <option value="+82" data-i18n="韓國 +82|South Korea +82"></option>
+                <option value="+65" data-i18n="新加坡 +65|Singapore +65"></option>
+                <option value="+60" data-i18n="馬來西亞 +60|Malaysia +60"></option>
+                <option value="+66" data-i18n="泰國 +66|Thailand +66"></option>
+                <option value="+84" data-i18n="越南 +84|Vietnam +84"></option>
+                <option value="+63" data-i18n="菲律賓 +63|Philippines +63"></option>
+                <option value="+62" data-i18n="印尼 +62|Indonesia +62"></option>
+                <option value="+91" data-i18n="印度 +91|India +91"></option>
+                <option value="+1" data-i18n="美國、加拿大 +1|US, Canada +1"></option>
+                <option value="+44" data-i18n="英國 +44|United Kingdom +44"></option>
+                <option value="+49" data-i18n="德國 +49|Germany +49"></option>
+                <option value="+33" data-i18n="法國 +33|France +33"></option>
+                <option value="+39" data-i18n="義大利 +39|Italy +39"></option>
+                <option value="+34" data-i18n="西班牙 +34|Spain +34"></option>
+                <option value="+31" data-i18n="荷蘭 +31|Netherlands +31"></option>
+                <option value="+61" data-i18n="澳洲 +61|Australia +61"></option>
+                <option value="+64" data-i18n="紐西蘭 +64|New Zealand +64"></option>
+                <option value="+971" data-i18n="阿聯 +971|UAE +971"></option>
+                <option value="+966" data-i18n="沙烏地阿拉伯 +966|Saudi Arabia +966"></option>
+                <option value="+7" data-i18n="俄羅斯 +7|Russia +7"></option>
+                <option value="+55" data-i18n="巴西 +55|Brazil +55"></option>
+                <option value="+52" data-i18n="墨西哥 +52|Mexico +52"></option>
+                <option value="" data-i18n="其他（手動輸入）|Other (type it in)"></option>
+              </select>
+              <input id="qi-country-code" type="text" inputmode="tel" autocomplete="off" value="+886" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="qi-phone" data-i18n="電話號碼|Phone number"></label>
+            <input id="qi-phone" type="text" inputmode="tel" autocomplete="off" placeholder="0912 345 678" />
+            <span class="hint" id="qi-phone-hint"></span>
+          </div>
         </div>
 
         <div id="qi-contact-rows" hidden><div class="field"><label for="qi-contact-name" data-i18n="姓名|Name"></label><input id="qi-contact-name" type="text" /></div>
@@ -449,19 +493,19 @@
 </div><!-- /.page-wrap -->
 
 <!-- App logic -->
-<script src="js/i18n.js?v=25"></script>
-<script src="js/print.js?v=25"></script>
-<script src="js/share.js?v=25"></script>
-<script src="js/tabs.js?v=25"></script>
-<script src="js/qr-extras.js?v=25"></script>
-<script src="js/app.js?v=25"></script>
-<script src="js/qr-analyze.js?v=25"></script>
-<script src="js/qr-multi.js?v=25"></script>
-<script src="js/scanner.js?v=25"></script>
-<script src="js/barcode-rules.js?v=25"></script>
-<script src="js/barcode.js?v=25"></script>
+<script src="js/i18n.js?v=26"></script>
+<script src="js/print.js?v=26"></script>
+<script src="js/share.js?v=26"></script>
+<script src="js/tabs.js?v=26"></script>
+<script src="js/qr-extras.js?v=26"></script>
+<script src="js/app.js?v=26"></script>
+<script src="js/qr-analyze.js?v=26"></script>
+<script src="js/qr-multi.js?v=26"></script>
+<script src="js/scanner.js?v=26"></script>
+<script src="js/barcode-rules.js?v=26"></script>
+<script src="js/barcode.js?v=26"></script>
 <script>QRTabs.start();</script>
-<script src="js/share-target.js?v=25"></script>
-<script src="js/pwa.js?v=25"></script>
+<script src="js/share-target.js?v=26"></script>
+<script src="js/pwa.js?v=26"></script>
 </body>
 </html>

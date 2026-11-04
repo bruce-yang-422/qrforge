@@ -98,6 +98,8 @@ These tools are in the web app only. Everything runs locally, and images are nev
 | **Check** | Tells you whether a code will scan and how to improve it, with a grade, contrast, margin, and a map of damaged modules. An image with several codes gets a report for each |
 | **Barcode** | Makes barcodes at true print size, and re-reads each one with a separate decoder whenever you change it. Can also share or copy the image |
 
+**Phone and SMS:** choose the country code from the menu or type it in. It starts as Taiwan, +886. A leading 0 in the phone number is removed (except for Italy), and the number the code will really dial is shown below the field. A number that starts with `+` is used as is, without the country code.
+
 **QR code appearance:** under **More settings**, choose the code and background colors, and add a PNG, JPG, or WebP logo under 5 MB. A logo automatically uses the highest error correction (H). Use dark modules on a light background, and test the downloaded code by scanning it.
 
 **Barcodes it can scan:** common types including EAN, UPC, Code 128, Code 39, ITF, and Data Matrix. Each image or camera read gives at most one barcode.
@@ -108,7 +110,15 @@ These tools are in the web app only. Everything runs locally, and images are nev
 
 **Barcode downloads:** PNG at 300, 600, or 1200 dpi, SVG, EPS, and PDF in millimetres, or a full label sheet as a PDF.
 
-**Label sheets:** L7160, L7163, and L7165 (A4), and 5160 and 5163 (US Letter). Labels from the Batch tab can show each file name or shared custom text, and keep the colors and logo. These follow the published sheet dimensions, and QRForge isn't affiliated with Avery. Print at 100% scale and test on plain paper first.
+**Label sheets:** labels from the Batch tab can show each file name or shared custom text, and keep the colors and logo. Print at 100% scale and test on plain paper first.
+
+| Group | Models |
+| --- | --- |
+| Common in Taiwan, A4 | Herwood C149210, C149105, C74105, C59105, C50105, L4567, L3867, C3770, C3070, and L2138; Longder LD-805, LD-836, and LD-806 |
+| International, A4 | Avery L7165, L7173, L7163, L7162, L7160, and L7651 |
+| US Letter | Avery 5164, 5163, 5161, 5160, and 5167 |
+
+These follow Herwood's templates and published sheet dimensions, and QRForge isn't affiliated with these brands.
 
 > [!NOTE]
 > Check grades are estimates from the image, not an ISO/IEC 15415 or 15416 verification. Test a printed sample before a large print run.

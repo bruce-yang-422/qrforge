@@ -11,7 +11,7 @@ const assert = require('node:assert/strict');
   for (const [type,data,expected] of [['email','test+tag@example.com','mailto:test%2Btag@example.com?subject=Hello%20%26%20%E4%B8%AD%E6%96%87&body=Line%201%0ALine%202'],['phone','+886 912-345-678','tel:+886912345678'],['sms','+886 912-345-678','sms:+886912345678?body=Line%201%0ALine%202']]) {
     const decoded=await page.evaluate(({type,data})=>{
       document.querySelector(`[name="qi-type"][value="${type}"]`).checked=true;
-      document.getElementById('qi-data').value=data;
+      document.getElementById(type==='email'?'qi-data':'qi-phone').value=data;
       document.getElementById('qi-subject').value='Hello & 中文';
       document.getElementById('qi-body').value='Line 1\nLine 2';
       updateTypeFields(); renderQuick();

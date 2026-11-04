@@ -6,14 +6,69 @@ const QRPrint = (() => {
   const PT_PER_MM = 72 / 25.4;
   const num = (v) => String(Math.round(v * 1000) / 1000);
 
-  /* Dimensions follow the published sheet specs. Print at 100% scale. */
+  const A4 = [210, 297];
+  const LETTER = [215.9, 279.4];
+
+  /* Dimensions follow the published sheet specs. Print at 100% scale.
+     Herwood's come from its Word templates, and its C sheets divide A4 with no margins.
+     `model` is "中文|English", as in data-i18n. */
   const LABEL_LAYOUTS = {
-    L7160: { name: "L7160 — A4, 21 up, 63.5 × 38.1 mm", page: [210, 297], label: [63.5, 38.1], cols: 3, rows: 7, left: 7.2, top: 15.15, pitch: [66.04, 38.1] },
-    L7163: { name: "L7163 — A4, 14 up, 99.1 × 38.1 mm", page: [210, 297], label: [99.1, 38.1], cols: 2, rows: 7, left: 4.65, top: 15.15, pitch: [101.6, 38.1] },
-    L7165: { name: "L7165 — A4, 8 up, 99.1 × 67.7 mm", page: [210, 297], label: [99.1, 67.7], cols: 2, rows: 4, left: 4.65, top: 13.1, pitch: [101.6, 67.7] },
-    5160: { name: "5160 — Letter, 30 up, 66.7 × 25.4 mm", page: [215.9, 279.4], label: [66.675, 25.4], cols: 3, rows: 10, left: 4.7625, top: 12.7, pitch: [69.85, 25.4] },
-    5163: { name: "5163 — Letter, 10 up, 101.6 × 50.8 mm", page: [215.9, 279.4], label: [101.6, 50.8], cols: 2, rows: 5, left: 3.96, top: 12.7, pitch: [106.36, 50.8] },
+    C149210: { model: "鶴屋 C149210|Herwood C149210", page: A4, label: [210, 148.5], cols: 1, rows: 2, left: 0, top: 0, pitch: [210, 148.5] },
+    C149105: { model: "鶴屋 C149105|Herwood C149105", page: A4, label: [105, 148.5], cols: 2, rows: 2, left: 0, top: 0, pitch: [105, 148.5] },
+    C74105: { model: "鶴屋 C74105／龍德 LD-805|Herwood C74105 / Longder LD-805", page: A4, label: [105, 74.25], cols: 2, rows: 4, left: 0, top: 0, pitch: [105, 74.25] },
+    C59105: { model: "鶴屋 C59105|Herwood C59105", page: A4, label: [105, 59.4], cols: 2, rows: 5, left: 0, top: 0, pitch: [105, 59.4] },
+    C50105: { model: "鶴屋 C50105|Herwood C50105", page: A4, label: [105, 49.5], cols: 2, rows: 6, left: 0, top: 0, pitch: [105, 49.5] },
+    L4567: { model: "鶴屋 L4567|Herwood L4567", page: A4, label: [67, 45], cols: 3, rows: 6, left: 3, top: 13.5, pitch: [68.5, 45] },
+    L3867: { model: "鶴屋 L3867|Herwood L3867", page: A4, label: [67, 38], cols: 3, rows: 7, left: 2.5, top: 16, pitch: [69, 38] },
+    LD836: { model: "龍德 LD-836|Longder LD-836", page: A4, label: [70, 42.4], cols: 3, rows: 7, left: 0, top: 0.1, pitch: [70, 42.4] },
+    C3770: { model: "鶴屋 C3770|Herwood C3770", page: A4, label: [70, 37.1], cols: 3, rows: 8, left: 0, top: 0.1, pitch: [70, 37.1] },
+    C3070: { model: "鶴屋 C3070|Herwood C3070", page: A4, label: [70, 29.7], cols: 3, rows: 10, left: 0, top: 0, pitch: [70, 29.7] },
+    L2138: { model: "鶴屋 L2138／龍德 LD-806|Herwood L2138 / Longder LD-806", page: A4, label: [38.1, 21.2], cols: 5, rows: 13, left: 4.75, top: 10.7, pitch: [40.6, 21.2] },
+
+    L7165: { model: "L7165|L7165", page: A4, label: [99.1, 67.7], cols: 2, rows: 4, left: 4.65, top: 13.1, pitch: [101.6, 67.7] },
+    L7173: { model: "L7173|L7173", page: A4, label: [99.1, 57], cols: 2, rows: 5, left: 4.65, top: 6, pitch: [101.6, 57] },
+    L7163: { model: "L7163|L7163", page: A4, label: [99.1, 38.1], cols: 2, rows: 7, left: 4.65, top: 15.15, pitch: [101.6, 38.1] },
+    L7162: { model: "L7162|L7162", page: A4, label: [99.1, 33.9], cols: 2, rows: 8, left: 4.65, top: 12.9, pitch: [101.6, 33.9] },
+    L7160: { model: "L7160|L7160", page: A4, label: [63.5, 38.1], cols: 3, rows: 7, left: 7.2, top: 15.15, pitch: [66.04, 38.1] },
+    L7651: { model: "L7651|L7651", page: A4, label: [38.1, 21.2], cols: 5, rows: 13, left: 4.75, top: 10.7, pitch: [40.6, 21.2] },
+
+    5164: { model: "5164|5164", page: LETTER, label: [101.6, 84.67], cols: 2, rows: 3, left: 3.96, top: 12.7, pitch: [106.36, 84.67] },
+    5163: { model: "5163|5163", page: LETTER, label: [101.6, 50.8], cols: 2, rows: 5, left: 3.96, top: 12.7, pitch: [106.36, 50.8] },
+    5161: { model: "5161|5161", page: LETTER, label: [101.6, 25.4], cols: 2, rows: 10, left: 3.96, top: 12.7, pitch: [106.36, 25.4] },
+    5160: { model: "5160|5160", page: LETTER, label: [66.675, 25.4], cols: 3, rows: 10, left: 4.7625, top: 12.7, pitch: [69.85, 25.4] },
+    5167: { model: "5167|5167", page: LETTER, label: [44.45, 12.7], cols: 4, rows: 20, left: 7.62, top: 12.7, pitch: [52.07, 12.7] },
   };
+
+  /* Written out because a plain object lists number-like keys, such as 5160, first. */
+  const LABEL_GROUPS = [
+    { name: () => tr("台灣常用 A4（鶴屋、龍德）", "Common in Taiwan, A4 (Herwood, Longder)"), keys: ["C149210", "C149105", "C74105", "C59105", "C50105", "L4567", "L3867", "LD836", "C3770", "C3070", "L2138"] },
+    { name: () => tr("國際常用 A4（Avery）", "International, A4 (Avery)"), keys: ["L7165", "L7173", "L7163", "L7162", "L7160", "L7651"] },
+    { name: () => tr("美規 Letter（Avery）", "US Letter (Avery)"), keys: ["5164", "5163", "5161", "5160", "5167"] },
+  ];
+
+  function labelName(layout) {
+    const [zh, en] = layout.model.split("|");
+    const count = layout.cols * layout.rows;
+    const size = layout.label.map((mm) => Math.round(mm * 10) / 10).join(" × ");
+    return tr(`${count} 格 · ${size} mm · ${zh}`, `${count} up · ${size} mm · ${en}`);
+  }
+
+  function fillLabelGroups(select) {
+    const chosen = select.value || tr("L3867", "L7160");
+    select.replaceChildren(...LABEL_GROUPS.map((group) => {
+      const node = document.createElement("optgroup");
+      node.label = group.name();
+      for (const key of group.keys) node.append(new Option(labelName(LABEL_LAYOUTS[key]), key));
+      return node;
+    }));
+    select.value = chosen;
+  }
+
+  /* Fills a menu with every sheet, and keeps its wording in the current language. */
+  function wireLabelSelect(select) {
+    fillLabelGroups(select);
+    document.addEventListener("qrlangchange", () => fillLabelGroups(select));
+  }
 
   /* pages: [{ width, height, content }], with content in PDF points, y up. */
   function buildPdf(pages) {
@@ -385,7 +440,7 @@ const QRPrint = (() => {
   }
 
   return {
-    LABEL_LAYOUTS, PT_PER_MM,
+    LABEL_LAYOUTS, LABEL_GROUPS, wireLabelSelect, PT_PER_MM,
     buildPdf, qrPdf, labelSheet, qrLabelOps, qrLabelModule,
     parseSvg, vectorOps, vectorPdf, vectorEps, setPngDpi,
     prepareCaptionFont, layoutCaption, paintWithCaption, captionSvg,

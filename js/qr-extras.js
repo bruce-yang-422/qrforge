@@ -5,6 +5,18 @@ const QRExtras = (() => {
   let logoRevision = 0;
   const clean = (v) => String(v || "").replace(/[\r\n]/g, "");
   const escape = (v) => String(v || "").replace(/\\/g, "\\\\").replace(/\r\n|\r|\n/g, "\\n").replace(/[;,]/g, "\\$&");
+  /* The full number for a code and a local number, or null if the code isn't valid.
+     A number that starts with + is already complete. Dropping the leading 0 makes a
+     local number work from abroad, except in Italy, where the 0 is part of the number. */
+  function phoneNumber(code, number) {
+    const typed = clean(number).trim();
+    if (typed.startsWith("+")) return typed;
+    const digits = clean(code).trim().replace(/^(\+|00)/, "");
+    if (!digits) return typed;
+    if (!/^\d{1,4}$/.test(digits)) return null;
+    const local = digits === "39" ? typed : typed.replace(/^[\s()-]*0/, "");
+    return /\d/.test(local) ? `+${digits}${local}` : "";
+  }
   function payload(type, row) {
     if (type === "vcard") {
       if (!row.name) return "";
@@ -93,5 +105,5 @@ const QRExtras = (() => {
     return { width, height, shapes: Array.from(paths, ([fill, segments]) => ({ fill, stroke:0, segments })) };
   }
   function pdf(qr) { return QRPrint.vectorPdf(vector(qr.canvas), (qr.matrix.size + 8) * qr.moduleMm / qr.canvas.width); }
-  return { payload, render, setLogo, vector, pdf };
+  return { payload, phoneNumber, render, setLogo, vector, pdf };
 })();

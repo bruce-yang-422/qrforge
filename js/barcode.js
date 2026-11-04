@@ -275,7 +275,7 @@
   }
 
   buildTypeMenu();
-  for (const [key, layout] of Object.entries(QRPrint.LABEL_LAYOUTS)) sheetSelect.add(new Option(layout.name, key));
+  QRPrint.wireLabelSelect(sheetSelect);
 
   typeSelect.addEventListener("change", () => { applyDefaults(); update(); });
   for (const input of [dataInput, captionInput, xInput, heightInput]) input.addEventListener("input", schedule);
