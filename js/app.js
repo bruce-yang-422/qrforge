@@ -104,6 +104,7 @@ function getSettings() {
     ecl:    document.getElementById("opt-ecl").value,
     scale:  Math.min(20, Math.max(2, parseInt(document.getElementById("opt-scale").value, 10) || 8)),
     format: document.querySelector("input[name='opt-fmt']:checked").value,
+    logoSize: Number(document.getElementById("opt-logo-size").value),
   };
 }
 
@@ -851,20 +852,142 @@ updateTypeFields();
 updateFormatHint();
 renderQuick();
 
+/* ── Colors ──────────────────────────────────────────────────────── */
+const foregroundInput = document.getElementById("opt-foreground");
+const backgroundInput = document.getElementById("opt-background");
+
+function luminance(hex) {
+  const channel = (start) => {
+    const value = parseInt(hex.slice(start, start + 2), 16) / 255;
+    return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5);
+}
+
+// Dark codes on light backgrounds, so every pairing here scans.
+const COLOR_SWATCHES = [
+  { input: foregroundInput, light: false, colors: [
+    ["#000000", "黑", "Black"], ["#1E3A8A", "深藍", "Navy"], ["#2563EB", "藍", "Blue"], ["#166534", "綠", "Green"],
+    ["#B91C1C", "紅", "Red"], ["#6D28D9", "紫", "Purple"], ["#78350F", "棕", "Brown"],
+  ] },
+  { input: backgroundInput, light: true, colors: [
+    ["#FFFFFF", "白", "White"], ["#FFF7E6", "米", "Cream"], ["#F1F5F9", "淺灰", "Light gray"], ["#EFF6FF", "淺藍", "Light blue"],
+    ["#F0FDF4", "淺綠", "Light green"], ["#FEFCE8", "淺黃", "Light yellow"], ["#FFF1F2", "淺粉", "Light pink"],
+  ] },
+];
+
+for (const group of COLOR_SWATCHES) {
+  const custom = group.input.closest(".swatch-custom");
+  group.custom = custom;
+  group.buttons = group.colors.map(([hex, zh, en]) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = group.light ? "swatch is-light" : "swatch";
+    button.style.background = hex;
+    button.dataset.color = hex;
+    button.dataset.zh = zh;
+    button.dataset.en = en;
+    button.addEventListener("click", () => {
+      group.input.value = hex.toLowerCase();
+      // The same event a picked color sends, so the code redraws the same way.
+      group.input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    custom.before(button);
+    return button;
+  });
+}
+
+function updateColorDetails() {
+  document.getElementById("opt-foreground-hex").textContent = foregroundInput.value.toUpperCase();
+  document.getElementById("opt-background-hex").textContent = backgroundInput.value.toUpperCase();
+  for (const group of COLOR_SWATCHES) {
+    const current = group.input.value.toUpperCase();
+    for (const button of group.buttons) {
+      const name = tr(button.dataset.zh, button.dataset.en);
+      button.title = name;
+      button.setAttribute("aria-label", name);
+      button.setAttribute("aria-pressed", String(button.dataset.color === current));
+    }
+    const custom = !group.buttons.some(button => button.dataset.color === current);
+    group.custom.classList.toggle("is-active", custom);
+    group.custom.style.background = custom ? current : "";
+    group.custom.title = tr("自訂顏色", "Custom color");
+  }
+  const code = luminance(foregroundInput.value);
+  const back = luminance(backgroundInput.value);
+  const contrast = (Math.max(code, back) + 0.05) / (Math.min(code, back) + 0.05);
+  const warning = document.getElementById("color-warning");
+  warning.textContent = contrast < 3
+    ? tr("對比太低，可能掃不出來。請加深圖案或淡化背景。", "The contrast is too low to scan reliably. Darken the code or lighten the background.")
+    : code > back
+      ? tr("淺色圖案配深色背景，部分掃描器可能讀不到。", "Some scanners can't read a light code on a dark background.")
+      : "";
+  warning.hidden = !warning.textContent;
+}
+
+settingsNode.addEventListener("input", updateColorDetails);
+document.addEventListener("qrlangchange", updateColorDetails);
+updateColorDetails();
+
+/* ── Logo ────────────────────────────────────────────────────────── */
+const logoInput = document.getElementById("opt-logo");
+const logoStatus = document.getElementById("logo-status");
+const eclSelect = document.getElementById("opt-ecl");
 let logoRun = 0;
-document.getElementById("opt-logo").addEventListener("change", async (event) => {
+let logoPreviewUrl = "";
+let eclBeforeLogo = "";
+
+// A logo always uses level H, so the menu says so and the earlier choice returns with its removal.
+function showLogo(file) {
+  document.getElementById("logo-pick").hidden = Boolean(file);
+  document.getElementById("logo-chosen").hidden = !file;
+  document.getElementById("logo-hint").hidden = !file;
+  document.getElementById("logo-size-row").hidden = !file;
+  URL.revokeObjectURL(logoPreviewUrl);
+  logoPreviewUrl = file ? URL.createObjectURL(file) : "";
+  document.getElementById("logo-preview").src = logoPreviewUrl;
+  document.getElementById("logo-name").textContent = file ? file.name : "";
+  if (file && !eclSelect.disabled) eclBeforeLogo = eclSelect.value;
+  if (!file && eclSelect.disabled) eclSelect.value = eclBeforeLogo;
+  if (file) eclSelect.value = "H";
+  eclSelect.disabled = Boolean(file);
+}
+
+// Tested up to this limit: beyond 28% of the code's width, short links stop scanning.
+const logoSizeInput = document.getElementById("opt-logo-size");
+function updateLogoSize() {
+  document.getElementById("logo-size-value").textContent = `${logoSizeInput.value}%`;
+}
+logoSizeInput.addEventListener("input", updateLogoSize);
+updateLogoSize();
+
+function rebuildAfterLogo() {
+  renderQuick();
+  if (results.length && lastBatchRun) lastBatchRun();
+}
+
+logoInput.addEventListener("change", async () => {
+  const file = logoInput.files[0];
+  if (!file) return;
   const run = ++logoRun;
-  const status = document.getElementById("logo-status");
   try {
-    await QRExtras.setLogo(event.target.files[0]);
+    await QRExtras.setLogo(file);
     if (run !== logoRun) return;
-    status.textContent = ""; renderQuick();
-    if (results.length && lastBatchRun) lastBatchRun();
-  } catch (err) { status.textContent = err.message; }
+    logoStatus.textContent = "";
+    showLogo(file);
+    rebuildAfterLogo();
+  } catch (err) {
+    if (run === logoRun) logoStatus.textContent = err.message;
+  } finally {
+    // Lets the same file be chosen again.
+    logoInput.value = "";
+  }
 });
 document.getElementById("logo-clear").addEventListener("click", async () => {
-  ++logoRun; await QRExtras.setLogo(null);
-  document.getElementById("opt-logo").value = "";
-  document.getElementById("logo-status").textContent = "";
-  renderQuick(); if (results.length && lastBatchRun) lastBatchRun();
+  ++logoRun;
+  await QRExtras.setLogo(null);
+  logoStatus.textContent = "";
+  showLogo(null);
+  rebuildAfterLogo();
+  logoInput.focus();
 });

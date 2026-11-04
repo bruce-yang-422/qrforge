@@ -2,6 +2,8 @@
 const QRExtras = (() => {
   let logo = null;
   let logoUrl = "";
+  let logoAlpha = null;
+  const MIN_LOGO_VERSION = 4;
   let logoRevision = 0;
   const clean = (v) => String(v || "").replace(/[\r\n]/g, "");
   const escape = (v) => String(v || "").replace(/\\/g, "\\\\").replace(/\r\n|\r|\n/g, "\\n").replace(/[;,]/g, "\\$&");
@@ -52,11 +54,16 @@ const QRExtras = (() => {
   }
   async function setLogo(file) {
     const revision = ++logoRevision;
-    if (!file) { logo = null; logoUrl = ""; return; }
+    if (!file) { logo = null; logoUrl = ""; logoAlpha = null; return; }
     if (!/^image\/(png|jpeg|webp)$/.test(file.type) || file.size > 5 * 1024 * 1024) {
       throw new Error(tr("請選擇 5 MB 以內的 PNG、JPG 或 WebP", "Choose a PNG, JPG or WebP under 5 MB"));
     }
-    const bitmap = await createImageBitmap(file);
+    let bitmap;
+    try {
+      bitmap = await createImageBitmap(file);
+    } catch {
+      throw new Error(tr("這張圖片無法開啟，可能已損毀", "This image couldn't be opened. It may be damaged"));
+    }
     if (revision !== logoRevision) { bitmap.close(); return; }
     const canvas = document.createElement("canvas");
     const ratio = Math.min(1, 256 / Math.max(bitmap.width, bitmap.height));
@@ -64,12 +71,77 @@ const QRExtras = (() => {
     canvas.height = Math.max(1, Math.round(bitmap.height * ratio));
     canvas.getContext("2d").drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     bitmap.close();
+    logoAlpha = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data;
     logoUrl = canvas.toDataURL("image/png");
     logo = canvas;
   }
+  /* The squares to leave blank: those the logo's visible shape reaches, with half a
+     square of margin, and any gaps it encloses. A transparent PNG keeps the code close
+     around its outline, and an opaque image clears its whole rectangle. */
+  function logoClearing(modules, boxModules, wide, tall) {
+    const first = (modules - boxModules) / 2;
+    const left = (modules - wide) / 2;
+    const top = (modules - tall) / 2;
+    const margin = 0.5;
+    const reaches = (r, c) => {
+      const fromX = Math.max(0, Math.floor((c - margin - left) / wide * logo.width));
+      const toX = Math.min(logo.width, Math.ceil((c + 1 + margin - left) / wide * logo.width));
+      const fromY = Math.max(0, Math.floor((r - margin - top) / tall * logo.height));
+      const toY = Math.min(logo.height, Math.ceil((r + 1 + margin - top) / tall * logo.height));
+      for (let y = fromY; y < toY; y++) {
+        for (let x = fromX; x < toX; x++) {
+          if (logoAlpha[(y * logo.width + x) * 4 + 3] >= 32) return true;
+        }
+      }
+      return false;
+    };
+    const solid = new Set();
+    for (let r = first; r < first + boxModules; r++) {
+      for (let c = first; c < first + boxModules; c++) {
+        if (reaches(r, c)) solid.add(r * modules + c);
+      }
+    }
+    /* Walk in from the box's edge: whatever can't be reached is enclosed by the logo. */
+    const outside = new Set();
+    const queue = [];
+    const visit = (r, c) => {
+      const key = r * modules + c;
+      if (r < first || c < first || r >= first + boxModules || c >= first + boxModules) return;
+      if (solid.has(key) || outside.has(key)) return;
+      outside.add(key);
+      queue.push([r, c]);
+    };
+    for (let i = 0; i < boxModules; i++) {
+      visit(first, first + i); visit(first + boxModules - 1, first + i);
+      visit(first + i, first); visit(first + i, first + boxModules - 1);
+    }
+    while (queue.length) {
+      const [r, c] = queue.pop();
+      visit(r - 1, c); visit(r + 1, c); visit(r, c - 1); visit(r, c + 1);
+    }
+    for (let r = first; r < first + boxModules; r++) {
+      for (let c = first; c < first + boxModules; c++) {
+        if (!outside.has(r * modules + c)) solid.add(r * modules + c);
+      }
+    }
+    return solid;
+  }
+
   function render(data, settings) {
-    const qr = qrcode(0, logo ? "H" : settings.ecl);
-    qr.addData(data, "Byte"); qr.make();
+    /* Very small codes have too little repair capacity to spare under a logo, so a logo
+       starts at version 4 (33 squares wide) and grows from there when the content needs it. */
+    const build = (version) => {
+      const code = qrcode(version, logo ? "H" : settings.ecl);
+      code.addData(data, "Byte");
+      code.make();
+      return code;
+    };
+    let qr;
+    try {
+      qr = build(logo ? MIN_LOGO_VERSION : 0);
+    } catch {
+      qr = build(0);
+    }
     const modules = qr.getModuleCount(), scale = settings.scale;
     const size = (modules + 8) * scale;
     const foreground = document.getElementById("opt-foreground").value;
@@ -79,21 +151,28 @@ const QRExtras = (() => {
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = background; ctx.fillRect(0, 0, size, size);
     ctx.fillStyle = foreground;
+    let logoWidth = 0, logoHeight = 0, cleared = new Set();
+    if (logo) {
+      /* An odd or even count to match the code keeps the blank area on whole squares.
+         logoSize is a share of the code's width, limited to what stayed readable in testing. */
+      let boxModules = Math.max(3, Math.round(modules * settings.logoSize / 100));
+      if ((boxModules - modules) % 2) boxModules += 1;
+      const fit = Math.min((boxModules - 1) / logo.width, (boxModules - 1) / logo.height);
+      cleared = logoClearing(modules, boxModules, logo.width * fit, logo.height * fit);
+      logoWidth = logo.width * fit * scale;
+      logoHeight = logo.height * fit * scale;
+    }
     let path = "";
-    for (let r = 0; r < modules; r++) for (let c = 0; c < modules; c++) if (qr.isDark(r, c)) {
+    for (let r = 0; r < modules; r++) for (let c = 0; c < modules; c++) if (qr.isDark(r, c) && !cleared.has(r * modules + c)) {
       const x = (c + 4) * scale, y = (r + 4) * scale;
       ctx.fillRect(x, y, scale, scale);
       path += `M${x} ${y}h${scale}v${scale}h-${scale}z`;
     }
     let mark = "";
     if (logo) {
-      const box = Math.floor(modules * 0.18) * scale;
-      const left = (size - box) / 2;
-      const ratio = Math.min((box - scale) / logo.width, (box - scale) / logo.height);
-      const w = logo.width * ratio, h = logo.height * ratio;
-      ctx.fillStyle = background; ctx.fillRect(left, left, box, box);
-      ctx.drawImage(logo, (size - w) / 2, (size - h) / 2, w, h);
-      mark = `<rect x="${left}" y="${left}" width="${box}" height="${box}" fill="${background}"/><image href="${logoUrl}" x="${(size-w)/2}" y="${(size-h)/2}" width="${w}" height="${h}"/>`;
+      const x = (size - logoWidth) / 2, y = (size - logoHeight) / 2;
+      ctx.drawImage(logo, x, y, logoWidth, logoHeight);
+      mark = `<image href="${logoUrl}" x="${x}" y="${y}" width="${logoWidth}" height="${logoHeight}"/>`;
     }
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}px" height="${size}px" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="${background}"/><path d="${path}" fill="${foreground}"/>${mark}</svg>`;
     return { format: settings.format, canvas, svg, matrix: { size: modules, isDark: (r,c) => qr.isDark(r,c) }, moduleMm: scale * 0.25 };
