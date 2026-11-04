@@ -7,16 +7,13 @@
 
 [![Web App](https://img.shields.io/website?url=https%3A%2F%2Fqrforge.stack-base.com&label=web%20app)](https://qrforge.stack-base.com)
 [![PWA: offline ready](https://img.shields.io/badge/PWA-offline%20ready-5A0FC8?logo=pwa&logoColor=white)](#web-app)
-[![JavaScript: no build step](https://img.shields.io/badge/JavaScript-no%20build%20step-F7DF1E?logo=javascript&logoColor=black)](js/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Languages: 繁體中文 and English](https://img.shields.io/badge/languages-%E7%B9%81%E9%AB%94%E4%B8%AD%E6%96%87%20%7C%20English-orange)](README.en.md)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Last Commit](https://img.shields.io/github/last-commit/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge/commits/main)
-[![Issues](https://img.shields.io/github/issues/bruce-yang-422/qrforge)](https://github.com/bruce-yang-422/qrforge/issues)
 
 [繁體中文](README.md) | **English**
 
-Generate, scan, and test QR codes, and make print-ready barcodes. Runs in your browser or, for batch QR generation, from the command line.
+Generate, scan, and test QR codes, scan barcodes, and make print-ready ones. Runs in your browser or, for batch QR generation, from the command line.
 
 **[Open the web app](https://qrforge.stack-base.com)** · [Report a bug](https://github.com/bruce-yang-422/qrforge/issues)
 
@@ -44,15 +41,16 @@ The web interface is bilingual (Traditional Chinese and English).
 ## Features
 
 - Generates QR codes for URLs, plain text, and WiFi credentials
-- **New in the web app:** vCard contacts, email (recipient, subject and body), phone and SMS QR codes. Customize foreground/background colors and add a PNG, JPG or WebP logo under 5 MB. Logos automatically use H error correction; test scanning the result.
-- **Barcode scanning:** read common EAN, UPC, Code 128, Code 39, ITF and Data Matrix codes from the camera or an image. Reads one barcode at a time; images still support multiple QR codes.
-- **Batch label text:** choose each file name or a shared custom caption under **Print labels**. Label PDFs retain text, colors and logos.
-- **Receive shares from other apps:** install the PWA, then choose QRForge in a supported system share sheet. Text and links fill the QR preview; images open the scanner (up to 10 images, each under 20 MB). Shares are temporarily stored on the device and deleted after reading. System share integration depends on browser and OS support.
 - Reads CSV, Excel (`.xlsx`), and TXT files
 - Detects whether a TXT file holds URLs or plain text
 - Exports PNG, JPG, or SVG with adjustable error correction and scale
-- **Web app:** live preview as you type, batches of up to 500 codes, ZIP and PDF download, label sheets, and offline use
-- **Web app only:** QR scanner, QR quality check, and barcode generator
+- **Web app:** live preview as you type, batches of up to 500 codes, ZIP and PDF download, label sheets with optional text, and offline use
+- **Web app only:**
+  - vCard contact, email, phone, and SMS QR codes
+  - Custom QR code colors and logos
+  - QR code and barcode scanning, with several QR codes read from one image
+  - QR quality check and barcode generator
+  - Receiving text, links, and images shared from other apps
 - **CLI:** recursive scan of the input folder and a timestamped log for each run
 
 ## Getting started
@@ -94,17 +92,23 @@ These tools are in the web app only. Everything runs locally, and images are nev
 
 | Tab | What it does |
 | --- | --- |
-| **QR Code** | Makes one code from a link, text, or WiFi details, with a live preview. Adds `https://` to a bare domain, can print text below the code in a choice of fonts, and can share or copy the image |
+| **QR Code** | Makes one code from a link, text, WiFi details, a contact, an email, a phone number, or an SMS, with a live preview. Adds `https://` to a bare domain, can print text below the code in a choice of fonts, and can share or copy the image |
 | **Batch** | Makes up to 500 codes from a pasted list or CSV, Excel, and TXT files, as PNG, JPG, SVG, or PDF in a ZIP file. Also prints them on label sheets |
-| **Scan** | Reads QR codes from the camera, a photo, an SVG file, or a pasted screenshot. An image with several codes has all of them read. The camera keeps scanning and shows results live below the picture. Links only open when you click them |
+| **Scan** | Reads QR codes and barcodes from the camera, a photo, an SVG file, or a pasted screenshot. An image with several codes has all of them read. The camera keeps scanning and shows results live below the picture. Links only open when you click them |
 | **Check** | Tells you whether a code will scan and how to improve it, with a grade, contrast, margin, and a map of damaged modules. An image with several codes gets a report for each |
 | **Barcode** | Makes barcodes at true print size, and re-reads each one with a separate decoder whenever you change it. Can also share or copy the image |
 
-**Barcode types:** EAN-13, EAN-8, UPC-A, UPC-E, ISBN, Code 128, ITF-14, GS1-128, SSCC-18, and Data Matrix. Check digits are calculated if you leave them out, and verified if you include them. You can also add text below a barcode, such as a product name, and choose its font. It's printed only, and scanners won't read it.
+**QR code appearance:** under **More settings**, choose the code and background colors, and add a PNG, JPG, or WebP logo under 5 MB. A logo automatically uses the highest error correction (H). Use dark modules on a light background, and test the downloaded code by scanning it.
+
+**Barcodes it can scan:** common types including EAN, UPC, Code 128, Code 39, ITF, and Data Matrix. Each image or camera read gives at most one barcode.
+
+**Receiving shares:** after installing the PWA, choose QRForge in a supported system share sheet. Text and links fill in the QR Code tab, and images open the Scan tab (up to 10 images, each under 20 MB). Shares are stored only on the device and deleted once read. Whether QRForge appears in the share sheet depends on the browser and operating system.
+
+**Barcodes it can make:** EAN-13, EAN-8, UPC-A, UPC-E, ISBN, Code 128, ITF-14, GS1-128, SSCC-18, and Data Matrix. Check digits are calculated if you leave them out, and verified if you include them. You can also add text below a barcode, such as a product name, and choose its font. It's printed only, and scanners won't read it.
 
 **Barcode downloads:** PNG at 300, 600, or 1200 dpi, SVG, EPS, and PDF in millimetres, or a full label sheet as a PDF.
 
-**Label sheets:** L7160, L7163, and L7165 (A4), and 5160 and 5163 (US Letter). These follow the published sheet dimensions, and QRForge isn't affiliated with Avery. Print at 100% scale and test on plain paper first.
+**Label sheets:** L7160, L7163, and L7165 (A4), and 5160 and 5163 (US Letter). Labels from the Batch tab can show each file name or shared custom text, and keep the colors and logo. These follow the published sheet dimensions, and QRForge isn't affiliated with Avery. Print at 100% scale and test on plain paper first.
 
 > [!NOTE]
 > Check grades are estimates from the image, not an ISO/IEC 15415 or 15416 verification. Test a printed sample before a large print run.
@@ -134,6 +138,15 @@ url,https://example.com,,,,website
 wifi,,MySSID,MyPassword,WPA,office-wifi
 text,Hello World,,,,
 ```
+
+The web app also accepts these `類型` values, while the CLI logs them as unsupported types. The added column names are lowercase English:
+
+| Type | Columns used |
+| --- | --- |
+| `email` | `資料` (recipient), `subject`, `body` |
+| `phone` | `資料` (phone number) |
+| `sms` | `資料` (phone number), `body` |
+| `vcard` | `name` (required), `org`, `title`, `phone`, `email`, `url` |
 
 ### TXT
 
@@ -202,6 +215,7 @@ qrforge/
 ├── index.html              # Web app entry point
 ├── css/style.css           # Web app styles
 ├── js/app.js               # QR generation, a browser port of main.py
+├── js/qr-extras.js         # Added content types, colors, logos, and drawing
 ├── js/i18n.js              # Interface language
 ├── js/tabs.js              # Tab navigation and on-demand library loading
 ├── js/scanner.js           # Scan and Check tabs
@@ -211,7 +225,9 @@ qrforge/
 ├── js/barcode-rules.js     # Barcode validation and check digits
 ├── js/print.js             # PDF, EPS, and label sheet output
 ├── js/share.js             # Share and copy buttons
+├── js/share-target.js      # Receives content shared from other apps
 ├── js/pwa.js               # Install prompt and offline status
+├── tests/                  # Browser feature checks
 ├── sw.js                   # Service worker
 ├── manifest.webmanifest    # PWA manifest
 ├── robots.txt              # Crawling rules for search engines
@@ -246,9 +262,9 @@ Offline support requires HTTPS or `localhost`. The app still opens from `file://
 - **CSV files with a BOM (CLI):** a UTF-8 file with a byte order mark, such as Excel's "CSV UTF-8" export, fails with a missing-column error. Use a file without a BOM, an `.xlsx` file, or the web app.
 - **WiFi security default:** the web app treats an empty security value as `WPA`. The CLI only does so when the column is missing entirely, so fill it in for CLI input.
 - **Commas in URLs:** TXT files treat commas as separators, so a URL containing one is split. Use the Batch tab's paste box or a CSV file instead.
-- **Label sheets:** QR code labels from the Batch tab contain only the code, with no text below it.
+- **vCard filenames (web):** a `vcard` row's `name` column is also its filename, and shares one value with `Qr-code檔案名稱`, so leave `Qr-code檔案名稱` empty on these rows.
 - **Sharing:** images are PNG where the browser allows it, otherwise JPG. The Share image button needs a browser that can share files, over HTTPS or `localhost`. Where it isn't available, it's hidden, and you can copy or download the image instead.
-- **Scan and Check:** codes with identical content are listed once. The camera reads one code at a time, so use a photo to read a whole label sheet.
+- **Scan and Check:** codes with identical content are listed once. The camera reads one code at a time, so use a photo to read a whole label sheet. The Check tab checks QR codes only, not barcodes.
 - **Multi-line CSV fields (web):** the browser's CSV parser reads line by line, so quoted fields containing line breaks aren't supported.
 
 ## Contributing
@@ -256,7 +272,7 @@ Offline support requires HTTPS or `localhost`. The app still opens from `file://
 Issues and pull requests are welcome. Before submitting a change, keep in mind:
 
 - `js/app.js` mirrors the logic in `main.py`, so apply input and filename changes to both.
-- There is no automated test suite yet, so test changes manually using the [sample files](assets/).
+- Browser feature checks for the web app are in [`tests/`](tests/README.md), which explains how to run them. The CLI has no automated tests yet, so test its changes manually using the [sample files](assets/).
 - To update a browser library, follow the steps in [`libs/README.md`](libs/README.md).
 
 ## License
